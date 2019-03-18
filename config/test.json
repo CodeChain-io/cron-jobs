@@ -1,0 +1,6 @@
+{
+  "indexer_url": "http://localhost:9001",
+  "network_id": "tc",
+  "rpc_url" : "http://localhost:8080"
+}
+

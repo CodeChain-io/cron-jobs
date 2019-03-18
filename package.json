@@ -1,0 +1,33 @@
+{
+  "name": "tick-tock",
+  "version": "0.1.0",
+  "main": "build/index.js",
+  "repository": "https://github.com/sgkim126/tick-tock-example",
+  "author": "Seulgi Kim <seulgi.kim@kodebox.io>",
+  "license": "ISC",
+  "scripts": {
+    "start": "ts-node ./index.ts",
+    "build": "tsc -p .",
+    "test": "mocha -r ts-node/register --timeout 5000 src/**/*.test.ts",
+    "lint": "tslint -p . && prettier './src/**.ts' './index.ts' -l",
+    "fmt": "tslint -p . --fix && prettier './src/**.ts' './index.ts' --write"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/config": "^0.0.34",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^10.9.1",
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2",
+    "prettier": "1.14.2",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.10.0",
+    "tslint-no-unused-expression-chai": "^0.1.4",
+    "typescript": "^3.3.3333"
+  },
+  "dependencies": {
+    "codechain-sdk": "https://github.com/joojis/codechain-sdk-js.git#corgi",
+    "config": "^3.0.1"
+  }
+}
