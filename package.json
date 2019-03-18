@@ -31,7 +31,9 @@
     "typescript": "^3.3.3333"
   },
   "dependencies": {
+    "@types/underscore": "^1.8.13",
     "codechain-sdk": "https://github.com/joojis/codechain-sdk-js.git#corgi",
-    "config": "^3.0.1"
+    "config": "^3.0.1",
+    "underscore": "^1.9.1"
   }
 }
