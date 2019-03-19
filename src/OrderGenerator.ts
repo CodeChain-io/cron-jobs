@@ -1,24 +1,14 @@
 import { U64 } from "codechain-primitives/lib";
-import { SDK } from "codechain-sdk";
 import { AssetManager } from "./AssetManager";
-import Helper from "./util";
+import Helper, { randRange } from "./util";
 
 export class OrderGenerator {
     private helper: Helper;
-    private sdk: SDK;
     private assetManager: AssetManager;
 
-    constructor(helper: Helper, sdk: SDK, assetManager: AssetManager) {
+    constructor(helper: Helper, assetManager: AssetManager) {
         this.helper = helper;
-        this.sdk = sdk;
         this.assetManager = assetManager;
-    }
-
-    public randomAssetQuantity(): number {
-        const min = 1;
-        const max = 99;
-
-        return Math.floor(min + Math.random() * (max + 1 - min));
     }
 
     /**
@@ -29,7 +19,7 @@ export class OrderGenerator {
         this.assetManager.checkAndFill(idxFrom);
         this.assetManager.checkAndFill(idxTo);
         const assets = this.assetManager.wallets;
-        this.sdk.core.createOrder({
+        return this.helper.sdk.core.createOrder({
             assetTypeFrom: assets[idxFrom].asset.assetType,
             assetTypeTo: assets[idxTo].asset.assetType,
             shardIdFrom: 0,
@@ -40,5 +30,9 @@ export class OrderGenerator {
             originOutputs: [assets[idxFrom].asset.outPoint],
             recipientFrom: assets[idxFrom].owner
         });
+    }
+
+    private randomAssetQuantity(): number {
+        return randRange(1, 99);
     }
 }

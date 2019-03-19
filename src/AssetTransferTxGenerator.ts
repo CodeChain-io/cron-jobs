@@ -1,15 +1,15 @@
-import { SDK } from "codechain-sdk";
 import { TransferAsset } from "codechain-sdk/lib/core/classes";
 import { Order } from "codechain-sdk/lib/core/transaction/Order";
 import { AssetManager } from "./AssetManager";
+import Helper from "./util";
 
 export class AssetTransferTxGenerator {
-    private sdk: SDK;
+    private helper: Helper;
     private assetManager: AssetManager;
     private commonDivisors: number[];
 
-    constructor(sdk: SDK, assetManager: AssetManager) {
-        this.sdk = sdk;
+    constructor(helper: Helper, assetManager: AssetManager) {
+        this.helper = helper;
         this.assetManager = assetManager;
         this.commonDivisors = [1, 2, 4, 5, 10, 20, 25, 50, 100];
     }
@@ -26,9 +26,9 @@ export class AssetTransferTxGenerator {
         const fromInput = assets[idxFrom].asset.createTransferInput();
         const toInput = assets[idxTo].asset.createTransferInput();
 
-        const randomQuantityMultiplier = Math.floor(
-            Math.random() * (this.commonDivisors.length + 1)
-        );
+        const randomQuantityMultiplier = this.commonDivisors[
+            Math.floor(Math.random() * this.commonDivisors.length)
+        ];
         const baseQuantityFrom = order.assetQuantityFrom.idiv(100);
         const baseQuantityTo = order.assetQuantityTo.idiv(100);
 
@@ -66,7 +66,7 @@ export class AssetTransferTxGenerator {
             }
         );
 
-        return this.sdk.core
+        return this.helper.sdk.core
             .createTransferAssetTransaction()
             .addInputs(fromInput, toInput)
             .addOutputs(consistentOutputs)

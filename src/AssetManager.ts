@@ -1,6 +1,9 @@
-import { SDK } from "codechain-sdk";
 import { Asset } from "codechain-sdk/lib/core/Asset";
-import { AssetTransferAddress, TransferAsset } from "codechain-sdk/lib/core/classes";
+import {
+    AssetTransferAddress,
+    TransferAsset
+} from "codechain-sdk/lib/core/classes";
+import * as _ from "lodash";
 import Helper from "./util";
 
 interface IWallet {
@@ -9,25 +12,27 @@ interface IWallet {
 }
 
 export class AssetManager {
-    private helper : Helper;
-    private sdk : SDK;
-    private wallets : IWallet[];
-    private walletCnt : number;
+    private helper: Helper;
+    private readonly _wallets: IWallet[];
+    private walletCnt: number;
 
-    constructor(helper : Helper, sdk: SDK, walletCnt: number) {
+    get wallets(): IWallet[] {
+        return this._wallets;
+    }
+
+    constructor(helper: Helper, walletCnt: number) {
         this.helper = helper;
-        this.sdk = sdk;
-        this.wallets = [];
+        this._wallets = [];
         this.walletCnt = walletCnt;
     }
 
     public async init() {
-        for(let i = 0; i < this.walletCnt; i++) {
+        for (let i = 0; i < this.walletCnt; i++) {
             const address = await this.helper.createP2PKHAddress();
             const asset = await this.helper.mintAsset({
                 supply: 1e10,
                 recipient: address
-            })
+            });
             this.wallets.push({
                 owner: address,
                 asset
@@ -35,26 +40,32 @@ export class AssetManager {
         }
     }
 
-    public async checkAndFill(idx : number) {
+    public async checkAndFill(idx: number) {
         const min = 100;
         if (this.wallets[idx].asset.quantity.lt(min)) {
             const owner = this.wallets[idx].owner;
             const asset = await this.helper.mintAsset({
                 supply: 1e10,
                 recipient: owner
-            })
+            });
             this.wallets[idx].asset = asset;
         }
     }
 
-    public async renewWalletsAfterTx(transferTx : TransferAsset) {
+    public async renewWalletsAfterTx(transferTx: TransferAsset) {
         const transferredAssets = transferTx.getTransferredAssets();
-        for(const transferredAsset of transferredAssets) {
-            for(const wallet of this.wallets) {
-                const assetEq = wallet.asset.assetType === transferredAsset.assetType
-                            && wallet.asset.shardId === transferredAsset.shardId
-                            && wallet.asset.lockScriptHash === transferredAsset.lockScriptHash
-                            && wallet.asset.parameters === transferredAsset.parameters
+        for (const transferredAsset of transferredAssets) {
+            for (const wallet of this.wallets) {
+                const assetEq =
+                    wallet.asset.assetType.value ===
+                        transferredAsset.assetType.value &&
+                    wallet.asset.shardId === transferredAsset.shardId &&
+                    wallet.asset.lockScriptHash.value ===
+                        transferredAsset.lockScriptHash.value &&
+                    _.isEqual(
+                        wallet.asset.parameters,
+                        transferredAsset.parameters
+                    );
 
                 if (assetEq) {
                     wallet.asset = transferredAsset;

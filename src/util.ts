@@ -1,26 +1,34 @@
 import { SDK } from "codechain-sdk";
 import { Asset } from "codechain-sdk/lib/core/Asset";
-import { AssetTransferAddress, H256, PlatformAddress, Transaction, U64 } from "codechain-sdk/lib/core/classes";
+import {
+    AssetTransferAddress,
+    H256,
+    PlatformAddress,
+    Transaction,
+    U64
+} from "codechain-sdk/lib/core/classes";
 import { AssetTransaction } from "codechain-sdk/lib/core/Transaction";
 import { TransferAsset } from "codechain-sdk/lib/core/transaction/TransferAsset";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import * as config from "config";
 
 // should be modified.
-const faucetSecret = "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd";
+const faucetSecret =
+    "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd";
 const faucetAddress = "tccq9h7vnl68frvqapzv3tujrxtxtwqdnxw6yamrrgd";
 
 export default class Helper {
     private keyStore: KeyStore;
-    private sdk: SDK;
+    private _sdk: SDK;
 
-    constructor(keyStore: KeyStore) {
-        const rpcUrl = getConfig<string>("rpc_url");
-        const networkId = getConfig<string>("network_id");
+    public get sdk() {
+        return this._sdk;
+    }
 
-        this.sdk = new SDK({server: rpcUrl, networkId});
+    constructor(sdk: SDK, keyStore: KeyStore) {
+        this._sdk = sdk;
         this.keyStore = keyStore;
-    };
+    }
 
     public createP2PKHAddress() {
         const p2pkh = this.sdk.key.createP2PKH({ keyStore: this.keyStore });
@@ -34,8 +42,8 @@ export default class Helper {
             fee?: number | string | U64;
             seq?: number;
         }
-    ) : Promise<H256> {
-        const {account, fee = 10} = params;
+    ): Promise<H256> {
+        const { account, fee = 10 } = params;
         const { seq = await this.sdk.rpc.chain.getSeq(account) } = params;
         const signed = await this.sdk.key.signTransaction(tx, {
             keyStore: this.keyStore,
@@ -46,7 +54,7 @@ export default class Helper {
         return this.sdk.rpc.chain.sendSignedTransaction(signed);
     }
 
-    public async sendAssetTransaction (
+    public async sendAssetTransaction(
         tx: AssetTransaction & Transaction,
         options?: {
             seq?: number;
@@ -54,7 +62,7 @@ export default class Helper {
             awaitResult?: boolean;
             secret?: string;
         }
-    ) : Promise<boolean[] | undefined> {
+    ): Promise<boolean[] | undefined> {
         const {
             seq = (await this.sdk.rpc.chain.getSeq(faucetAddress)) || 0,
             fee = 10,
@@ -83,25 +91,25 @@ export default class Helper {
         secret?: string;
         seq?: number;
         metadata?: string;
-    }) : Promise<Asset> {
+    }): Promise<Asset> {
         const {
             supply,
             seq,
             recipient = await this.createP2PKHAddress(),
             secret,
-            metadata = "",
+            metadata = ""
         } = params;
         const tx = this.sdk.core.createMintAssetTransaction({
             scheme: {
                 shardId: 0,
                 metadata,
-                supply,
+                supply
             },
             recipient
         });
         await this.sendAssetTransaction(tx, {
             secret,
-            seq,
+            seq
         });
         const asset = await this.sdk.rpc.chain.getAsset(tx.tracker(), 0, 0);
         if (asset === null) {
@@ -110,15 +118,14 @@ export default class Helper {
         return asset;
     }
 
-    public async signTransactionInput(
-        tx: TransferAsset,
-        index: number
-    ) {
-        await this.sdk.key.signTransactionInput(tx, index, { keyStore: this.keyStore });
+    public async signTransactionInput(tx: TransferAsset, index: number) {
+        await this.sdk.key.signTransactionInput(tx, index, {
+            keyStore: this.keyStore
+        });
     }
 }
 
-function getConfig<T>(field: string): T {
+export function getConfig<T>(field: string): T {
     const c = config.get<T>(field);
     if (c == null) {
         throw new Error(`${field} is not specified`);
@@ -128,4 +135,8 @@ function getConfig<T>(field: string): T {
 
 export function haveConfig(field: string): boolean {
     return !!config.has(field) && config.get(field) != null;
+}
+
+export function randRange(min: number, max: number) {
+    return Math.floor(min + Math.random() * (max + 1 - min));
 }
