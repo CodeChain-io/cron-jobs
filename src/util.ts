@@ -13,6 +13,10 @@ import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import * as config from "config";
 
 // should be modified.
+// On Corgi
+// secret 090b235e9eb8f197f2dd927937222c570396d971222d9009a9189e2b6cc0a2c1
+// faucetAddress tccq8y2fax3d4lresherumwd3adjcry4wwydqk9rsww
+
 const faucetSecret =
     "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd";
 const faucetAddress = "tccq9h7vnl68frvqapzv3tujrxtxtwqdnxw6yamrrgd";

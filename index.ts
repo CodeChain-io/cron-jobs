@@ -3,20 +3,10 @@ import * as _ from "lodash";
 import { AssetManager } from "./src/AssetManager";
 import { AssetTransferTxGenerator } from "./src/AssetTransferTxGenerator";
 import { OrderGenerator } from "./src/OrderGenerator";
-import Helper, { getConfig, randRange } from "./src/util";
+import Helper, { getConfig } from "./src/util";
 
 function asyncSleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function getTwoDistinctIdx(range: number) {
-    const idxFrom = randRange(0, range - 1);
-    let idxTo;
-    do {
-        idxTo = randRange(0, range - 1);
-    } while (idxTo === idxFrom);
-
-    return [idxFrom, idxTo];
 }
 
 async function main() {
@@ -39,26 +29,48 @@ async function main() {
 
     while (true) {
         try {
-            for (let i = 0; i < numberOfAssets; i++) {
-                console.log(
-                    assetManager.wallets[i].asset.outPoint.quantity.toString()
-                );
+            // for (let i = 0; i < numberOfAssets; i++) {
+            //     console.log(
+            //         assetManager.wallets[i].asset.outPoint.quantity.toString()
+            //     );
+            // }
+            assetManager.shuffleBox();
+            const [idxFrom, idxTo, idxFeeCandidate] = [
+                assetManager.idxBox[0],
+                assetManager.idxBox[1],
+                assetManager.idxBox[numberOfAssets - 1]
+            ];
+            const idxFee = Math.random() > 0.5 ? idxFeeCandidate : undefined;
+            if (idxFee) {
+                console.log("Fee introduced");
             }
-            const [idxFrom, idxTo] = getTwoDistinctIdx(numberOfAssets);
             const orderGenerated = orderGenerator.generateOrder({
                 idxFrom,
-                idxTo
+                idxTo,
+                idxFee
             });
+            const dualOrder =
+                Math.random() < 0.5
+                    ? undefined
+                    : orderGenerator.generateDualOrder(orderGenerated, idxTo);
+            if (dualOrder) {
+                console.log("Dual order generated");
+            }
             const assetTransferTxGenerated = assetTransferTxGenerator.generateAssetTransferTx(
                 {
                     idxFrom,
-                    idxTo
+                    idxTo,
+                    idxFee
                 },
-                orderGenerated
+                orderGenerated,
+                dualOrder
             );
 
             await helper.signTransactionInput(assetTransferTxGenerated, 0);
             await helper.signTransactionInput(assetTransferTxGenerated, 1);
+            if (idxFee) {
+                await helper.signTransactionInput(assetTransferTxGenerated, 2);
+            }
             const result = await helper.sendAssetTransaction(
                 assetTransferTxGenerated
             );
@@ -66,10 +78,53 @@ async function main() {
             console.log(result);
             if (_.isEqual(result, [true])) {
                 await assetManager.renewWalletsAfterTx(
-                    assetTransferTxGenerated
+                    assetTransferTxGenerated,
+                    idxFrom
                 );
             }
             await asyncSleep(1000);
+
+            // continuously fill the previous partially filled order.
+            // sometimes fails because of the divisibility of remaining assetQuantityFrom.
+            if (Math.random() < 0.5) {
+                console.log(
+                    "Transaction filling partially filled order was given away."
+                );
+                const prevSpent = assetTransferTxGenerated.orders()[0]
+                    .spentQuantity;
+                const prevSpentDual = dualOrder
+                    ? assetTransferTxGenerated.orders()[1].spentQuantity
+                    : 0;
+                // console.log(prevSpent.toString())
+                // console.log(assetManager.wallets[idxFrom].asset.quantity.toString());
+                const orderConsumed = orderGenerated.consume(prevSpent);
+                const dualOrderConsumed = dualOrder
+                    ? dualOrder.consume(prevSpentDual)
+                    : undefined;
+                const assetTransferTxContinue = assetTransferTxGenerator.generateAssetTransferTx(
+                    {
+                        idxFrom,
+                        idxTo,
+                        idxFee
+                    },
+                    orderConsumed,
+                    dualOrderConsumed
+                );
+
+                await helper.signTransactionInput(assetTransferTxContinue, 1);
+                const result2 = await helper.sendAssetTransaction(
+                    assetTransferTxContinue
+                );
+
+                console.log(result2);
+                if (_.isEqual(result2, [true])) {
+                    await assetManager.renewWalletsAfterTx(
+                        assetTransferTxContinue,
+                        idxFrom
+                    );
+                }
+                await asyncSleep(1000);
+            }
         } catch (e) {
             console.log(e);
         }

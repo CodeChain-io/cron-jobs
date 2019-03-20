@@ -11,17 +11,19 @@ export class AssetTransferTxGenerator {
     constructor(helper: Helper, assetManager: AssetManager) {
         this.helper = helper;
         this.assetManager = assetManager;
-        this.commonDivisors = [1, 2, 4, 5, 10, 20, 25, 50, 100];
+        this.commonDivisors = [1, 2, 4, 5, 10, 20, 25, 50];
     }
 
     public generateAssetTransferTx(
-        indexes: {
+        indices: {
             idxFrom: number;
             idxTo: number;
+            idxFee?: number;
         },
-        order: Order
+        order: Order,
+        dualOrder?: Order
     ): TransferAsset {
-        const { idxFrom, idxTo } = indexes;
+        const { idxFrom, idxTo, idxFee } = indices;
         const assets = this.assetManager.wallets;
         const fromInput = assets[idxFrom].asset.createTransferInput();
         const toInput = assets[idxTo].asset.createTransferInput();
@@ -66,15 +68,48 @@ export class AssetTransferTxGenerator {
             }
         );
 
-        return this.helper.sdk.core
+        const result = this.helper.sdk.core
             .createTransferAssetTransaction()
             .addInputs(fromInput, toInput)
             .addOutputs(consistentOutputs)
             .addOrder({
                 order,
                 spentQuantity: spentFrom,
-                inputIndices: [0],
-                outputIndices: [0, 1]
+                inputIndices: idxFee ? [0, 2] : [0],
+                outputIndices: idxFee ? [0, 1, 4, 5] : [0, 1]
             });
+
+        if (dualOrder) {
+            result.addOrder({
+                order: dualOrder,
+                spentQuantity: receivedTo,
+                inputIndices: [1],
+                outputIndices: [2, 3]
+            });
+        }
+
+        if (idxFee) {
+            const feeInput = assets[idxFrom].feeAsset.createTransferInput();
+            const baseQuantityFee = order.assetQuantityFee.idiv(100);
+            const feeTotal = baseQuantityFee.times(randomQuantityMultiplier);
+            const assetTypeFee = assets[idxFrom].feeAsset.assetType;
+            result.addInputs(feeInput);
+            result.addOutputs(
+                {
+                    recipient: assets[idxFrom].owner,
+                    quantity: feeInput.prevOut.quantity.minus(feeTotal),
+                    assetType: assetTypeFee,
+                    shardId: 0
+                },
+                {
+                    recipient: assets[idxFee].owner,
+                    quantity: feeTotal,
+                    assetType: assetTypeFee,
+                    shardId: 0
+                }
+            );
+        }
+
+        return result;
     }
 }
