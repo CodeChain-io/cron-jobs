@@ -2,7 +2,7 @@ import {H256, H256Value, U64, U64Value} from "codechain-primitives";
 import {AssetScheme} from "codechain-sdk/lib/core/classes";
 import {PlatformAddress} from "codechain-primitives/lib";
 
-import {ACCOUNTS, ASSET_SCHEMES, REGULATOR, REGULATOR_ALT, sdk, SERVER} from "./configs";
+import {ACCOUNTS, ASSET_SCHEMES, PSUEDO_FAUCET, REGULATOR, REGULATOR_ALT, sdk, SERVER} from "./configs";
 import {TxSender} from "./TxSender";
 import {State} from "./State";
 import {CreateAsset} from "./actions/CreateAsset";
@@ -77,7 +77,9 @@ async function initForLocal(state: State) {
 }
 
 async function initUsingIndexer(state: State) {
-    await state.recover([REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), ASSET_SCHEMES);
+    await state.recover([PSUEDO_FAUCET.address, REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), ASSET_SCHEMES);
+    await ensureCCC(state, PSUEDO_FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 1000);
+
     for (const assetScheme of ASSET_SCHEMES) {
         const action = new CreateAsset({
             regulator: REGULATOR,

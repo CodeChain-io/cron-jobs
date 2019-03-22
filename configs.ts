@@ -1,4 +1,4 @@
-import {PlatformAddress, U64} from "codechain-primitives/lib";
+import {H256, PlatformAddress, U64} from "codechain-primitives/lib";
 import {SDK} from "codechain-sdk";
 import {AssetScheme} from "codechain-sdk/lib/core/classes";
 import {KeyStore} from "codechain-sdk/lib/key/KeyStore";
@@ -27,6 +27,14 @@ export const sdk = (() => {
 })();
 
 export const localKeyStore: Promise<KeyStore> = sdk.key.createLocalKeyStore();
+
+const FAUCET_SECRET = "3f3a6a9efc7a0435b32096ea1debdbc77481dc069c65cfefe698aa243845f0cd";
+const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
+export const PSUEDO_FAUCET = {
+    secret: H256.ensure(FAUCET_SECRET),
+    accountId: FAUCET_ACCOUNT_ID,
+    address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {networkId: sdk.networkId}),
+};
 
 // tccqy7lfe4tx80r9tpdpqrk8tfsvlkefnh04v75amvp
 export const REGULATOR: PlatformAddress =
