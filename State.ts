@@ -99,12 +99,8 @@ export class State {
                     return new Utxo(address, asset);
                 });
                 this.utxos[address.value].push(...utxos);
-
-                console.log(`asset type ${assetType}: `);
-                for (const utxo of utxos) {
-                    console.log(`    ${utxo.asset.toJSON()}`)
-                }
             }
+            this.printUtxos(address);
         }
     }
 
