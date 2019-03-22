@@ -4,7 +4,9 @@
   "main": "index.ts",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "local": "SERVER=local ts-node index.ts",
+    "corgi": "SERVER=corgi ts-node index.ts"
   },
   "dependencies": {
     "@types/lodash": "^4.14.123",
