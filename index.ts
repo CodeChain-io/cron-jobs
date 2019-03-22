@@ -9,13 +9,23 @@ import {CreateAsset} from "./actions/CreateAsset";
 import {assert, makeRandomString, sleep} from "./util";
 import {airdrop_any_10} from "./scenario";
 
-async function ensureCCC(state: State, faucet: { secret: H256, address: PlatformAddress }, accounts: PlatformAddress[], threshold: U64Value) {
+async function ensureCCC(
+    state: State,
+    faucet: { secret: H256, address: PlatformAddress },
+    accounts: PlatformAddress[],
+    threshold: U64Value, // if a balance hits this threshold
+    amount: U64Value,    // make them to have this amount.
+) {
     const poors = accounts
         .map<[PlatformAddress, U64]>(account => [account, state.getBalance(account)])
         .filter(([account, balance]) => balance.isLessThan(threshold));
 
+    if (poors.length > 0) {
+        console.log("Ensure accounts to have enough CCC");
+    }
+
     for (const [account, balance] of poors) {
-        const toGive = U64.ensure(threshold).minus(balance);
+        const toGive = U64.ensure(amount).minus(balance);
 
         const sendTx = new TxSender(faucet.secret,
             sdk.core.createPayTransaction({
@@ -27,12 +37,14 @@ async function ensureCCC(state: State, faucet: { secret: H256, address: Platform
         const faucetPrev = state.modifyBalance(faucet.address, existing => existing.minus(toGive));
         const accountPrev = state.modifyBalance(account, existing => existing.plus(toGive));
 
-        console.log(`pay (sender) ${faucet.address.value}: ${faucetPrev.toString(10)} => ${state.getBalance(faucet.address).toString(10)}`);
-        console.log(`pay (receiver) ${account.value}: ${accountPrev.toString(10)} => ${state.getBalance(account).toString(10)}`);
+        console.log(`    pay (sender) ${faucet.address.value}: ${faucetPrev.toString(10)} => ${state.getBalance(faucet.address).toString(10)}`);
+        console.log(`    pay (receiver) ${account.value}: ${accountPrev.toString(10)} => ${state.getBalance(account).toString(10)}`);
     }
 }
 
-async function initForLocal(state: State) {
+type EnsureCCC = (state: State) => Promise<void>;
+
+async function initForLocal(state: State): Promise<EnsureCCC> {
     const FAUCET_SECRET = "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd";
     const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
     const FAUCET = {
@@ -41,8 +53,10 @@ async function initForLocal(state: State) {
         address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {networkId: "tc"}),
     };
 
+    const ensure = (state: State) => ensureCCC(state, FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 100000, 200000);
+
     await state.recover([FAUCET.address].concat([REGULATOR, REGULATOR_ALT]).concat(ACCOUNTS));
-    await ensureCCC(state, FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 100000);
+    await ensure(state);
 
     const randomPostfix = makeRandomString(5);
 
@@ -74,12 +88,15 @@ async function initForLocal(state: State) {
         assert(() => action.valid(state));
         await action.sendApply(state);
     }
+
+    return ensure;
 }
 
-async function initUsingIndexer(state: State) {
-    await state.recover([PSUEDO_FAUCET.address, REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), ASSET_SCHEMES);
-    await ensureCCC(state, PSUEDO_FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 1000);
+async function initUsingIndexer(state: State): Promise<EnsureCCC> {
+    const ensurer = (state: State) => ensureCCC(state, PSUEDO_FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 1000, 2000);
 
+    await state.recover([PSUEDO_FAUCET.address, REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), ASSET_SCHEMES);
+    await ensurer(state);
     for (const assetScheme of ASSET_SCHEMES) {
         const action = new CreateAsset({
             regulator: REGULATOR,
@@ -90,14 +107,17 @@ async function initUsingIndexer(state: State) {
             await action.sendApply(state);
         }
     }
+
+    return ensurer;
 }
 
 async function main() {
     let state = new State();
+    let ensureCCC: EnsureCCC;
     if (SERVER == "local") {
-        await initForLocal(state);
+        ensureCCC = await initForLocal(state);
     } else {
-        await initUsingIndexer(state);
+        ensureCCC = await initUsingIndexer(state);
     }
 
     console.log("=== BEGIN SCENARIO ===");
@@ -105,7 +125,7 @@ async function main() {
         const tx = await airdrop_any_10(state);
         await tx.sendApply(state);
         state.printUtxos(...([REGULATOR, REGULATOR_ALT].concat(ACCOUNTS)));
-        sleep(1.0);
+        await ensureCCC(state);
     }
 }
 
