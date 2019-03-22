@@ -15,7 +15,7 @@ import * as config from "config";
 // should be modified.
 // On Corgi
 // secret 090b235e9eb8f197f2dd927937222c570396d971222d9009a9189e2b6cc0a2c1
-// faucetAddress tccq8y2fax3d4lresherumwd3adjcry4wwydqk9rsww
+// faucetAddress wccq8y2fax3d4lresherumwd3adjcry4wwydqqrhaxp
 
 const faucetSecret =
     "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd";
@@ -66,7 +66,7 @@ export default class Helper {
             awaitResult?: boolean;
             secret?: string;
         }
-    ): Promise<boolean[] | undefined> {
+    ): Promise<boolean | null> {
         const {
             seq = (await this.sdk.rpc.chain.getSeq(faucetAddress)) || 0,
             fee = 10,
@@ -80,12 +80,14 @@ export default class Helper {
         });
         await this.sdk.rpc.chain.sendSignedTransaction(signed);
         if (awaitResult) {
-            return this.sdk.rpc.chain.getTransactionResultsByTracker(
-                tx.tracker(),
+            return this.sdk.rpc.chain.getTransactionResult(
+                signed.hash(),
                 {
                     timeout: 300 * 1000
                 }
             );
+        } else {
+            return null;
         }
     }
 
@@ -111,10 +113,15 @@ export default class Helper {
             },
             recipient
         });
+        const awaitMint = true;
         await this.sendAssetTransaction(tx, {
             secret,
             seq
         });
+
+        if (!awaitMint) {
+            return tx.getMintedAsset();
+        }
         const asset = await this.sdk.rpc.chain.getAsset(tx.tracker(), 0, 0);
         if (asset === null) {
             throw Error(`Failed to mint asset`);
@@ -143,4 +150,35 @@ export function haveConfig(field: string): boolean {
 
 export function randRange(min: number, max: number) {
     return Math.floor(min + Math.random() * (max + 1 - min));
+}
+
+export function asyncSleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function getDivisors(n: U64) {
+    if (n.lt(1)) {
+        throw new Error("Argument error");
+    }
+    const small = [];
+    const large = [];
+    const end = Math.floor(Math.sqrt(n.value.toNumber()));
+    for (let i = 1; i <= end; i++) {
+        if (n.mod(i).eq(0)) {
+            small.push(new U64(i));
+            if (!n.eq(i * i)) {
+                // Don't include a square root twice
+                large.push(n.idiv(i));
+            }
+        }
+    }
+    large.reverse();
+    return small.concat(large);
+}
+
+export function gcd(a: U64, b: U64): U64 {
+    if (a.eq(0)) {
+        return b;
+    }
+    return gcd(b.mod(a), a);
 }

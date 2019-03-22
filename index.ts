@@ -3,11 +3,7 @@ import * as _ from "lodash";
 import { AssetManager } from "./src/AssetManager";
 import { AssetTransferTxGenerator } from "./src/AssetTransferTxGenerator";
 import { OrderGenerator } from "./src/OrderGenerator";
-import Helper, { getConfig } from "./src/util";
-
-function asyncSleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+import Helper, { asyncSleep, getConfig } from "./src/util";
 
 async function main() {
     const rpcUrl = getConfig<string>("rpc_url");
@@ -76,16 +72,12 @@ async function main() {
             );
 
             console.log(result);
-            if (_.isEqual(result, [true])) {
-                await assetManager.renewWalletsAfterTx(
-                    assetTransferTxGenerated,
-                    idxFrom
-                );
-            }
+            await assetManager.renewWalletsAfterTx(
+                assetTransferTxGenerated,
+                idxFrom
+            );
             await asyncSleep(1000);
 
-            // continuously fill the previous partially filled order.
-            // sometimes fails because of the divisibility of remaining assetQuantityFrom.
             if (Math.random() < 0.5) {
                 console.log(
                     "Transaction filling partially filled order was given away."
@@ -117,12 +109,10 @@ async function main() {
                 );
 
                 console.log(result2);
-                if (_.isEqual(result2, [true])) {
-                    await assetManager.renewWalletsAfterTx(
-                        assetTransferTxContinue,
-                        idxFrom
-                    );
-                }
+                await assetManager.renewWalletsAfterTx(
+                    assetTransferTxContinue,
+                    idxFrom
+                );
                 await asyncSleep(1000);
             }
         } catch (e) {

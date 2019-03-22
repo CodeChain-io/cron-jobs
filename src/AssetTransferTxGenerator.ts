@@ -1,17 +1,15 @@
 import { TransferAsset } from "codechain-sdk/lib/core/classes";
 import { Order } from "codechain-sdk/lib/core/transaction/Order";
 import { AssetManager } from "./AssetManager";
-import Helper from "./util";
+import Helper, { gcd, getDivisors, randRange } from "./util";
 
 export class AssetTransferTxGenerator {
     private helper: Helper;
     private assetManager: AssetManager;
-    private commonDivisors: number[];
 
     constructor(helper: Helper, assetManager: AssetManager) {
         this.helper = helper;
         this.assetManager = assetManager;
-        this.commonDivisors = [1, 2, 4, 5, 10, 20, 25, 50];
     }
 
     public generateAssetTransferTx(
@@ -28,11 +26,28 @@ export class AssetTransferTxGenerator {
         const fromInput = assets[idxFrom].asset.createTransferInput();
         const toInput = assets[idxTo].asset.createTransferInput();
 
-        const randomQuantityMultiplier = this.commonDivisors[
-            Math.floor(Math.random() * this.commonDivisors.length)
-        ];
-        const baseQuantityFrom = order.assetQuantityFrom.idiv(100);
-        const baseQuantityTo = order.assetQuantityTo.idiv(100);
+        let gcdFromAndToAndFee;
+        if (idxFee) {
+            gcdFromAndToAndFee = gcd(
+                gcd(order.assetQuantityFrom, order.assetQuantityTo),
+                order.assetQuantityFee
+            );
+        } else {
+            gcdFromAndToAndFee = gcd(
+                order.assetQuantityFrom,
+                order.assetQuantityTo
+            );
+        }
+
+        const commonDivisors = getDivisors(gcdFromAndToAndFee);
+
+        const randomQuantityMultiplier =
+            commonDivisors[randRange(0, commonDivisors.length - 2)];
+
+        const baseQuantityFrom = order.assetQuantityFrom.idiv(
+            gcdFromAndToAndFee
+        );
+        const baseQuantityTo = order.assetQuantityTo.idiv(gcdFromAndToAndFee);
 
         const spentFrom = baseQuantityFrom.times(randomQuantityMultiplier);
         const receivedTo = baseQuantityTo.times(randomQuantityMultiplier);
@@ -90,7 +105,9 @@ export class AssetTransferTxGenerator {
 
         if (idxFee) {
             const feeInput = assets[idxFrom].feeAsset.createTransferInput();
-            const baseQuantityFee = order.assetQuantityFee.idiv(100);
+            const baseQuantityFee = order.assetQuantityFee.idiv(
+                gcdFromAndToAndFee
+            );
             const feeTotal = baseQuantityFee.times(randomQuantityMultiplier);
             const assetTypeFee = assets[idxFrom].feeAsset.assetType;
             result.addInputs(feeInput);
