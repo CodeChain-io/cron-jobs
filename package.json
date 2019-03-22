@@ -1,0 +1,21 @@
+{
+  "name": "codechain-scenario",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.123",
+    "codechain-primitives": "^0.4.8",
+    "codechain-sdk": "https://github.com/HoOngEe/codechain-sdk-js.git#range-pendingTx-lib",
+    "request-promise-native": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/request": "^2.48.1",
+    "@types/request-promise-native": "^1.0.15",
+    "ts-node": "^8.0.3",
+    "typescript": "^3.3.3333"
+  }
+}
