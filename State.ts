@@ -1,4 +1,12 @@
-import {H160, H160Value, PlatformAddress, PlatformAddressValue, U64, U64Value} from "codechain-primitives/lib";
+import {
+    AssetTransferAddress,
+    H160,
+    H160Value,
+    PlatformAddress,
+    PlatformAddressValue,
+    U64,
+    U64Value
+} from "codechain-primitives/lib";
 import {Asset, AssetScheme} from "codechain-sdk/lib/core/classes";
 import * as request from "request-promise-native";
 
@@ -72,8 +80,9 @@ export class State {
                     transactionTracker: string;
                     transactionOutputIndex: number;
                 };
+                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, address.accountId, {networkId: sdk.networkId});
                 const utxoResponse: UtxoAttribute[] = await request({
-                    url: `${INDEXER_URL}/api/utxo?address=${address.value}&assetType=${assetType}`,
+                    url: `${INDEXER_URL}/api/utxo?address=${assetAddress.value}&assetType=${assetType}`,
                     json: true
                 });
                 const utxos = utxoResponse.map(utxo => {
