@@ -6,8 +6,8 @@ import {ACCOUNTS, ASSET_SCHEMES, PSUEDO_FAUCET, REGULATOR, REGULATOR_ALT, sdk, S
 import {TxSender} from "./TxSender";
 import {State} from "./State";
 import {CreateAsset} from "./actions/CreateAsset";
-import {assert, makeRandomString, sleep} from "./util";
-import {airdrop_any_10} from "./scenario";
+import {assert, makeRandomString, pickRandom, sleep} from "./util";
+import {scenarios, Skip} from "./scenario";
 
 async function ensureCCC(
     state: State,
@@ -119,12 +119,23 @@ async function main() {
     } else {
         ensureCCC = await initUsingIndexer(state);
     }
-
+    console.log();
     console.log("=== BEGIN SCENARIO ===");
     while(true) {
-        const tx = await airdrop_any_10(state);
+        const randomScenario = pickRandom(scenarios)!;
+        console.log(`scenario ${randomScenario.name}`);
+
+        const tx = await randomScenario(state);
+        if (tx instanceof Skip) {
+            console.warn(`skip: ${tx.reason}`);
+            continue;
+        }
+
         await tx.sendApply(state);
+
         state.printUtxos(...([REGULATOR, REGULATOR_ALT].concat(ACCOUNTS)));
+        console.log();
+
         await ensureCCC(state);
     }
 }

@@ -30,14 +30,25 @@ function give(utxo: Utxo, sender: PlatformAddress, receiver: PlatformAddress, qu
     }]
 }
 
-export async function airdrop_any_10(state: State): Promise<Action<Transaction>> {
-    const utxo = pickRandomUtxo(state.getUtxos(REGULATOR), utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10));
-    if (!utxo) {
-        throw new Error("Asset is depleted");
+export class Skip {
+    readonly reason: string;
+    constructor(reason: string) {
+        this.reason = reason;
     }
-    return await Transfer.create({
-        sender: REGULATOR,
-        inputs: [utxo!],
-        outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
-    });
 }
+
+type Scenario = (state: State) => Promise<Action<Transaction> | Skip>;
+
+export const scenarios: Scenario[] = [
+    async function airdrop_any_10(state: State) {
+        const utxo = pickRandomUtxo(state.getUtxos(REGULATOR), utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10));
+        if (!utxo) {
+            return new Skip("Asset is depleted");
+        }
+        return await Transfer.create({
+            sender: REGULATOR,
+            inputs: [utxo!],
+            outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
+        });
+    },
+];
