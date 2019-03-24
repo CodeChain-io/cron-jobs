@@ -132,7 +132,7 @@ async function main() {
             continue;
         }
 
-        await tx.sendApply(state);
+        await tx.sendApply(state, randomScenario.expected);
 
         state.printUtxos(...([REGULATOR, REGULATOR_ALT].concat(ACCOUNTS)));
 

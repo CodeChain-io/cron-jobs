@@ -3,6 +3,7 @@ import {H160, PlatformAddress} from "codechain-primitives/lib";
 
 import {TxSender} from "../TxSender";
 import {State} from "../State";
+import {assert} from "../util";
 
 export abstract class Action<Tx extends Transaction> {
     readonly tag: string;
@@ -26,8 +27,10 @@ export abstract class Action<Tx extends Transaction> {
         this.txSender.applyFee(state);
     }
 
-    async sendApply(state: State) {
-        if (this.valid(state)) {
+    async sendApply(state: State, expected?: boolean) {
+        const valid = this.valid(state);
+        assert(() => valid == ((expected == null) ? true : expected));
+        if (valid) {
             await this.send(state);
             this.apply(state);
             console.log("succeed");

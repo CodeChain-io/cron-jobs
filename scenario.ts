@@ -39,9 +39,10 @@ export class Skip {
 
 type Scenario = (state: State) => Promise<Action<Transaction> | Skip>;
 
-export const scenarios: { weight: number, scenario: Scenario, }[] = [
+export const scenarios: { weight: number, expected: boolean, scenario: Scenario }[] = [
     {
         weight: 10,
+        expected: true,
         scenario:
             async function airdrop_any_10(state: State) {
                 const utxo = pickRandomUtxo(state.getUtxos(REGULATOR),
