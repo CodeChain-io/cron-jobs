@@ -33,6 +33,21 @@ export function pickRandom<T>(pool: T[]): T | null {
     return pool[index];
 }
 
+export function pickWeightedRandom<T extends {weight: number}>(pool: T[]): T | null {
+    if (pool.length === 0) {
+        return null;
+    }
+    let sum = 0;
+    const accum = [];
+    for (let i=0; i<pool.length; i++) {
+        sum += pool[i].weight;
+        accum.push(sum);
+    }
+    const threshold = Math.random() * sum;
+    const index = accum.findIndex(x => threshold <= x);
+    return pool[index];
+}
+
 export function sleep(seconds: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }

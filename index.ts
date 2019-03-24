@@ -6,7 +6,7 @@ import {ACCOUNTS, ASSET_SCHEMES, PSUEDO_FAUCET, REGULATOR, REGULATOR_ALT, sdk, S
 import {TxSender} from "./TxSender";
 import {State} from "./State";
 import {CreateAsset} from "./actions/CreateAsset";
-import {assert, makeRandomString, pickRandom, sleep} from "./util";
+import {assert, makeRandomString, pickRandom, pickWeightedRandom, sleep} from "./util";
 import {scenarios, Skip} from "./scenario";
 
 async function ensureCCC(
@@ -122,10 +122,11 @@ async function main() {
     console.log();
     console.log("=== BEGIN SCENARIO ===");
     while(true) {
-        const randomScenario = pickRandom(scenarios)!;
-        console.log(`scenario ${randomScenario.name}`);
+        console.log();
+        const randomScenario = pickWeightedRandom(scenarios)!;
+        console.log(`scenario ${randomScenario.scenario.name}`);
 
-        const tx = await randomScenario(state);
+        const tx = await randomScenario.scenario(state);
         if (tx instanceof Skip) {
             console.warn(`skip: ${tx.reason}`);
             continue;
@@ -134,7 +135,6 @@ async function main() {
         await tx.sendApply(state);
 
         state.printUtxos(...([REGULATOR, REGULATOR_ALT].concat(ACCOUNTS)));
-        console.log();
 
         await ensureCCC(state);
     }
