@@ -6,6 +6,7 @@ import {Transfer, TransferOutput} from "./actions/Transfer"
 import {State, Utxo} from "./State";
 import {ACCOUNTS, REGULATOR, REGULATOR_ALT} from "./configs";
 import {pickRandom} from "./util";
+import {ChangeAssetScheme} from "./actions/ChangeAssetScheme";
 
 function pickRandomUtxo(utxos: Utxo[], predicate?: (utxo: Utxo) => boolean): Utxo | null {
     if (predicate) {
@@ -46,7 +47,8 @@ export const scenarios: { weight: number, expected: boolean, scenario: Scenario 
         scenario:
             async function airdrop_any_10(state: State) {
                 const utxo = pickRandomUtxo(state.getUtxos(REGULATOR),
-                        utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10));
+                        utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
+                            && state.getAssetScheme(utxo.asset.assetType).registrar!.value == REGULATOR.value);
                 if (!utxo) {
                     return new Skip("Asset is depleted");
                 }
@@ -55,6 +57,40 @@ export const scenarios: { weight: number, expected: boolean, scenario: Scenario 
                     inputs: [utxo!],
                     outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
                 });
+            },
+    }, {
+        weight: 1,
+        expected: false,
+        scenario:
+            async function try_airdrop_others_asset(state: State) {
+                const utxo = pickRandomUtxo(state.getUtxos(REGULATOR),
+                        utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
+                            && state.getAssetScheme(utxo.asset.assetType).registrar!.value != REGULATOR.value);
+                if (!utxo) {
+                    return new Skip("Asset is depleted");
+                }
+                return await Transfer.create({
+                    sender: REGULATOR,
+                    inputs: [utxo!],
+                    outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
+                })
+            },
+    }, {
+        weight: 1,
+        expected: true,
+        scenario:
+            async function registrar_changes_registrar_of_asset_scheme(state: State) {
+                const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+                const current_registrar = assetScheme.registrar!;
+                const other_registrar = (current_registrar.value == REGULATOR.value) ? REGULATOR_ALT : REGULATOR;
+                return await ChangeAssetScheme.create({
+                    assetType: assetType,
+                    assetScheme: assetScheme,
+                    sender: current_registrar,
+                    changes: {
+                        registrar: other_registrar,
+                    },
+                })
             },
     }
 ];

@@ -184,6 +184,14 @@ export class State {
         this.assetSchemes[assetType.value] = assetScheme;
     }
 
+    allAssetSchemes(): [H160, AssetScheme][] {
+        const result: [H160, AssetScheme][] = [];
+        for (const assetType in this.assetSchemes) {
+            result.push([H160.ensure(assetType), this.assetSchemes[assetType]]);
+        }
+        return result;
+    }
+
     private setSeq(addressValue: PlatformAddressValue, seq: number) {
         this.seqs[PlatformAddress.ensure(addressValue).value] = seq;
     }
