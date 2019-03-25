@@ -2,86 +2,14 @@ import { PlatformAddress } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { Asset } from "codechain-sdk/lib/core/Asset";
 import { AssetTransferInput } from "codechain-sdk/lib/core/transaction/AssetTransferInput";
-import { TransferAsset } from "codechain-sdk/lib/core/transaction/TransferAsset";
 import * as config from "config";
 import { shuffle } from "underscore";
-import { calculateSeq, sendMints, sendTransaction } from "./sendTx";
+import { activateApprovers } from "./active";
+import { sendMints, sendTransaction } from "./sendTx";
+import { approve } from "./src/approve";
 import { mintHands } from "./src/mintHands";
 import { createUsers, loadUsers, storeUsers } from "./src/users";
-
-function wait(timeout: number): Promise<void> {
-    return new Promise(resolve => {
-        setTimeout(resolve, timeout);
-    });
-}
-
-async function isActiveAccount(sdk: SDK, account: string): Promise<boolean> {
-    const balance = await sdk.rpc.chain.getBalance(account);
-    if (!balance.isEqualTo(0)) {
-        return true;
-    }
-
-    const seq = await sdk.rpc.chain.getSeq(account);
-    return seq !== 0;
-}
-
-async function activateApprovers(
-    sdk: SDK,
-    params: { approvers: string[]; payer: string; passphrase: string }
-): Promise<void> {
-    const { approvers, payer, passphrase } = params;
-
-    const recipients = [];
-    for (const approver of approvers) {
-        if (!(await isActiveAccount(sdk, approver))) {
-            recipients.push(approver);
-        }
-    }
-    if (recipients.length === 0) {
-        return;
-    }
-
-    let hashes = [];
-    let seq = await calculateSeq(sdk, payer);
-    for (const recipient of recipients) {
-        const pay = sdk.core.createPayTransaction({
-            recipient,
-            quantity: 1
-        });
-        hashes.push(await sendTransaction(sdk, payer, passphrase, seq, pay));
-        seq += 1;
-    }
-
-    while (true) {
-        if (hashes.length === 0) {
-            break;
-        }
-        const results = await Promise.all(
-            hashes.map(hash => sdk.rpc.chain.getTransactionResult(hash))
-        );
-        const len = results.length;
-        const nextHashes = [];
-        for (let index = 0; index < len; index += 1) {
-            const hash = hashes[index];
-            if (results[index] == null) {
-                nextHashes.push(hashes[index]);
-                continue;
-            }
-
-            if (!results[index]) {
-                throw Error(
-                    `Cannot activate the account: ${await sdk.rpc.chain.getErrorHint(
-                        hash
-                    )}`
-                );
-            }
-        }
-        if (nextHashes.length !== 0) {
-            await wait(1_000);
-        }
-        hashes = nextHashes;
-    }
-}
+import { wait } from "./src/wait";
 
 const BACKUP_FILE_NAME = ".users";
 
@@ -331,17 +259,4 @@ if (require.main === module) {
 
         setTimeout(transferFunction, 1_000);
     })().catch(console.error);
-}
-
-async function approve(
-    sdk: SDK,
-    transfer: TransferAsset,
-    account: string,
-    passphrase: string
-) {
-    const approval = await sdk.key.approveTransaction(transfer, {
-        account,
-        passphrase
-    });
-    transfer.addApproval(`0x${approval}`);
 }
