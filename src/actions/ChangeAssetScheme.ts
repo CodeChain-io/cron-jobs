@@ -75,30 +75,32 @@ export class ChangeAssetScheme extends Action<ChangeAssetSchemeTx> {
         super.apply(state);
 
         const assetScheme = state.getAssetScheme(this.assetType) as Writable<AssetScheme>;
+        console.log(`changes to ${this.assetType.value}`);
         const changes = this.changes;
         if (changes.metadata) {
-            console.log(`change metadata: ${assetScheme.metadata} -> ${changes.metadata}`);
+            console.log(`    metadata: ${assetScheme.metadata} -> ${changes.metadata}`);
             assetScheme.metadata = changes.metadata;
         }
         if (changes.approver) {
             console.log(
-                `change approver: ${(assetScheme.approver || "[null]").toString()} -> ${
-                    changes.approver.value
-                }`,
+                `    ` +
+                    `approver: ${(assetScheme.approver || "[null]").toString()}` +
+                    ` -> ${changes.approver.value}`,
             );
             assetScheme.approver = changes.approver;
         }
         if (changes.registrar) {
             console.log(
-                `change registrar: ${(assetScheme.registrar || "[null]").toString()} -> ${
-                    changes.registrar.value
-                }`,
+                `    ` +
+                    `registrar: ${(assetScheme.registrar || "[null]").toString()}` +
+                    ` -> ${changes.registrar.value}`,
             );
             assetScheme.registrar = changes.registrar;
         }
         if (changes.allowedScriptHashes) {
             console.log(
-                `change registrar: ${assetScheme.allowedScriptHashes.map(x => x.toString())}` +
+                `    ` +
+                    `registrar: ${assetScheme.allowedScriptHashes.map(x => x.toString())}` +
                     ` -> ${changes.allowedScriptHashes.map(x => x.toString())}`,
             );
             assetScheme.allowedScriptHashes = changes.allowedScriptHashes;
