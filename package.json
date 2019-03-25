@@ -6,8 +6,7 @@
   "scripts": {
     "local": "SERVER=local ts-node src/index.ts",
     "corgi": "SERVER=corgi ts-node src/index.ts",
-    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
-    "fmt-file": "fmt() { eslint $1 --fix && prettier $1 --write; }; fmt"
+    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
   },
   "dependencies": {
     "@types/lodash": "^4.14.123",
