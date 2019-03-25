@@ -190,7 +190,16 @@ export default class CodeChain {
             }
         );
 
-        await this.sdk.rpc.chain.sendSignedTransaction(signedTransaction);
+        const txHash = await this.sdk.rpc.chain.sendSignedTransaction(
+            signedTransaction
+        );
+
+        const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
+            timeout: 10 * 1000
+        });
+        if (result !== true) {
+            throw new Error(`fillMoneyForNoop failed ${result}`);
+        }
     };
 
     public sendNoopTransaction = async (): Promise<void> => {
