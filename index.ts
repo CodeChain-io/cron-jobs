@@ -2,6 +2,7 @@ import { PlatformAddress } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { Asset } from "codechain-sdk/lib/core/Asset";
 import { AssetTransferInput } from "codechain-sdk/lib/core/transaction/AssetTransferInput";
+import { TransferAsset } from "codechain-sdk/lib/core/transaction/TransferAsset";
 import * as config from "config";
 import { shuffle } from "underscore";
 import { calculateSeq, sendMints, sendTransaction } from "./sendTx";
@@ -133,7 +134,14 @@ if (require.main === module) {
         });
 
         const mintedDate = new Date();
-        const mints = mintHands(sdk, users, mintedDate, hourApprover);
+        const mints = mintHands(
+            sdk,
+            users,
+            mintedDate,
+            hourApprover,
+            minuteApprover,
+            secondApprover
+        );
 
         const [mintHashes, nextSeq] = await sendMints(sdk, mints, {
             payer,
@@ -173,101 +181,124 @@ if (require.main === module) {
         let pendings: [string, Asset, Asset, Asset, Date, number][] = [];
 
         const transferFunction = async () => {
-            const current = new Date();
-            const inputs = shuffle<AssetTransferInput>([
-                hourAsset.createTransferInput(),
-                minuteAsset.createTransferInput(),
-                secondAsset.createTransferInput()
-            ]);
-            const outputs = [
-                sdk.core.createAssetTransferOutput({
-                    assetType: hourType,
-                    shardId,
-                    quantity: 1,
-                    recipient: users[current.getUTCHours()]
-                }),
-                sdk.core.createAssetTransferOutput({
-                    assetType: minuteType,
-                    shardId,
-                    quantity: 1,
-                    recipient: users[current.getUTCMinutes()]
-                }),
-                sdk.core.createAssetTransferOutput({
-                    assetType: secondType,
-                    shardId,
-                    quantity: 1,
-                    recipient: users[current.getUTCSeconds()]
-                })
-            ];
-            const transfer = sdk.core.createTransferAssetTransaction({
-                inputs,
-                outputs,
-                metadata: `Current time is ${current}`
-            });
-            await sdk.key.signTransactionInput(transfer, 0, { passphrase });
-            await sdk.key.signTransactionInput(transfer, 1, { passphrase });
-            await sdk.key.signTransactionInput(transfer, 2, { passphrase });
-            const approval = await sdk.key.approveTransaction(transfer, {
-                account: hourApprover,
-                passphrase
-            });
-            transfer.addApproval(approval);
+            try {
+                const current = new Date();
+                const inputs = shuffle<AssetTransferInput>([
+                    hourAsset.createTransferInput(),
+                    minuteAsset.createTransferInput(),
+                    secondAsset.createTransferInput()
+                ]);
+                const outputs = [
+                    sdk.core.createAssetTransferOutput({
+                        assetType: hourType,
+                        shardId,
+                        quantity: 1,
+                        recipient: users[current.getUTCHours()]
+                    }),
+                    sdk.core.createAssetTransferOutput({
+                        assetType: minuteType,
+                        shardId,
+                        quantity: 1,
+                        recipient: users[current.getUTCMinutes()]
+                    }),
+                    sdk.core.createAssetTransferOutput({
+                        assetType: secondType,
+                        shardId,
+                        quantity: 1,
+                        recipient: users[current.getUTCSeconds()]
+                    })
+                ];
+                const transfer = sdk.core.createTransferAssetTransaction({
+                    inputs,
+                    outputs,
+                    metadata: `Current time is ${current}`
+                });
+                await sdk.key.signTransactionInput(transfer, 0, { passphrase });
+                await sdk.key.signTransactionInput(transfer, 1, { passphrase });
+                await sdk.key.signTransactionInput(transfer, 2, { passphrase });
+                await approve(sdk, transfer, hourApprover, passphrase);
+                await approve(sdk, transfer, minuteApprover, passphrase);
+                await approve(sdk, transfer, secondApprover, passphrase);
 
-            const hash = await sendTransaction(
-                sdk,
-                payer,
-                passphrase,
-                seq,
-                transfer
-            );
-            console.log(`Clock hands are moved at ${current}:${hash}`);
-            pendings.push([
-                hash.value,
-                hourAsset,
-                minuteAsset,
-                secondAsset,
-                current,
-                seq
-            ]);
+                const hash = await sendTransaction(
+                    sdk,
+                    payer,
+                    passphrase,
+                    seq,
+                    transfer
+                );
+                console.log(`Clock hands are moved at ${current}:${hash}`);
+                pendings.push([
+                    hash.value,
+                    hourAsset,
+                    minuteAsset,
+                    secondAsset,
+                    current,
+                    seq
+                ]);
 
-            hourAsset = transfer.getTransferredAsset(0);
-            minuteAsset = transfer.getTransferredAsset(1);
-            secondAsset = transfer.getTransferredAsset(2);
-            seq += 1;
+                hourAsset = transfer.getTransferredAsset(0);
+                minuteAsset = transfer.getTransferredAsset(1);
+                secondAsset = transfer.getTransferredAsset(2);
+                seq += 1;
 
-            setTimeout(transferFunction, 1_000);
+                setTimeout(transferFunction, 1_000);
+            } catch (ex) {
+                console.error(ex);
+            }
         };
 
         const resultFunction = async () => {
-            while (pendings.length !== 0) {
-                const hash = pendings[0][0];
-                const result = await sdk.rpc.chain.getTransactionResult(hash);
-                if (result) {
-                    pendings.pop();
-                    break;
-                }
-                const current = pendings[0][4];
-                if (result == null) {
-                    console.log(
-                        `Wait the result of ${hash} sent at ${current}`
+            try {
+                while (pendings.length !== 0) {
+                    const hash = pendings[0][0];
+                    const result = await sdk.rpc.chain.getTransactionResult(
+                        hash
                     );
-                    setTimeout(resultFunction, 1_000);
-                    return;
+                    if (result) {
+                        pendings.pop();
+                        break;
+                    }
+                    const current = pendings[0][4];
+                    if (result == null) {
+                        console.log(
+                            `Wait the result of ${hash} sent at ${current}`
+                        );
+                        setTimeout(resultFunction, 1_000);
+                        return;
+                    }
+                    const reason = await sdk.rpc.chain.getErrorHint(hash);
+                    console.log(
+                        `Tx(${hash} sent at ${current} failed: ${reason}`
+                    );
+
+                    hourAsset = pendings[0][1];
+                    minuteAsset = pendings[0][2];
+                    secondAsset = pendings[0][3];
+                    seq = pendings[0][5];
+                    pendings = [];
                 }
-                const reason = await sdk.rpc.chain.getErrorHint(hash);
-                console.log(`Tx(${hash} sent at ${current} failed: ${reason}`);
 
-                hourAsset = pendings[0][1];
-                minuteAsset = pendings[0][2];
-                secondAsset = pendings[0][3];
-                seq = pendings[0][5];
-                pendings = [];
+                setTimeout(resultFunction, 500);
+            } catch (ex) {
+                console.error(ex);
             }
-
-            setTimeout(resultFunction, 500);
         };
         setTimeout(resultFunction, 500);
 
         setTimeout(transferFunction, 1_000);
     })().catch(console.error);
+}
+
+async function approve(
+    sdk: SDK,
+    transfer: TransferAsset,
+    account: string,
+    passphrase: string
+) {
+    const approval = await sdk.key.approveTransaction(transfer, {
+        account,
+        passphrase
+    });
+    transfer.addApproval(`0x${approval}`);
 }
