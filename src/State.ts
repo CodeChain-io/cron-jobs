@@ -5,20 +5,20 @@ import {
     PlatformAddress,
     PlatformAddressValue,
     U64,
-    U64Value
+    U64Value,
 } from "codechain-primitives/lib";
-import {Asset, AssetScheme} from "codechain-sdk/lib/core/classes";
+import { Asset, AssetScheme } from "codechain-sdk/lib/core/classes";
 import * as request from "request-promise-native";
 
-import {INDEXER_URL, REGULATOR, sdk} from "./configs";
-import {CreateAsset} from "./actions/CreateAsset";
-import {assert} from "./util";
+import { CreateAsset } from "./actions/CreateAsset";
+import { INDEXER_URL, REGULATOR, sdk } from "./configs";
+import { assert } from "./util";
 
 export class Utxo {
-    owner: PlatformAddress;
-    asset: Asset;
+    public owner: PlatformAddress;
+    public asset: Asset;
 
-    constructor(owner: PlatformAddress, asset: Asset) {
+    public constructor(owner: PlatformAddress, asset: Asset) {
         this.owner = owner;
         this.asset = asset;
     }
@@ -30,14 +30,14 @@ export class State {
     private seqs: { [account: string]: number };
     private assetSchemes: { [assetType: string]: AssetScheme };
 
-    constructor() {
+    public constructor() {
         this.balances = {};
         this.utxos = {};
         this.seqs = {};
         this.assetSchemes = {};
     }
 
-    async recover(addresses: PlatformAddress[], assetSchemes?: AssetScheme[]) {
+    public async recover(addresses: PlatformAddress[], assetSchemes?: AssetScheme[]) {
         console.log("state recovey");
 
         const cccs = await Promise.all(addresses.map(address => sdk.rpc.chain.getBalance(address)));
@@ -46,7 +46,7 @@ export class State {
         for (const assetScheme of assetSchemes || []) {
             const assetType = new CreateAsset({
                 regulator: REGULATOR,
-                assetScheme
+                assetScheme,
             }).tx.getAssetType();
             const currentAssetScheme = await sdk.rpc.chain.getAssetSchemeByType(assetType, 0);
             if (!currentAssetScheme) {
@@ -66,8 +66,8 @@ export class State {
             console.log(`seq ${address}: ${this.getSeq(address)}`);
 
             this.utxos[address.value] = [];
-            for (const assetType in this.assetSchemes) {
-                type UtxoAttribute = {
+            for (const assetType of Object.keys(this.assetSchemes)) {
+                interface UtxoAttribute {
                     id?: string;
                     address: string;
                     assetType: string;
@@ -79,11 +79,15 @@ export class State {
                     transactionHash: string;
                     transactionTracker: string;
                     transactionOutputIndex: number;
-                };
-                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, address.accountId, {networkId: sdk.networkId});
+                }
+                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, address.accountId, {
+                    networkId: sdk.networkId,
+                });
                 const utxoResponse: UtxoAttribute[] = await request({
-                    url: `${INDEXER_URL}/api/utxo?address=${assetAddress.value}&assetType=${assetType}`,
-                    json: true
+                    url: `${INDEXER_URL}/api/utxo?address=${
+                        assetAddress.value
+                    }&assetType=${assetType}`,
+                    json: true,
                 });
                 const utxos = utxoResponse.map(utxo => {
                     const asset = Asset.fromJSON({
@@ -104,31 +108,34 @@ export class State {
         }
     }
 
-    getBalance(addressValue: PlatformAddressValue): U64 {
+    public getBalance(addressValue: PlatformAddressValue): U64 {
         const address = PlatformAddress.ensure(addressValue);
         if (this.balances.hasOwnProperty(address.value)) {
-            return this.balances[address.value]
+            return this.balances[address.value];
         } else {
-            return new U64(0)
+            return new U64(0);
         }
     }
 
-    setBalance(addressValue: PlatformAddressValue, value: U64Value) {
+    public setBalance(addressValue: PlatformAddressValue, value: U64Value) {
         const address = PlatformAddress.ensure(addressValue);
         this.balances[address.value] = U64.ensure(value);
     }
 
-    modifyBalance(addressValue: PlatformAddressValue, callback: ((balance: U64) => U64Value)): U64 {
+    public modifyBalance(
+        addressValue: PlatformAddressValue,
+        callback: (balance: U64) => U64Value,
+    ): U64 {
         const existing = this.getBalance(addressValue);
         const result = U64.ensure(callback(existing));
         this.setBalance(addressValue, result);
         return existing;
     }
 
-    getUtxos(addressValue: PlatformAddressValue): Utxo[] {
+    public getUtxos(addressValue: PlatformAddressValue): Utxo[] {
         const address = PlatformAddress.ensure(addressValue);
         if (this.utxos.hasOwnProperty(address.value)) {
-            return this.utxos[address.value]
+            return this.utxos[address.value];
         } else {
             const utxos: Utxo[] = [];
             this.utxos[address.value] = utxos;
@@ -136,10 +143,19 @@ export class State {
         }
     }
 
-    printUtxos(...addressValues: PlatformAddressValue[]) {
+    public printUtxos(...addressValues: PlatformAddressValue[]) {
+        function compareU64(a: U64, b: U64): number {
+            if (a.isGreaterThan(b)) {
+                return -1;
+            } else if (b.isGreaterThan(a)) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
         for (const addressValue of addressValues) {
             const utxos = this.getUtxos(addressValue).map(utxo => utxo.asset);
-            if (utxos.length == 0) {
+            if (utxos.length === 0) {
                 continue;
             }
             const assetsQuantities: { [assetType: string]: [U64] } = {};
@@ -152,55 +168,48 @@ export class State {
             }
             console.log(`utxo for ${PlatformAddress.ensure(addressValue).value}`);
             for (const assetType of Object.keys(assetsQuantities).sort()) {
-                function compareU64(a: U64, b: U64): number {
-                    if (a.isGreaterThan(b)) {
-                        return -1;
-                    } else if (b.isGreaterThan(a)) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
-
-                const quantities = assetsQuantities[assetType].sort(compareU64).map(quantity => quantity.toString(10)).join(", ");
+                const quantities = assetsQuantities[assetType]
+                    .sort(compareU64)
+                    .map(quantity => quantity.toString(10))
+                    .join(", ");
                 console.log(`  utxo ${assetType}: [${quantities}]`);
             }
         }
     }
 
-    hasAssetScheme(assetTypeValue: H160Value): boolean {
+    public hasAssetScheme(assetTypeValue: H160Value): boolean {
         const assetType = H160.ensure(assetTypeValue);
         return this.assetSchemes.hasOwnProperty(assetType.value);
     }
 
-    getAssetScheme(assetTypeValue: H160Value): AssetScheme {
+    public getAssetScheme(assetTypeValue: H160Value): AssetScheme {
         const assetType = H160.ensure(assetTypeValue);
         return this.assetSchemes[assetType.value];
     }
 
-    setAssetScheme(assetTypeValue: H160Value, assetScheme: AssetScheme) {
+    public setAssetScheme(assetTypeValue: H160Value, assetScheme: AssetScheme) {
         const assetType = H160.ensure(assetTypeValue);
         assert(() => !this.hasAssetScheme(assetType));
         this.assetSchemes[assetType.value] = assetScheme;
     }
 
-    allAssetSchemes(): [H160, AssetScheme][] {
+    public allAssetSchemes(): [H160, AssetScheme][] {
         const result: [H160, AssetScheme][] = [];
-        for (const assetType in this.assetSchemes) {
+        for (const assetType of Object.keys(this.assetSchemes)) {
             result.push([H160.ensure(assetType), this.assetSchemes[assetType]]);
         }
         return result;
     }
 
+    public getSeq(addressValue: PlatformAddressValue): number {
+        return this.seqs[PlatformAddress.ensure(addressValue).value];
+    }
+
+    public nextSeq(addressValue: PlatformAddressValue): number {
+        return this.seqs[PlatformAddress.ensure(addressValue).value]++;
+    }
+
     private setSeq(addressValue: PlatformAddressValue, seq: number) {
         this.seqs[PlatformAddress.ensure(addressValue).value] = seq;
-    }
-
-    getSeq(addressValue: PlatformAddressValue): number {
-        return this.seqs[PlatformAddress.ensure(addressValue).value]
-    }
-
-    nextSeq(addressValue: PlatformAddressValue): number {
-        return this.seqs[PlatformAddress.ensure(addressValue).value]++;
     }
 }

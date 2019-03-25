@@ -1,7 +1,7 @@
-import {H256, PlatformAddress, U64} from "codechain-primitives/lib";
-import {SDK} from "codechain-sdk";
-import {AssetScheme} from "codechain-sdk/lib/core/classes";
-import {KeyStore} from "codechain-sdk/lib/key/KeyStore";
+import { H256, PlatformAddress, U64 } from "codechain-primitives/lib";
+import { SDK } from "codechain-sdk";
+import { AssetScheme } from "codechain-sdk/lib/core/classes";
+import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 
 export const SERVER: string = (() => {
     const server = process.env.SERVER || "local";
@@ -14,15 +14,18 @@ export const SERVER: string = (() => {
 export const INDEXER_URL = "https://corgi.codechain.io/explorer";
 export const sdk = (() => {
     switch (SERVER) {
-        case "local": return new SDK({
-            server: "http://127.0.0.1:8080",
-            networkId: "tc",
-        });
-        case "corgi": return new SDK({
-            server: "http://13.124.96.177:8080",
-            networkId: "wc",
-        });
-        default: throw Error("Invalid server configuration");
+        case "local":
+            return new SDK({
+                server: "http://127.0.0.1:8080",
+                networkId: "tc",
+            });
+        case "corgi":
+            return new SDK({
+                server: "http://13.124.96.177:8080",
+                networkId: "wc",
+            });
+        default:
+            throw Error("Invalid server configuration");
     }
 })();
 
@@ -33,15 +36,23 @@ const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
 export const PSUEDO_FAUCET = {
     secret: H256.ensure(FAUCET_SECRET),
     accountId: FAUCET_ACCOUNT_ID,
-    address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {networkId: sdk.networkId}),
+    address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {
+        networkId: sdk.networkId,
+    }),
 };
 
 // tccqy7lfe4tx80r9tpdpqrk8tfsvlkefnh04v75amvp
-export const REGULATOR: PlatformAddress =
-    PlatformAddress.fromAccountId("3df4e6ab31de32ac2d080763ad3067ed94ceefab", { networkId: sdk.networkId });
+export const REGULATOR: PlatformAddress = PlatformAddress.fromAccountId(
+    "3df4e6ab31de32ac2d080763ad3067ed94ceefab",
+    {
+        networkId: sdk.networkId,
+    },
+);
 // tccq957zg9360axnv6vpkdgrfu80nhhfgqqmsk28l26
-export const REGULATOR_ALT: PlatformAddress =
-    PlatformAddress.fromAccountId("69e120b1d3fa69b34c0d9a81a7877cef74a000dc", { networkId: sdk.networkId });
+export const REGULATOR_ALT: PlatformAddress = PlatformAddress.fromAccountId(
+    "69e120b1d3fa69b34c0d9a81a7877cef74a000dc",
+    { networkId: sdk.networkId },
+);
 export const ACCOUNTS: PlatformAddress[] = [
     "e17ff439706c7ee9b3de76615fdd648b1d327640", // tccq8shlapewpk8a6dnmemxzh7avj936vnkgq54m7cd
     "6ada20402ef76234cbba1b80ce841bad1d68f30b", // tccq94d5gzq9mmkydxthgdcpn5yrwk3668npvpd9pe0
@@ -56,17 +67,18 @@ export const ACCOUNTS: PlatformAddress[] = [
 ].map(accountId => PlatformAddress.fromAccountId(accountId, { networkId: sdk.networkId }));
 
 export const ASSET_SCHEMES: AssetScheme[] = [
-    {name: "SCC1", supply: 1000000},
-    {name: "SCC2", supply: 1000000},
-    {name: "SCC3", supply: 1000000},
-    {name: "SCC4", supply: 1000000},
-    {name: "SCC5", supply: 1000000},
-].map(({name, supply}) => {
+    { name: "SCC1", supply: 1000000 },
+    { name: "SCC2", supply: 1000000 },
+    { name: "SCC3", supply: 1000000 },
+    { name: "SCC4", supply: 1000000 },
+    { name: "SCC5", supply: 1000000 },
+].map(({ name, supply }) => {
     const postfix = process.env.POSTFIX;
+    let fullName: string;
     if (postfix) {
-        var fullName = `${name}-${postfix}`
+        fullName = `${name}-${postfix}`;
     } else {
-        var fullName = name;
+        fullName = name;
     }
     return new AssetScheme({
         networkId: sdk.networkId,
@@ -79,5 +91,5 @@ export const ASSET_SCHEMES: AssetScheme[] = [
         metadata: JSON.stringify({
             name: fullName,
         }),
-    })
+    });
 });

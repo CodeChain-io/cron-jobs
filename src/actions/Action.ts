@@ -1,35 +1,26 @@
-import {Transaction} from "codechain-sdk/lib/core/classes";
-import {H160, PlatformAddress} from "codechain-primitives/lib";
+import { H160, PlatformAddress } from "codechain-primitives/lib";
+import { Transaction } from "codechain-sdk/lib/core/classes";
 
-import {TxSender} from "../TxSender";
-import {State} from "../State";
-import {assert} from "../util";
+import { State } from "../State";
+import { TxSender } from "../TxSender";
+import { assert } from "../util";
 
 export abstract class Action<Tx extends Transaction> {
-    readonly tag: string;
-    readonly tx: Tx;
-    readonly sender: PlatformAddress;
-    readonly txSender: TxSender;
+    public readonly tag: string;
+    public readonly tx: Tx;
+    public readonly sender: PlatformAddress;
+    public readonly txSender: TxSender;
 
-    protected constructor(params: { sender: PlatformAddress, tx: Tx, tag: string }) {
+    protected constructor(params: { sender: PlatformAddress; tx: Tx; tag: string }) {
         this.tag = params.tag;
         this.tx = params.tx;
         this.sender = params.sender;
         this.txSender = new TxSender(params.sender, params.tx);
     }
 
-    protected async send(state: State) {
-        console.log(`send ${this.tag}`);
-        await this.txSender.send(state);
-    }
-
-    protected apply(state: State) {
-        this.txSender.applyFee(state);
-    }
-
-    async sendApply(state: State, expected?: boolean) {
+    public async sendApply(state: State, expected?: boolean) {
         const valid = this.valid(state);
-        assert(() => valid == ((expected == null) ? true : expected));
+        assert(() => valid === (expected == null ? true : expected));
         if (valid) {
             await this.send(state);
             this.apply(state);
@@ -46,14 +37,28 @@ export abstract class Action<Tx extends Transaction> {
         }
     }
 
-    abstract valid(state: State): boolean;
+    public abstract valid(state: State): boolean;
+
+    protected async send(state: State) {
+        console.log(`send ${this.tag}`);
+        await this.txSender.send(state);
+    }
+
+    protected apply(state: State) {
+        this.txSender.applyFee(state);
+    }
 }
 
-export function isApprovedByAssetRegistrar(state: State, assetType: H160, sender: PlatformAddress, approvers: PlatformAddress[]) {
+export function isApprovedByAssetRegistrar(
+    state: State,
+    assetType: H160,
+    sender: PlatformAddress,
+    approvers: PlatformAddress[],
+) {
     const scheme = state.getAssetScheme(assetType);
     const registrar = scheme.registrar!;
     if (registrar.value === sender.value) {
         return true;
     }
-    return approvers.findIndex(approver => approver.value === registrar.value) != -1;
+    return approvers.findIndex(approver => approver.value === registrar.value) !== -1;
 }

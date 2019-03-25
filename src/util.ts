@@ -1,20 +1,23 @@
-import {AssetTransaction, Transaction} from "codechain-sdk/lib/core/Transaction";
-import {PlatformAddress} from "codechain-primitives/lib";
-import {localKeyStore, sdk} from "./configs"
+import { PlatformAddress } from "codechain-primitives/lib";
+import { AssetTransaction, Transaction } from "codechain-sdk/lib/core/Transaction";
+import { localKeyStore, sdk } from "./configs";
 
 export type Writable<T> = { -readonly [P in keyof T]-?: T[P] };
 
 export async function createApprovedTx<Tx extends Transaction & AssetTransaction>(params: {
-    tx: Tx,
-    approvers: PlatformAddress[],
+    tx: Tx;
+    approvers: PlatformAddress[];
 }): Promise<Tx> {
     const keyStore = await localKeyStore;
     const tx = params.tx as { approvals?: string[] };
-    tx.approvals = await Promise.all(params.approvers
-        .map(approver => sdk.key.approveTransaction(params.tx, {
-            account: approver,
-            keyStore,
-        })));
+    tx.approvals = await Promise.all(
+        params.approvers.map(approver =>
+            sdk.key.approveTransaction(params.tx, {
+                account: approver,
+                keyStore,
+            }),
+        ),
+    );
     return params.tx as Tx;
 }
 
@@ -39,14 +42,14 @@ export function pickRandom<T>(pool: T[], predicate?: (item: T) => boolean): T | 
     return filtered[index];
 }
 
-export function pickWeightedRandom<T extends {weight: number}>(pool: T[]): T | null {
+export function pickWeightedRandom<T extends { weight: number }>(pool: T[]): T | null {
     if (pool.length === 0) {
         return null;
     }
     let sum = 0;
     const accum = [];
-    for (let i=0; i<pool.length; i++) {
-        sum += pool[i].weight;
+    for (const item of pool) {
+        sum += item.weight;
         accum.push(sum);
     }
     const threshold = Math.random() * sum;
@@ -61,8 +64,9 @@ export function sleep(seconds: number): Promise<void> {
 export function makeRandomString(length: number) {
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let text = "";
-    for (let i = 0; i < length; i++)
+    for (let i = 0; i < length; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
 
     return text;
 }
