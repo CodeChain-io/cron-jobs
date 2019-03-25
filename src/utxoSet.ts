@@ -46,7 +46,7 @@ export default class UTXOSet {
             shardId: 0,
             metadata: JSON.stringify({
                 name: "Gold For TimelockTest",
-                description: "An asset to test timelock",
+                description: `An asset to test timelock ${Math.random()}`,
                 icon_url: "https://static.majecty.tech/images/clock512.png"
             }),
             supply: 100
