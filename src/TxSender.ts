@@ -34,7 +34,7 @@ export class TxSender {
         }
     }
 
-    public async send(state: State) {
+    public async send(state: State): Promise<H256> {
         const seq = state.nextSeq(this.sender);
         console.log(`seq++ ${this.sender.value}: ${seq}`);
         const signedTx = await this.getSignedTransaction(seq);
@@ -46,6 +46,7 @@ export class TxSender {
             const reason = await sdk.rpc.chain.getErrorHint(hash);
             throw new Error(reason || "Error with no reason");
         }
+        return hash;
     }
 
     public applyFee(state: State) {
