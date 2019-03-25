@@ -183,17 +183,35 @@ if (require.main === module) {
                     metadata: `Current time is ${current}`
                 });
                 await sdk.key.signTransactionInput(transfer, 0, { passphrase });
-                const approvers = [secondApprover];
+                const approvers = [];
+                let failedTransaction = false;
+                if (p99()) {
+                    approvers.push(secondApprover);
+                } else {
+                    console.log("Create a failed transaction");
+                    failedTransaction = true;
+                }
+
                 if (minuteChanged) {
                     await sdk.key.signTransactionInput(transfer, 1, {
                         passphrase
                     });
-                    approvers.push(minuteApprover);
+                    if (p99()) {
+                        approvers.push(minuteApprover);
+                    } else {
+                        console.log("Create a failed transaction");
+                        failedTransaction = true;
+                    }
                     if (hourChanged) {
                         await sdk.key.signTransactionInput(transfer, 2, {
                             passphrase
                         });
-                        approvers.push(hourApprover);
+                        if (p99()) {
+                            approvers.push(hourApprover);
+                        } else {
+                            console.log("Create a failed transaction");
+                            failedTransaction = true;
+                        }
                     }
                 }
                 for (const approver of shuffle<string>(approvers)) {
@@ -207,6 +225,13 @@ if (require.main === module) {
                     seq,
                     transfer
                 );
+                if (failedTransaction) {
+                    console.log(`Send failed transaction at ${current}:${hash}`);
+
+                    seq += 1;
+                    setTimeout(transferFunction, 0); // Send the next transaction immediately.
+                    return;
+                }
                 console.log(`Clock hands are moved at ${current}:${hash}`);
                 pendings.push([
                     hash.value,
@@ -281,4 +306,8 @@ if (require.main === module) {
 
         setTimeout(transferFunction, 1_000);
     })().catch(console.error);
+}
+
+function p99() {
+    return Math.random() * 100 < 99;
 }
