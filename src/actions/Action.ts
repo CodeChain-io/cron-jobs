@@ -22,9 +22,15 @@ export abstract class Action<Tx extends Transaction> {
         const valid = this.valid(state);
         assert(() => valid === (expected == null ? true : expected));
         if (valid) {
-            await this.send(state);
-            this.apply(state);
-            console.log("succeed");
+            try {
+                await this.send(state);
+                this.apply(state);
+                console.log("succeed");
+            } catch (e) {
+                console.error(`failed to send tx: `);
+                console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
+                throw e;
+            }
         } else {
             try {
                 await this.send(state);
@@ -33,6 +39,8 @@ export abstract class Action<Tx extends Transaction> {
                 console.log("failed as expected");
                 return;
             }
+            console.error(`failed to fail tx: `);
+            console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
             throw new Error("Should fail but not failed");
         }
     }
