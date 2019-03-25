@@ -38,16 +38,19 @@ export class Skip {
     }
 }
 
-type Scenario = (state: State) => Promise<Action<Transaction> | Skip>;
+interface ScenarioResult {
+    expected: boolean;
+    action: Action<Transaction>;
+}
+
+type Scenario = (state: State) => Promise<ScenarioResult | Skip>;
 
 export const scenarios: {
     weight: number;
-    expected: boolean;
     scenario: Scenario;
 }[] = [
     {
         weight: 10,
-        expected: true,
         scenario: async function airDrop(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR),
@@ -58,16 +61,18 @@ export const scenarios: {
             if (!utxo) {
                 return new Skip("Asset is depleted");
             }
-            return await Transfer.create({
-                sender: REGULATOR,
-                inputs: [utxo!],
-                outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
-            });
+            return {
+                expected: true,
+                action: await Transfer.create({
+                    sender: REGULATOR,
+                    inputs: [utxo!],
+                    outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
+                }),
+            };
         },
     },
     {
         weight: 1,
-        expected: false,
         scenario: async function tryAirDropOthers(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR),
@@ -78,16 +83,18 @@ export const scenarios: {
             if (!utxo) {
                 return new Skip("Asset is depleted");
             }
-            return await Transfer.create({
-                sender: REGULATOR,
-                inputs: [utxo!],
-                outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
-            });
+            return {
+                expected: false,
+                action: await Transfer.create({
+                    sender: REGULATOR,
+                    inputs: [utxo!],
+                    outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
+                }),
+            };
         },
     },
     {
         weight: 1,
-        expected: true,
         scenario: async function airdropOthersButWithApprovals(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR),
@@ -98,30 +105,35 @@ export const scenarios: {
             if (!utxo) {
                 return new Skip("Asset is depleted");
             }
-            return await Transfer.create({
-                sender: REGULATOR,
-                approvers: [REGULATOR_ALT],
-                inputs: [utxo!],
-                outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
-            });
+            return {
+                expected: true,
+                action: await Transfer.create({
+                    sender: REGULATOR,
+                    approvers: [REGULATOR_ALT],
+                    inputs: [utxo!],
+                    outputs: give(utxo, REGULATOR, pickRandom(ACCOUNTS)!, 10),
+                }),
+            };
         },
     },
     {
         weight: 1,
-        expected: true,
         scenario: async function registrarChangesRegistrarOfAssetScheme(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
             const currentRegistrar = assetScheme.registrar!;
             const otherRegistrar =
                 currentRegistrar.value === REGULATOR.value ? REGULATOR_ALT : REGULATOR;
-            return await ChangeAssetScheme.create({
-                assetType,
-                assetScheme,
-                sender: currentRegistrar,
-                changes: {
-                    registrar: otherRegistrar,
-                },
-            });
+            return {
+                expected: true,
+                action: await ChangeAssetScheme.create({
+                    assetType,
+                    assetScheme,
+                    sender: currentRegistrar,
+                    changes: {
+                        registrar: otherRegistrar,
+                    },
+                }),
+            };
         },
     },
 ];

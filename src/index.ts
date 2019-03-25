@@ -150,16 +150,16 @@ async function main() {
     console.log("=== BEGIN SCENARIO ===");
     for (;;) {
         console.log();
-        const randomScenario = pickWeightedRandom(scenarios)!;
-        console.log(`scenario ${randomScenario.scenario.name}`);
+        const picked = pickWeightedRandom(scenarios)!;
+        console.log(`scenario ${picked.scenario.name}`);
 
-        const tx = await randomScenario.scenario(state);
-        if (tx instanceof Skip) {
-            console.warn(`skip: ${tx.reason}`);
+        const scenario = await picked.scenario(state);
+        if (scenario instanceof Skip) {
+            console.warn(`skip: ${scenario.reason}`);
             continue;
         }
 
-        await tx.sendApply(state, randomScenario.expected);
+        await scenario.action.sendApply(state, scenario.expected);
 
         state.printUtxos(...[REGULATOR, REGULATOR_ALT].concat(ACCOUNTS));
 
