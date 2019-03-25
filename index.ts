@@ -7,6 +7,11 @@ import { shuffle } from "underscore";
 import { activateApprovers } from "./active";
 import { sendMints, sendTransaction } from "./sendTx";
 import { approve } from "./src/approve";
+import {
+    createApprovers,
+    loadApprovers,
+    storeApprovers
+} from "./src/approvers";
 import { mintHands } from "./src/mintHands";
 import { createShardId, loadShardId, storeShardId } from "./src/shard";
 import { createUsers, loadUsers, storeUsers } from "./src/users";
@@ -14,6 +19,7 @@ import { wait } from "./src/wait";
 
 const USERS_FILE_NAME = ".users";
 const SHARD_ID_FILE_NAME = ".shard";
+const APPROVERS_FILE_NAME = ".approvers";
 
 if (require.main === module) {
     const rpcUrl = config.get<string>("rpc_url")!;
@@ -27,31 +33,12 @@ if (require.main === module) {
 
     const sdk = new SDK({ server: rpcUrl, networkId });
     (async () => {
-        const [
-            hourApprover,
-            minuteApprover,
-            secondApprover,
-            users
-        ] = await loadUsers(USERS_FILE_NAME).catch((err: Error) => {
+        const users = await loadUsers(USERS_FILE_NAME).catch((err: Error) => {
             console.error(err.message);
             return createUsers(sdk, passphrase).then(
-                async ([
-                    approver1,
-                    approver2,
-                    approver3,
-                    createdUsers
-                ]): Promise<[string, string, string, string[]]> => {
-                    console.log(`Hour approver(${approver1}) created`);
-                    console.log(`Minute approver(${approver2}) created`);
-                    console.log(`Second approver(${approver3}) created`);
-                    await storeUsers(
-                        USERS_FILE_NAME,
-                        approver1,
-                        approver2,
-                        approver3,
-                        createdUsers
-                    );
-                    return [approver1, approver2, approver3, createdUsers];
+                async (createdUsers): Promise<string[]> => {
+                    await storeUsers(USERS_FILE_NAME, createdUsers);
+                    return createdUsers;
                 }
             );
         });
@@ -66,6 +53,28 @@ if (require.main === module) {
                 });
             }
         );
+
+        const [
+            hourApprover,
+            minuteApprover,
+            secondApprover
+        ] = await loadApprovers(APPROVERS_FILE_NAME).catch((err: Error) => {
+            console.error(err.message);
+            return createApprovers(sdk, passphrase).then(
+                async ([approver1, approver2, approver3]) => {
+                    console.log(`Hour approver(${approver1}) is created`);
+                    console.log(`Minute approver(${approver2}) is created`);
+                    console.log(`Second approver(${approver3}) is created`);
+                    await storeApprovers(
+                        APPROVERS_FILE_NAME,
+                        approver1,
+                        approver2,
+                        approver3
+                    );
+                    return [approver1, approver2, approver3];
+                }
+            );
+        });
 
         // Activate the approvers
         await activateApprovers(sdk, {
