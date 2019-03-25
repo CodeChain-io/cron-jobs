@@ -211,7 +211,7 @@ if (require.main === module) {
                 account: hourApprover,
                 passphrase
             });
-            (transfer as any).approvals = [`0x${approval}`];
+            transfer.addApproval(approval);
 
             const hash = await sendTransaction(
                 sdk,

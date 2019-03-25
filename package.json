@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@types/underscore": "^1.8.13",
-    "codechain-sdk": "https://github.com/joojis/codechain-sdk-js.git#corgi",
+    "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#approval-lib",
     "config": "^3.0.1",
     "underscore": "^1.9.1"
   }
