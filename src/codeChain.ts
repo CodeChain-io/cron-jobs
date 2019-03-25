@@ -9,8 +9,8 @@ import {
 } from "codechain-sdk/lib/core/classes";
 import { H256 } from "codechain-sdk/lib/core/H256";
 import {
-    AssetTransferInputJSON,
-    AssetTransferInput
+    AssetTransferInput,
+    AssetTransferInputJSON
 } from "codechain-sdk/lib/core/transaction/AssetTransferInput";
 import { TransferAssetActionJSON } from "codechain-sdk/lib/core/transaction/TransferAsset";
 import { MemoryKeyStore } from "codechain-sdk/lib/key/MemoryKeyStore";
@@ -21,7 +21,7 @@ import {
     getConfig,
     getCurrentSeq
 } from "./util";
-import UTXOSet from "./UTXOSet";
+import UTXOSet from "./utxoSet";
 
 type NetworkId = "tc" | "wc";
 
