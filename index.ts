@@ -180,45 +180,75 @@ if (require.main === module) {
 
         let pendings: [string, Asset, Asset, Asset, Date, number][] = [];
 
+        let previousDate = mintedDate;
         const transferFunction = async () => {
             try {
                 const current = new Date();
-                const inputs = shuffle<AssetTransferInput>([
-                    hourAsset.createTransferInput(),
-                    minuteAsset.createTransferInput(),
-                    secondAsset.createTransferInput()
-                ]);
-                const outputs = [
-                    sdk.core.createAssetTransferOutput({
-                        assetType: hourType,
-                        shardId,
-                        quantity: 1,
-                        recipient: users[current.getUTCHours()]
-                    }),
-                    sdk.core.createAssetTransferOutput({
-                        assetType: minuteType,
-                        shardId,
-                        quantity: 1,
-                        recipient: users[current.getUTCMinutes()]
-                    }),
+                const hourChanged =
+                    current.getUTCHours() !== previousDate.getUTCHours();
+                const minuteChanged =
+                    hourChanged ||
+                    current.getUTCMinutes() !== previousDate.getUTCMinutes();
+                const unshuffledInputs = [];
+                const outputs = [];
+                if (hourChanged) {
+                    outputs.push(
+                        sdk.core.createAssetTransferOutput({
+                            assetType: hourType,
+                            shardId,
+                            quantity: 1,
+                            recipient: users[current.getUTCHours()]
+                        })
+                    );
+                    unshuffledInputs.push(hourAsset.createTransferInput());
+                }
+
+                if (minuteChanged) {
+                    outputs.push(
+                        sdk.core.createAssetTransferOutput({
+                            assetType: minuteType,
+                            shardId,
+                            quantity: 1,
+                            recipient: users[current.getUTCMinutes()]
+                        })
+                    );
+                    unshuffledInputs.push(minuteAsset.createTransferInput());
+                }
+
+                outputs.push(
                     sdk.core.createAssetTransferOutput({
                         assetType: secondType,
                         shardId,
                         quantity: 1,
                         recipient: users[current.getUTCSeconds()]
                     })
-                ];
+                );
+                unshuffledInputs.push(secondAsset.createTransferInput());
+
+                const inputs = shuffle<AssetTransferInput>(unshuffledInputs);
+
                 const transfer = sdk.core.createTransferAssetTransaction({
                     inputs,
                     outputs,
                     metadata: `Current time is ${current}`
                 });
                 await sdk.key.signTransactionInput(transfer, 0, { passphrase });
-                await sdk.key.signTransactionInput(transfer, 1, { passphrase });
-                await sdk.key.signTransactionInput(transfer, 2, { passphrase });
-                await approve(sdk, transfer, hourApprover, passphrase);
-                await approve(sdk, transfer, minuteApprover, passphrase);
-                await approve(sdk, transfer, secondApprover, passphrase);
+                const approvers = [secondApprover];
+                if (minuteChanged) {
+                    await sdk.key.signTransactionInput(transfer, 1, {
+                        passphrase
+                    });
+                    approvers.push(minuteApprover);
+                    if (hourChanged) {
+                        await sdk.key.signTransactionInput(transfer, 2, {
+                            passphrase
+                        });
+                        approvers.push(hourApprover);
+                    }
+                }
+                for (const approver of shuffle<string>(approvers)) {
+                    await approve(sdk, transfer, approver, passphrase);
+                }
 
                 const hash = await sendTransaction(
                     sdk,
@@ -237,15 +267,24 @@ if (require.main === module) {
                     seq
                 ]);
 
-                hourAsset = transfer.getTransferredAsset(0);
-                minuteAsset = transfer.getTransferredAsset(1);
-                secondAsset = transfer.getTransferredAsset(2);
+                let assetIndex = 0;
+                if (hourChanged) {
+                    hourAsset = transfer.getTransferredAsset(assetIndex);
+                    assetIndex += 1;
+                }
+                if (minuteChanged) {
+                    minuteAsset = transfer.getTransferredAsset(assetIndex);
+                    assetIndex += 1;
+                }
+                secondAsset = transfer.getTransferredAsset(assetIndex);
+
                 seq += 1;
 
                 const timeout = Math.max(
                     current.getTime() + 1_000 - Date.now(),
                     0
                 );
+                previousDate = current;
                 setTimeout(transferFunction, timeout);
             } catch (ex) {
                 console.error(ex);
