@@ -80,12 +80,9 @@ export default class Helper {
         });
         await this.sdk.rpc.chain.sendSignedTransaction(signed);
         if (awaitResult) {
-            return this.sdk.rpc.chain.getTransactionResult(
-                signed.hash(),
-                {
-                    timeout: 300 * 1000
-                }
-            );
+            return this.sdk.rpc.chain.getTransactionResult(signed.hash(), {
+                timeout: 300 * 1000
+            });
         } else {
             return null;
         }

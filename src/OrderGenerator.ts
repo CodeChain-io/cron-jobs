@@ -15,11 +15,15 @@ export class OrderGenerator {
     /**
      * @param idx An array index of assetManager's wallets, which indicates an assetFrom in an Order.
      */
-    public generateOrder(input: {
-        idxFrom: number;
-        idxTo: number;
-        idxFee?: number;
-    }) {
+    public generateOrder(
+        input: {
+            idxFrom: number;
+            idxTo: number;
+            idxFee?: number;
+        },
+        assetQuantityFrom: U64 = new U64(this.randomAssetQuantity() * 100),
+        assetQuantityTo: U64 = new U64(this.randomAssetQuantity() * 100)
+    ) {
         const { idxFrom, idxTo, idxFee } = input;
         this.assetManager.checkAndFill(idxFrom);
         this.assetManager.checkAndFill(idxTo);
@@ -31,8 +35,6 @@ export class OrderGenerator {
         if (idxFee) {
             originOutputs.push(wallets[idxFrom].feeAsset.outPoint);
         }
-        const assetQuantityFrom = this.randomAssetQuantity() * 100;
-
         if (idxFee) {
             return this.helper.sdk.core.createOrder({
                 assetTypeFrom: wallets[idxFrom].asset.assetType,
@@ -42,8 +44,8 @@ export class OrderGenerator {
                 shardIdTo: 0,
                 shardIdFee: 0,
                 assetQuantityFrom,
-                assetQuantityTo: this.randomAssetQuantity() * 100,
-                assetQuantityFee: assetQuantityFrom * feeMultiple,
+                assetQuantityTo,
+                assetQuantityFee: assetQuantityFrom.times(feeMultiple),
                 expiration: U64.MAX_VALUE,
                 originOutputs,
                 recipientFrom: wallets[idxFrom].owner,
@@ -57,12 +59,41 @@ export class OrderGenerator {
                 shardIdTo: 0,
                 shardIdFee: 0,
                 assetQuantityFrom,
-                assetQuantityTo: this.randomAssetQuantity() * 100,
+                assetQuantityTo,
                 expiration: U64.MAX_VALUE,
                 originOutputs,
                 recipientFrom: wallets[idxFrom].owner
             });
         }
+    }
+
+    // Assumption : cnt >= 2
+    public generateNEntangledOrders(cnt: number, idxFee?: number): Order[] {
+        const idxBox = this.assetManager.idxBox;
+        const result: Order[] = [];
+        result.push(
+            this.generateOrder({ idxFrom: idxBox[0], idxTo: idxBox[1], idxFee })
+        );
+
+        for (let i = 0; i < cnt - 2; i++) {
+            result.push(
+                this.generateOrder(
+                    {
+                        idxFrom: idxBox[i + 1],
+                        idxTo: idxBox[i + 2]
+                    },
+                    result[i].assetQuantityTo
+                )
+            );
+        }
+
+        const last = this.generateDualOrder(
+            this.compress(result, idxBox[0]),
+            idxBox[cnt - 1]
+        );
+        result.push(last);
+
+        return result;
     }
 
     public generateDualOrder(target: Order, idxFrom: number) {
@@ -77,6 +108,24 @@ export class OrderGenerator {
             expiration: target.expiration,
             originOutputs: [wallets[idxFrom].asset.outPoint],
             recipientFrom: wallets[idxFrom].owner
+        });
+    }
+
+    // Assumption : all middle values are coherent.
+    private compress(target: Order[], idxFirstFrom: number): Order {
+        const fst = target[0];
+        const last = target[target.length - 1];
+        const wallets = this.assetManager.wallets;
+        return this.helper.sdk.core.createOrder({
+            assetTypeFrom: fst.assetTypeFrom,
+            assetTypeTo: last.assetTypeTo,
+            shardIdFrom: fst.shardIdFrom,
+            shardIdTo: last.shardIdTo,
+            assetQuantityFrom: fst.assetQuantityFrom,
+            assetQuantityTo: last.assetQuantityTo,
+            expiration: fst.expiration,
+            originOutputs: [wallets[idxFirstFrom].asset.outPoint],
+            recipientFrom: wallets[idxFirstFrom].owner
         });
     }
 
