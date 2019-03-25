@@ -8,9 +8,7 @@
     "outDir": "lib",
     "strict": true,
     "noImplicitAny": true,
-    "downlevelIteration": true,
-
+    "downlevelIteration": true
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["./src/**/*.spec.ts"]
+  "include": ["./src/**/*.ts"]
 }

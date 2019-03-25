@@ -1,11 +1,11 @@
 {
   "name": "codechain-scenario",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
-    "local": "SERVER=local ts-node index.ts",
-    "corgi": "SERVER=corgi ts-node index.ts"
+    "local": "SERVER=local ts-node src/index.ts",
+    "corgi": "SERVER=corgi ts-node src/index.ts"
   },
   "dependencies": {
     "@types/lodash": "^4.14.123",
