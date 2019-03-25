@@ -43,6 +43,8 @@ async function activateApprover(
     }
 }
 
+const BACKUP_FILE_NAME = ".users";
+
 if (require.main === module) {
     const rpcUrl = config.get<string>("rpc_url")!;
     const networkId = config.get<string>("network_id")!;
@@ -55,24 +57,54 @@ if (require.main === module) {
 
     const sdk = new SDK({ server: rpcUrl, networkId });
     (async () => {
-        const users = await loadUsers(".users").catch((err: Error) => {
+        const [
+            hourApprover,
+            minuteApprover,
+            secondApprover,
+            users
+        ] = await loadUsers(BACKUP_FILE_NAME).catch((err: Error) => {
             console.error(err.message);
-            return createUsers(sdk, passphrase).then(async createdUsers => {
-                await storeUsers(".users", createdUsers);
-                return createdUsers;
-            });
+            return createUsers(sdk, passphrase).then(
+                async ([
+                    approver1,
+                    approver2,
+                    approver3,
+                    createdUsers
+                ]): Promise<[string, string, string, string[]]> => {
+                    console.log(`Hour approver(${approver1}) created`);
+                    console.log(`Minute approver(${approver2}) created`);
+                    console.log(`Second approver(${approver3}) created`);
+                    await storeUsers(
+                        BACKUP_FILE_NAME,
+                        approver1,
+                        approver2,
+                        approver3,
+                        createdUsers
+                    );
+                    return [approver1, approver2, approver3, createdUsers];
+                }
+            );
         });
 
-        const approver = (await sdk.key.createPlatformAddress({
-            passphrase
-        })).value;
-        console.log(`Approver(${approver}) created`);
-
         // Activate the approver
-        await activateApprover(sdk, { approver, payer, passphrase });
+        await activateApprover(sdk, {
+            approver: hourApprover,
+            payer,
+            passphrase
+        });
+        await activateApprover(sdk, {
+            approver: minuteApprover,
+            payer,
+            passphrase
+        });
+        await activateApprover(sdk, {
+            approver: secondApprover,
+            payer,
+            passphrase
+        });
 
         const mintedDate = new Date();
-        const mints = mintHands(sdk, users, mintedDate, approver);
+        const mints = mintHands(sdk, users, mintedDate, hourApprover);
 
         const [mintHashes, nextSeq] = await sendMints(sdk, mints, {
             payer,
@@ -147,7 +179,7 @@ if (require.main === module) {
             await sdk.key.signTransactionInput(transfer, 1, { passphrase });
             await sdk.key.signTransactionInput(transfer, 2, { passphrase });
             const approval = await sdk.key.approveTransaction(transfer, {
-                account: approver,
+                account: hourApprover,
                 passphrase
             });
             (transfer as any).approvals = [`0x${approval}`];

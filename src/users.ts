@@ -1,7 +1,9 @@
 import { SDK } from "codechain-sdk";
 import * as fs from "fs";
 
-export function loadUsers(filename: string): Promise<string[]> {
+export function loadUsers(
+    filename: string
+): Promise<[string, string, string, string[]]> {
     return new Promise((resolve, reject) => {
         if (!fs.existsSync(filename)) {
             reject(Error(`${filename} not exists.`));
@@ -13,8 +15,8 @@ export function loadUsers(filename: string): Promise<string[]> {
                 reject(err);
                 return;
             }
-            const users = JSON.parse(data);
-            if (users.length !== 60) {
+            const users: string[] = JSON.parse(data);
+            if (users.length !== 63) {
                 reject(
                     Error(
                         `There are ${
@@ -24,7 +26,10 @@ export function loadUsers(filename: string): Promise<string[]> {
                 );
                 return;
             }
-            resolve(users);
+            const hourApprover = users.shift()!;
+            const minuteApprover = users.shift()!;
+            const secondApprover = users.shift()!;
+            resolve([hourApprover, minuteApprover, secondApprover, users]);
         });
     });
 }
@@ -32,7 +37,7 @@ export function loadUsers(filename: string): Promise<string[]> {
 export async function createUsers(
     sdk: SDK,
     passphrase?: string
-): Promise<string[]> {
+): Promise<[string, string, string, string[]]> {
     const users = [];
     for (let i = 0; i < 60; i += 1) {
         const user = await sdk.key.createAssetTransferAddress({
@@ -41,18 +46,37 @@ export async function createUsers(
         });
         users.push(user.value);
     }
-    return users;
+    const hourApprover = (await sdk.key.createPlatformAddress({
+        passphrase
+    })).value;
+    const minuteApprover = (await sdk.key.createPlatformAddress({
+        passphrase
+    })).value;
+    const secondApprover = (await sdk.key.createPlatformAddress({
+        passphrase
+    })).value;
+    return [hourApprover, minuteApprover, secondApprover, users];
 }
 
-export function storeUsers(filename: string, users: string[]): Promise<null> {
+export function storeUsers(
+    filename: string,
+    hourApprover: string,
+    minuteApprover: string,
+    secondApprover: string,
+    users: string[]
+): Promise<null> {
     if (fs.existsSync(filename)) {
         throw Error(`${filename} already exists.`);
     }
 
     return new Promise((resolve, reject) => {
+        const data = users.slice(0);
+        data.unshift(secondApprover);
+        data.unshift(minuteApprover);
+        data.unshift(hourApprover);
         fs.writeFile(
             filename,
-            JSON.stringify(users),
+            JSON.stringify(data),
             { encoding: "utf-8", mode: 0o600 },
             err => {
                 if (err != null) {
