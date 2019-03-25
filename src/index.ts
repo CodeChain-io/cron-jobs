@@ -172,8 +172,8 @@ async function main() {
     console.log("=== BEGIN SCENARIO ===");
     for (;;) {
         console.log();
-        const picked = pickWeightedRandom(scenarios)!;
-        console.log(`scenario ${picked.scenario.name}`);
+        const picked = pickWeightedRandom(Object.values(scenarios))!;
+        console.log(`scenario ${picked.description}`);
 
         const scenario = await picked.scenario(state);
         if (scenario instanceof Skip) {

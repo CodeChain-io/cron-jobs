@@ -45,13 +45,11 @@ interface ScenarioResult {
 
 type Scenario = (state: State) => Promise<ScenarioResult | Skip>;
 
-export const scenarios: {
-    weight: number;
-    scenario: Scenario;
-}[] = [
-    {
+export const scenarios = {
+    airDrop: {
         weight: 10,
-        scenario: async function airDrop(state: State) {
+        description: "Airdrop",
+        async scenario(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR.accountId),
                 x =>
@@ -72,9 +70,10 @@ export const scenarios: {
             };
         },
     },
-    {
+    tryAirDropOthers: {
         weight: 1,
-        scenario: async function tryAirDropOthers(state: State) {
+        description: "Try Airdrop other's asset",
+        async scenario(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR.accountId),
                 x =>
@@ -95,9 +94,10 @@ export const scenarios: {
             };
         },
     },
-    {
+    airdropOthersButWithApprovals: {
         weight: 1,
-        scenario: async function airdropOthersButWithApprovals(state: State) {
+        description: "Airdrop other's asset with other's approval",
+        async scenario(state: State) {
             const utxo = pickRandom(
                 state.getUtxos(REGULATOR.accountId),
                 x =>
@@ -119,9 +119,10 @@ export const scenarios: {
             };
         },
     },
-    {
+    registrarChangesRegistrarOfAssetScheme: {
         weight: 1,
-        scenario: async function registrarChangesRegistrarOfAssetScheme(state: State) {
+        description: "Registrar can change registrar of AssetScheme",
+        async scenario(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
             const currentRegistrar = assetScheme.registrar!;
             const otherRegistrar =
@@ -141,4 +142,4 @@ export const scenarios: {
             };
         },
     },
-];
+};
