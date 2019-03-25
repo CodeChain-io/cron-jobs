@@ -14,7 +14,8 @@ export function mintHands(
             name: "Hour Hand",
             description: `An hour hand of ${approver}'s clock`,
             icon_url:
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Clock-hour-10.svg/200px-Clock-hour-10.svg.png"
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Clock-hour-10.svg/200px-Clock-hour-10.svg.png",
+            created_at: date.toISOString()
         }),
         approver: PlatformAddress.fromString(approver),
         supply: 1
@@ -26,7 +27,8 @@ export function mintHands(
             name: "Minute Hand",
             description: `A minute hand of ${approver}'s clock`,
             icon_url:
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Clock-minute-15.svg/200px-Clock-minute-15.svg.png"
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Clock-minute-15.svg/200px-Clock-minute-15.svg.png",
+            created_at: date.toISOString()
         }),
         approver: PlatformAddress.fromString(approver),
         supply: 1
@@ -38,7 +40,8 @@ export function mintHands(
             name: "Second Hand",
             description: `A second hand of ${approver}'s clock`,
             icon_url:
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Red_Second_Hand_from_a_Clockjpg.jpeg/320px-Red_Second_Hand_from_a_Clockjpg.jpeg"
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Red_Second_Hand_from_a_Clockjpg.jpeg/320px-Red_Second_Hand_from_a_Clockjpg.jpeg",
+            created_at: date.toISOString()
         }),
         approver: PlatformAddress.fromString(approver),
         supply: 1
