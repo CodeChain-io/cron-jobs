@@ -11,11 +11,12 @@ export async function createApprovedTx<Tx extends Transaction & AssetTransaction
     const keyStore = await localKeyStore;
     const tx = params.tx as { approvals?: string[] };
     tx.approvals = await Promise.all(
-        params.approvers.map(approver =>
-            sdk.key.approveTransaction(params.tx, {
-                account: approver,
-                keyStore,
-            }),
+        params.approvers.map(
+            async approver =>
+                `0x${await sdk.key.approveTransaction(params.tx, {
+                    account: approver,
+                    keyStore,
+                })}`,
         ),
     );
     return params.tx as Tx;
