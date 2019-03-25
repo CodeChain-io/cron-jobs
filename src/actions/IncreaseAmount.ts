@@ -8,20 +8,20 @@ import {
 
 import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
 import { sdk } from "../configs";
-import { State } from "../State";
+import { State, Utxo } from "../State";
 import { createApprovedTx } from "../util";
 import { Action, isApprovedByAssetRegistrar } from "./Action";
 
 export class IncreaseSupply extends Action<IncreaseAssetSupply> {
     public static async create(params: {
         sender: PlatformAddress;
-        receiver: PlatformAddress;
+        receiver: H160;
         approvers?: PlatformAddress[];
         assetType: H160;
         supplyValue: U64Value;
     }): Promise<IncreaseSupply> {
         const supply = U64.ensure(params.supplyValue);
-        const recipient = AssetTransferAddress.fromTypeAndPayload(1, params.receiver.accountId, {
+        const recipient = AssetTransferAddress.fromTypeAndPayload(1, params.receiver, {
             networkId: sdk.networkId,
         });
         const tx = await createApprovedTx({
@@ -43,13 +43,14 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
             tx,
         });
     }
+    public readonly receiver: H160;
     public readonly approvers: PlatformAddress[];
     public readonly assetType: H160;
     public readonly supply: U64;
 
     private constructor(params: {
         sender: PlatformAddress;
-        receiver: PlatformAddress;
+        receiver: H160;
         approvers: PlatformAddress[];
         assetType: H160;
         supply: U64;
@@ -60,6 +61,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
             sender: params.sender,
             tx: params.tx,
         });
+        this.receiver = params.receiver;
         this.approvers = params.approvers;
         this.assetType = params.assetType;
         this.supply = params.supply;
@@ -81,6 +83,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
 
     protected apply(state: State) {
         super.apply(state);
+        state.getUtxos(this.receiver).push(new Utxo(this.receiver, this.tx.getMintedAsset()));
         const assetScheme = state.getAssetScheme(this.assetType) as {
             supply: U64;
         };

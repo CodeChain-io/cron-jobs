@@ -1,11 +1,12 @@
 import { H256, U64, U64Value } from "codechain-primitives";
-import { PlatformAddress } from "codechain-primitives/lib";
+import { H160, PlatformAddress } from "codechain-primitives/lib";
 import { AssetScheme } from "codechain-sdk/lib/core/classes";
 
 import { CreateAsset } from "./actions/CreateAsset";
 import {
-    ACCOUNTS,
+    ASSET_ACCOUNTS,
     ASSET_SCHEMES,
+    PLATFORM_ADDRESSES,
     PSUEDO_FAUCET,
     REGULATOR,
     REGULATOR_ALT,
@@ -19,7 +20,7 @@ import { assert, makeRandomString, pickWeightedRandom } from "./util";
 
 async function ensureCCC(
     state: State,
-    faucet: { secret: H256; address: PlatformAddress },
+    faucet: { secret: H256; platformAddress: PlatformAddress },
     accounts: PlatformAddress[],
     threshold: U64Value, // if a balance hits this threshold
     amount: U64Value, // make them to have this amount.
@@ -44,13 +45,15 @@ async function ensureCCC(
         );
         await sendTx.sendApplyFee(state);
 
-        const faucetPrev = state.modifyBalance(faucet.address, existing => existing.minus(toGive));
+        const faucetPrev = state.modifyBalance(faucet.platformAddress, existing =>
+            existing.minus(toGive),
+        );
         const accountPrev = state.modifyBalance(account, existing => existing.plus(toGive));
 
         console.log(
             "    " +
-                `pay (sender) ${faucet.address.value}: ${faucetPrev.toString(10)}` +
-                ` => ${state.getBalance(faucet.address).toString(10)}`,
+                `pay (sender) ${faucet.platformAddress.value}: ${faucetPrev.toString(10)}` +
+                ` => ${state.getBalance(faucet.platformAddress).toString(10)}`,
         );
         console.log(
             "    " +
@@ -67,16 +70,24 @@ async function initForLocal(state: State): Promise<EnsureCCC> {
     const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
     const FAUCET = {
         secret: H256.ensure(FAUCET_SECRET),
-        accountId: FAUCET_ACCOUNT_ID,
-        address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {
+        accountId: H160.ensure(FAUCET_ACCOUNT_ID),
+        platformAddress: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {
             networkId: "tc",
         }),
     };
 
     const ensure = (st: State) =>
-        ensureCCC(st, FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 100000, 200000);
-
-    await state.recover([FAUCET.address].concat([REGULATOR, REGULATOR_ALT]).concat(ACCOUNTS));
+        ensureCCC(
+            st,
+            FAUCET,
+            [REGULATOR, REGULATOR_ALT].map(x => x.platformAddress).concat(PLATFORM_ADDRESSES),
+            100000,
+            200000,
+        );
+    await state.recover(
+        [FAUCET, REGULATOR, REGULATOR_ALT].map(x => x.platformAddress).concat(PLATFORM_ADDRESSES),
+        [REGULATOR, REGULATOR_ALT].map(x => x.accountId).concat(ASSET_ACCOUNTS),
+    );
     await ensure(state);
 
     const randomPostfix = makeRandomString(5);
@@ -92,7 +103,7 @@ async function initForLocal(state: State): Promise<EnsureCCC> {
             new AssetScheme({
                 networkId: sdk.networkId,
                 shardId: 0,
-                registrar: REGULATOR,
+                registrar: REGULATOR.platformAddress,
                 approver: null,
                 allowedScriptHashes: [],
                 pool: [],
@@ -105,7 +116,8 @@ async function initForLocal(state: State): Promise<EnsureCCC> {
 
     for (const assetScheme of tempAssetSchemes) {
         const action = new CreateAsset({
-            regulator: REGULATOR,
+            regulator: REGULATOR.platformAddress,
+            recipient: REGULATOR.accountId,
             assetScheme,
         });
         assert(() => action.valid(state));
@@ -117,16 +129,26 @@ async function initForLocal(state: State): Promise<EnsureCCC> {
 
 async function initUsingIndexer(state: State): Promise<EnsureCCC> {
     const ensurer = (st: State) =>
-        ensureCCC(st, PSUEDO_FAUCET, [REGULATOR, REGULATOR_ALT].concat(ACCOUNTS), 1000, 2000);
+        ensureCCC(
+            st,
+            PSUEDO_FAUCET,
+            [REGULATOR, REGULATOR_ALT].map(x => x.platformAddress).concat(PLATFORM_ADDRESSES),
+            1000,
+            2000,
+        );
 
     await state.recover(
-        [PSUEDO_FAUCET.address, REGULATOR, REGULATOR_ALT].concat(ACCOUNTS),
+        [PSUEDO_FAUCET, REGULATOR, REGULATOR_ALT]
+            .map(x => x.platformAddress)
+            .concat(PLATFORM_ADDRESSES),
+        [REGULATOR, REGULATOR_ALT].map(x => x.accountId).concat(ASSET_ACCOUNTS),
         ASSET_SCHEMES,
     );
     await ensurer(state);
     for (const assetScheme of ASSET_SCHEMES) {
         const action = new CreateAsset({
-            regulator: REGULATOR,
+            regulator: REGULATOR.platformAddress,
+            recipient: REGULATOR.accountId,
             assetScheme,
         });
         if (!state.hasAssetScheme(action.tx.getAssetType())) {
@@ -161,7 +183,7 @@ async function main() {
 
         await scenario.action.sendApply(state, scenario.expected);
 
-        state.printUtxos(...[REGULATOR, REGULATOR_ALT].concat(ACCOUNTS));
+        state.printUtxos(...[REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS));
 
         await ensureAmountOfCCC(state);
     }

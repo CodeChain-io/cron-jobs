@@ -15,10 +15,10 @@ import { INDEXER_URL, REGULATOR, sdk } from "./configs";
 import { assert } from "./util";
 
 export class Utxo {
-    public owner: PlatformAddress;
+    public owner: H160;
     public asset: Asset;
 
-    public constructor(owner: PlatformAddress, asset: Asset) {
+    public constructor(owner: H160, asset: Asset) {
         this.owner = owner;
         this.asset = asset;
     }
@@ -26,18 +26,22 @@ export class Utxo {
 
 export class State {
     private balances: { [account: string]: U64 };
-    private utxos: { [account: string]: Utxo[] };
     private seqs: { [account: string]: number };
+    private utxos: { [accountId: string]: Utxo[] };
     private assetSchemes: { [assetType: string]: AssetScheme };
 
     public constructor() {
         this.balances = {};
-        this.utxos = {};
         this.seqs = {};
+        this.utxos = {};
         this.assetSchemes = {};
     }
 
-    public async recover(addresses: PlatformAddress[], assetSchemes?: AssetScheme[]) {
+    public async recover(
+        addresses: PlatformAddress[],
+        accounts: H160[],
+        assetSchemes?: AssetScheme[],
+    ) {
         console.log("state recovey");
 
         const cccs = await Promise.all(addresses.map(address => sdk.rpc.chain.getBalance(address)));
@@ -45,7 +49,8 @@ export class State {
 
         for (const assetScheme of assetSchemes || []) {
             const assetType = new CreateAsset({
-                regulator: REGULATOR,
+                regulator: REGULATOR.platformAddress,
+                recipient: REGULATOR.accountId,
                 assetScheme,
             }).tx.getAssetType();
             const currentAssetScheme = await sdk.rpc.chain.getAssetSchemeByType(assetType, 0);
@@ -64,8 +69,10 @@ export class State {
 
             this.setSeq(address, seqs[i]);
             console.log(`seq ${address}: ${this.getSeq(address)}`);
+        }
 
-            this.utxos[address.value] = [];
+        for (const account of accounts) {
+            this.utxos[account.value] = [];
             for (const assetType of Object.keys(this.assetSchemes)) {
                 interface UtxoAttribute {
                     id?: string;
@@ -80,7 +87,7 @@ export class State {
                     transactionTracker: string;
                     transactionOutputIndex: number;
                 }
-                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, address.accountId, {
+                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, account, {
                     networkId: sdk.networkId,
                 });
                 const utxoResponse: UtxoAttribute[] = await request({
@@ -100,11 +107,11 @@ export class State {
                         tracker: utxo.transactionTracker,
                         transactionOutputIndex: utxo.transactionOutputIndex,
                     });
-                    return new Utxo(address, asset);
+                    return new Utxo(account, asset);
                 });
-                this.utxos[address.value].push(...utxos);
+                this.utxos[account.value].push(...utxos);
             }
-            this.printUtxos(address);
+            this.printUtxos(account);
         }
     }
 
@@ -132,8 +139,8 @@ export class State {
         return existing;
     }
 
-    public getUtxos(addressValue: PlatformAddressValue): Utxo[] {
-        const address = PlatformAddress.ensure(addressValue);
+    public getUtxos(accountValue: H160Value): Utxo[] {
+        const address = H160.ensure(accountValue);
         if (this.utxos.hasOwnProperty(address.value)) {
             return this.utxos[address.value];
         } else {
@@ -143,7 +150,7 @@ export class State {
         }
     }
 
-    public printUtxos(...addressValues: PlatformAddressValue[]) {
+    public printUtxos(...accountValues: H160Value[]) {
         function compareU64(a: U64, b: U64): number {
             if (a.isGreaterThan(b)) {
                 return -1;
@@ -153,8 +160,8 @@ export class State {
                 return 0;
             }
         }
-        for (const addressValue of addressValues) {
-            const utxos = this.getUtxos(addressValue).map(utxo => utxo.asset);
+        for (const accountValue of accountValues) {
+            const utxos = this.getUtxos(accountValue).map(utxo => utxo.asset);
             if (utxos.length === 0) {
                 continue;
             }
@@ -166,7 +173,7 @@ export class State {
                     assetsQuantities[utxo.assetType.value] = [utxo.quantity];
                 }
             }
-            console.log(`utxo for ${PlatformAddress.ensure(addressValue).value}`);
+            console.log(`utxo for ${H160.ensure(accountValue).value}`);
             for (const assetType of Object.keys(assetsQuantities).sort()) {
                 const quantities = assetsQuantities[assetType]
                     .sort(compareU64)

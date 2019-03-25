@@ -1,4 +1,4 @@
-import { H256, PlatformAddress, U64 } from "codechain-primitives/lib";
+import { H160, H256, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
 import { AssetScheme } from "codechain-sdk/lib/core/classes";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
@@ -35,36 +35,43 @@ const FAUCET_SECRET = "3f3a6a9efc7a0435b32096ea1debdbc77481dc069c65cfefe698aa243
 const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
 export const PSUEDO_FAUCET = {
     secret: H256.ensure(FAUCET_SECRET),
-    accountId: FAUCET_ACCOUNT_ID,
-    address: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {
+    accountId: H160.ensure(FAUCET_ACCOUNT_ID),
+    platformAddress: PlatformAddress.fromAccountId(FAUCET_ACCOUNT_ID, {
         networkId: sdk.networkId,
     }),
 };
 
-// tccqy7lfe4tx80r9tpdpqrk8tfsvlkefnh04v75amvp
-export const REGULATOR: PlatformAddress = PlatformAddress.fromAccountId(
-    "3df4e6ab31de32ac2d080763ad3067ed94ceefab",
-    {
+export const REGULATOR = {
+    // tccq90v3qsvtpt72nv09ngg8ntdwcul6paa6ux6gmnl
+    platformAddress: PlatformAddress.fromAccountId("5ec8820c5857e54d8f2cd083cd6d7639fd07bdd7", {
         networkId: sdk.networkId,
-    },
-);
-// tccq957zg9360axnv6vpkdgrfu80nhhfgqqmsk28l26
-export const REGULATOR_ALT: PlatformAddress = PlatformAddress.fromAccountId(
-    "69e120b1d3fa69b34c0d9a81a7877cef74a000dc",
-    { networkId: sdk.networkId },
-);
-export const ACCOUNTS: PlatformAddress[] = [
-    "e17ff439706c7ee9b3de76615fdd648b1d327640", // tccq8shlapewpk8a6dnmemxzh7avj936vnkgq54m7cd
-    "6ada20402ef76234cbba1b80ce841bad1d68f30b", // tccq94d5gzq9mmkydxthgdcpn5yrwk3668npvpd9pe0
-    "61e81175e52e0cd519e72d5afbe08a65eadd38da", // tccq9s7syt4u5hqe4geuuk447lq3fj74hfcmgm9vv08
-    "69845440b69b324fb560879866d539a482c0e3b8", // tccq95cg4zqk6dnyna4vzresek48xjg9s8rhq67cvt7
-    "d2ac58696662c08ee37b2d9e5ac3bde3b14f8dfe", // tccq8f2ckrfve3vprhr0vkeukkrhh3mznudlckp6kqq
-    // "457f3c295de54a1044197563c47a20347daa0a23", // tccq9zh70pfthj55yzyr96k83r6yq68m2s2yv8dqgxp
-    // "ecc6aba091aa62a56bda65b7ec270b55d5798175", // tccq8kvd2aqjx4x9fttmfjm0mp8pd2a27vpw53j2jhh
-    // "67a88eab5e26be65a4c9671fa445caeaacd78e72", // tccq9n63r4ttcntuedye9n3lfz9et42e4uwwged7vhp
-    // "e419a134b85f941416edec82d7bafbfe837c9ab2", // tccq8jpngf5hp0eg9qkahkg94a6l0lgxly6kgks2a25
-    // "50c9360a5ae6b4e1c98fd61924aeb86e56f085e2", // tccq9gvjds2ttntfcwf3ltpjf9whph9duy9ug4tk64r
+    }),
+    // tcaqyqemdrkpgxnqd352dh0j6grec8f5fzg9a6s0x8ug9
+    accountId: H160.ensure("9db4760a0d303634536ef96903ce0e9a24482f75"),
+};
+
+export const REGULATOR_ALT = {
+    // tccq88kk349wm2nvffnusvqhh4g6zr9fxxu75xaxpgp
+    platformAddress: PlatformAddress.fromAccountId("cf6b46a576d5362533e4180bdea8d0865498dcf5", {
+        networkId: sdk.networkId,
+    }),
+    // tcaqyql0kalwjhey7ge4euq8f63lzfskk7ejn7qmxy6rm
+    accountId: H160.ensure("f7dbbf74af927919ae7803a751f8930b5bd994fc"),
+};
+
+export const PLATFORM_ADDRESSES: PlatformAddress[] = [
+    "d390b492e7121bba6a7243dc0d7031c6e2375b75", // tccq8fepdyjuufphwn2wfpacrtsx8rwyd6mw5jyc2cc
+    "d16bf365af3b73fc05b8d2fbd1a919f1b7e1245f", // tccq8gkhum94uah8lq9hrf0h5dfr8cm0cfytuu54ag8
+    "0a2d89d2856489abe3047c3acc5d86f1510158bc", // tccqy9zmzwjs4jgn2lrq37r4nzasmc4zq2chst55vns
 ].map(accountId => PlatformAddress.fromAccountId(accountId, { networkId: sdk.networkId }));
+
+export const ASSET_ACCOUNTS: H160[] = [
+    "9b6305ba085f658dcc8ce09293b3270646d6395a", // tcaqyqekcc9hgy97evdejxwpy5nkvnsv3kk89dqa8uv47
+    "55e25d9f0e977ac4817e186a2ded6b87fee178e5", // tcaqyq4tcjanu8fw7kys9lps63da44c0lhp0rjszhtaey
+    "f53316adb96b1bd85f7ae7c5f29f39d799288b4b", // tcaqyql2vck4kukkx7ctaaw030jnuua0xfg3d9swk3plr
+    "2df658920a663db06dd5c042623bef4852ecef7c", // tcaqyqjmajcjg9xv0dsdh2uqsnz80h5s5hvaa7qugl0gt
+    "9df2f9e12013050d433859a442c285e7ef716130", // tcaqyqemuheuyspxpgdgvu9nfzzc2z70mm3vycqutehka
+].map(H160.ensure);
 
 export const ASSET_SCHEMES: AssetScheme[] = [
     { name: "SCC1", supply: 1000000 },
@@ -83,7 +90,7 @@ export const ASSET_SCHEMES: AssetScheme[] = [
     return new AssetScheme({
         networkId: sdk.networkId,
         shardId: 0,
-        registrar: REGULATOR,
+        registrar: REGULATOR.platformAddress,
         approver: null,
         allowedScriptHashes: [],
         pool: [],

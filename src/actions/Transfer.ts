@@ -13,7 +13,7 @@ import { assert, createApprovedTx } from "../util";
 import { Action, isApprovedByAssetRegistrar } from "./Action";
 
 export interface TransferOutput {
-    receiver: PlatformAddress;
+    receiver: H160;
     type: "burn" | "p2pkh";
     assetType: H160;
     quantity: U64Value;
@@ -27,24 +27,31 @@ export class Transfer extends Action<TransferAsset> {
         burns?: Utxo[];
         outputs?: TransferOutput[];
     }): Promise<Transfer> {
+        const unsignedTx = sdk.core.createTransferAssetTransaction({
+            burns: (params.burns || []).map(utxo => utxo.asset.createTransferInput()),
+            inputs: (params.inputs || []).map(utxo => utxo.asset.createTransferInput()),
+            outputs: (params.outputs || []).map(output =>
+                sdk.core.createAssetTransferOutput({
+                    recipient: AssetTransferAddress.fromTypeAndPayload(
+                        output.type === "p2pkh" ? 1 : 2,
+                        output.receiver,
+                        { networkId: sdk.networkId },
+                    ),
+                    shardId: 0,
+                    assetType: output.assetType,
+                    quantity: U64.ensure(output.quantity),
+                }),
+            ),
+        });
+        for (let i = 0; i < unsignedTx.inputs().length; i++) {
+            await sdk.key.signTransactionInput(unsignedTx, i);
+        }
+        for (let i = 0; i < unsignedTx.burns().length; i++) {
+            await sdk.key.signTransactionBurn(unsignedTx, i);
+        }
         const tx = await createApprovedTx({
             approvers: params.approvers || [],
-            tx: sdk.core.createTransferAssetTransaction({
-                burns: (params.burns || []).map(utxo => utxo.asset.createTransferInput()),
-                inputs: (params.inputs || []).map(utxo => utxo.asset.createTransferInput()),
-                outputs: (params.outputs || []).map(output =>
-                    sdk.core.createAssetTransferOutput({
-                        recipient: AssetTransferAddress.fromTypeAndPayload(
-                            output.type === "p2pkh" ? 1 : 2,
-                            output.receiver.accountId,
-                            { networkId: sdk.networkId },
-                        ),
-                        shardId: 0,
-                        assetType: output.assetType,
-                        quantity: U64.ensure(output.quantity),
-                    }),
-                ),
-            }),
+            tx: unsignedTx,
         });
 
         return new Transfer({
