@@ -28,8 +28,7 @@ describe("Users", async function() {
 
     it("create 60 users", async function() {
         const users = await createUsers(sdk, passphrase);
-        expect(users.length).equal(4);
-        expect(users[3].length).equal(60);
+        expect(users.length).equal(60);
     }).timeout(60_000);
 
     it("Cannot read when there is no file.", function() {
@@ -37,29 +36,10 @@ describe("Users", async function() {
     });
 
     it("Read stored data.", async function() {
-        const [
-            originalApprover1,
-            originalApprover2,
-            originalApprover3,
-            originalUsers
-        ] = await createUsers(sdk, passphrase);
-        await storeUsers(
-            userFilePath,
-            originalApprover1,
-            originalApprover2,
-            originalApprover3,
-            originalUsers
-        );
-        const [
-            recoveredApprover1,
-            recoveredApprover2,
-            recoveredApprover3,
-            recoveredUsers
-        ] = await loadUsers(userFilePath);
+        const originalUsers = await createUsers(sdk, passphrase);
+        await storeUsers(userFilePath, originalUsers);
+        const recoveredUsers = await loadUsers(userFilePath);
         expect(recoveredUsers).deep.equal(originalUsers);
-        expect(recoveredApprover1).equal(originalApprover1);
-        expect(recoveredApprover2).equal(originalApprover2);
-        expect(recoveredApprover3).equal(originalApprover3);
     }).timeout(60_000);
 
     afterEach(function() {

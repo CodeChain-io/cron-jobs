@@ -55,8 +55,29 @@ describe("Clock hands", async function() {
     });
 
     it("Check owners", async function() {
+        const shardId = 0;
         const date = new Date();
-        const [hour, minute, second] = mintHands(sdk, users, date, payer);
+        const hourApprover = (await sdk.key.createPlatformAddress({
+            keyStore,
+            passphrase
+        })).value;
+        const minuteApprover = (await sdk.key.createPlatformAddress({
+            keyStore,
+            passphrase
+        })).value;
+        const secondApprover = (await sdk.key.createPlatformAddress({
+            keyStore,
+            passphrase
+        })).value;
+        const [hour, minute, second] = mintHands(
+            sdk,
+            shardId,
+            users,
+            date,
+            hourApprover,
+            minuteApprover,
+            secondApprover
+        );
 
         const hourOwner = Buffer.from(
             AssetTransferAddress.fromString(
