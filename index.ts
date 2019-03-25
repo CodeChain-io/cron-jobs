@@ -242,7 +242,11 @@ if (require.main === module) {
                 secondAsset = transfer.getTransferredAsset(2);
                 seq += 1;
 
-                setTimeout(transferFunction, 1_000);
+                const timeout = Math.max(
+                    current.getTime() + 1_000 - Date.now(),
+                    0
+                );
+                setTimeout(transferFunction, timeout);
             } catch (ex) {
                 console.error(ex);
             }
