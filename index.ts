@@ -226,7 +226,9 @@ if (require.main === module) {
                     transfer
                 );
                 if (failedTransaction) {
-                    console.log(`Send failed transaction at ${current}:${hash}`);
+                    console.log(
+                        `Send failed transaction at ${current}:${hash}`
+                    );
 
                     seq += 1;
                     setTimeout(transferFunction, 0); // Send the next transaction immediately.
