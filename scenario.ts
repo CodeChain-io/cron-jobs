@@ -8,15 +8,6 @@ import {ACCOUNTS, REGULATOR, REGULATOR_ALT} from "./configs";
 import {pickRandom} from "./util";
 import {ChangeAssetScheme} from "./actions/ChangeAssetScheme";
 
-function pickRandomUtxo(utxos: Utxo[], predicate?: (utxo: Utxo) => boolean): Utxo | null {
-    if (predicate) {
-        var pool = utxos.filter(predicate);
-    } else {
-        var pool = utxos;
-    }
-    return pickRandom(pool);
-}
-
 function give(utxo: Utxo, sender: PlatformAddress, receiver: PlatformAddress, quantity: U64Value): TransferOutput[] {
     return [{
         assetType: utxo.asset.assetType,
@@ -33,6 +24,7 @@ function give(utxo: Utxo, sender: PlatformAddress, receiver: PlatformAddress, qu
 
 export class Skip {
     readonly reason: string;
+
     constructor(reason: string) {
         this.reason = reason;
     }
@@ -46,9 +38,9 @@ export const scenarios: { weight: number, expected: boolean, scenario: Scenario 
         expected: true,
         scenario:
             async function airdrop_any_10(state: State) {
-                const utxo = pickRandomUtxo(state.getUtxos(REGULATOR),
-                        utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
-                            && state.getAssetScheme(utxo.asset.assetType).registrar!.value == REGULATOR.value);
+                const utxo = pickRandom(state.getUtxos(REGULATOR),
+                    utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
+                        && state.getAssetScheme(utxo.asset.assetType).registrar!.value == REGULATOR.value);
                 if (!utxo) {
                     return new Skip("Asset is depleted");
                 }
@@ -63,9 +55,9 @@ export const scenarios: { weight: number, expected: boolean, scenario: Scenario 
         expected: false,
         scenario:
             async function try_airdrop_others_asset(state: State) {
-                const utxo = pickRandomUtxo(state.getUtxos(REGULATOR),
-                        utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
-                            && state.getAssetScheme(utxo.asset.assetType).registrar!.value != REGULATOR.value);
+                const utxo = pickRandom(state.getUtxos(REGULATOR),
+                    utxo => utxo.asset.quantity.isGreaterThanOrEqualTo(10)
+                        && state.getAssetScheme(utxo.asset.assetType).registrar!.value != REGULATOR.value);
                 if (!utxo) {
                     return new Skip("Asset is depleted");
                 }
@@ -92,5 +84,5 @@ export const scenarios: { weight: number, expected: boolean, scenario: Scenario 
                     },
                 })
             },
-    }
+    },
 ];

@@ -25,12 +25,18 @@ export function assert(expr: () => boolean) {
     }
 }
 
-export function pickRandom<T>(pool: T[]): T | null {
-    if (pool.length === 0) {
+export function pickRandom<T>(pool: T[], predicate?: (item: T) => boolean): T | null {
+    let filtered: T[];
+    if (predicate) {
+        filtered = pool.filter(predicate);
+    } else {
+        filtered = pool;
+    }
+    if (filtered.length === 0) {
         return null;
     }
-    const index = Math.floor(Math.random() * pool.length);
-    return pool[index];
+    const index = Math.floor(Math.random() * filtered.length);
+    return filtered[index];
 }
 
 export function pickWeightedRandom<T extends {weight: number}>(pool: T[]): T | null {
