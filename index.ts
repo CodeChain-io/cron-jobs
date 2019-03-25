@@ -8,10 +8,12 @@ import { activateApprovers } from "./active";
 import { sendMints, sendTransaction } from "./sendTx";
 import { approve } from "./src/approve";
 import { mintHands } from "./src/mintHands";
+import { createShardId, loadShardId, storeShardId } from "./src/shard";
 import { createUsers, loadUsers, storeUsers } from "./src/users";
 import { wait } from "./src/wait";
 
-const BACKUP_FILE_NAME = ".users";
+const USERS_FILE_NAME = ".users";
+const SHARD_ID_FILE_NAME = ".shard";
 
 if (require.main === module) {
     const rpcUrl = config.get<string>("rpc_url")!;
@@ -30,7 +32,7 @@ if (require.main === module) {
             minuteApprover,
             secondApprover,
             users
-        ] = await loadUsers(BACKUP_FILE_NAME).catch((err: Error) => {
+        ] = await loadUsers(USERS_FILE_NAME).catch((err: Error) => {
             console.error(err.message);
             return createUsers(sdk, passphrase).then(
                 async ([
@@ -43,7 +45,7 @@ if (require.main === module) {
                     console.log(`Minute approver(${approver2}) created`);
                     console.log(`Second approver(${approver3}) created`);
                     await storeUsers(
-                        BACKUP_FILE_NAME,
+                        USERS_FILE_NAME,
                         approver1,
                         approver2,
                         approver3,
@@ -53,6 +55,17 @@ if (require.main === module) {
                 }
             );
         });
+
+        const shardId = await loadShardId(SHARD_ID_FILE_NAME).catch(
+            (err: Error) => {
+                console.error(err.message);
+                return createShardId(sdk, payer, passphrase).then(async id => {
+                    console.log(`Shard(${id}) is created`);
+                    await storeShardId(SHARD_ID_FILE_NAME, id);
+                    return id;
+                });
+            }
+        );
 
         // Activate the approvers
         await activateApprovers(sdk, {
@@ -64,6 +77,7 @@ if (require.main === module) {
         const mintedDate = new Date();
         const mints = mintHands(
             sdk,
+            shardId,
             users,
             mintedDate,
             hourApprover,
@@ -101,7 +115,6 @@ if (require.main === module) {
         let minuteAsset = mints[1].getMintedAsset();
         let secondAsset = mints[2].getMintedAsset();
 
-        const shardId = 0;
         const hourType = hourAsset.assetType;
         const minuteType = minuteAsset.assetType;
         const secondType = secondAsset.assetType;

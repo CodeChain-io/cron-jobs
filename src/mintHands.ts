@@ -4,6 +4,7 @@ import { MintAsset } from "codechain-sdk/lib/core/transaction/MintAsset";
 
 export function mintHands(
     sdk: SDK,
+    shardId: number,
     users: string[],
     date: Date,
     hourApprover: string,
@@ -11,7 +12,7 @@ export function mintHands(
     secondApprover: string
 ): [MintAsset, MintAsset, MintAsset] {
     const hourHand = sdk.core.createAssetScheme({
-        shardId: 0,
+        shardId,
         metadata: JSON.stringify({
             name: "Hour Hand",
             description: `An hour hand of ${hourApprover}'s clock`,
@@ -24,7 +25,7 @@ export function mintHands(
     });
 
     const minuteHand = sdk.core.createAssetScheme({
-        shardId: 0,
+        shardId,
         metadata: JSON.stringify({
             name: "Minute Hand",
             description: `A minute hand of ${minuteApprover}'s clock`,
@@ -37,7 +38,7 @@ export function mintHands(
     });
 
     const secondHand = sdk.core.createAssetScheme({
-        shardId: 0,
+        shardId,
         metadata: JSON.stringify({
             name: "Second Hand",
             description: `A second hand of ${secondApprover}'s clock`,
