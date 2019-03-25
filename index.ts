@@ -14,32 +14,71 @@ function wait(timeout: number): Promise<void> {
     });
 }
 
-async function activateApprover(
+async function isActiveAccount(sdk: SDK, account: string): Promise<boolean> {
+    const balance = await sdk.rpc.chain.getBalance(account);
+    if (!balance.isEqualTo(0)) {
+        return true;
+    }
+
+    const seq = await sdk.rpc.chain.getSeq(account);
+    return seq !== 0;
+}
+
+async function activateApprovers(
     sdk: SDK,
-    params: { approver: string; payer: string; passphrase: string }
+    params: { approvers: string[]; payer: string; passphrase: string }
 ): Promise<void> {
-    const { approver, payer, passphrase } = params;
-    const pay = sdk.core.createPayTransaction({
-        recipient: approver,
-        quantity: 1
-    });
-    const seq = await calculateSeq(sdk, payer);
-    const hash = await sendTransaction(sdk, payer, passphrase, seq, pay);
+    const { approvers, payer, passphrase } = params;
+
+    const recipients = [];
+    for (const approver of approvers) {
+        if (!(await isActiveAccount(sdk, approver))) {
+            recipients.push(approver);
+        }
+    }
+    if (recipients.length === 0) {
+        return;
+    }
+
+    let hashes = [];
+    let seq = await calculateSeq(sdk, payer);
+    for (const recipient of recipients) {
+        const pay = sdk.core.createPayTransaction({
+            recipient,
+            quantity: 1
+        });
+        hashes.push(await sendTransaction(sdk, payer, passphrase, seq, pay));
+        seq += 1;
+    }
 
     while (true) {
-        const result = await sdk.rpc.chain.getTransactionResult(hash);
-        if (result) {
+        if (hashes.length === 0) {
             break;
         }
-        if (result == null) {
-            await wait(1_000);
-            continue;
-        }
-        throw Error(
-            `Cannot activate the approver: ${await sdk.rpc.chain.getErrorHint(
-                hash
-            )}`
+        const results = await Promise.all(
+            hashes.map(hash => sdk.rpc.chain.getTransactionResult(hash))
         );
+        const len = results.length;
+        const nextHashes = [];
+        for (let index = 0; index < len; index += 1) {
+            const hash = hashes[index];
+            if (results[index] == null) {
+                nextHashes.push(hashes[index]);
+                continue;
+            }
+
+            if (!results[index]) {
+                throw Error(
+                    `Cannot activate the account: ${await sdk.rpc.chain.getErrorHint(
+                        hash
+                    )}`
+                );
+            }
+        }
+        if (nextHashes.length !== 0) {
+            await wait(1_000);
+        }
+        hashes = nextHashes;
     }
 }
 
@@ -86,19 +125,9 @@ if (require.main === module) {
             );
         });
 
-        // Activate the approver
-        await activateApprover(sdk, {
-            approver: hourApprover,
-            payer,
-            passphrase
-        });
-        await activateApprover(sdk, {
-            approver: minuteApprover,
-            payer,
-            passphrase
-        });
-        await activateApprover(sdk, {
-            approver: secondApprover,
+        // Activate the approvers
+        await activateApprovers(sdk, {
+            approvers: [hourApprover, minuteApprover, secondApprover],
             payer,
             passphrase
         });
