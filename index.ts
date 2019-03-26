@@ -2,6 +2,7 @@ import { SDK } from "codechain-sdk";
 import * as _ from "lodash";
 import { AssetManager } from "./src/AssetManager";
 import { AssetTransferTxGenerator } from "./src/AssetTransferTxGenerator";
+import { FlawGenerator } from "./src/FlawGenerator";
 import { OrderGenerator } from "./src/OrderGenerator";
 import Helper, { asyncSleep, getConfig, randRange } from "./src/util";
 
@@ -13,7 +14,7 @@ async function main() {
     const keyStore = await sdk.key.createLocalKeyStore();
 
     const helper = new Helper(sdk, keyStore);
-    const numberOfAssets = 5;
+    const numberOfAssets = 10;
     const assetManager = new AssetManager(helper, numberOfAssets);
     await assetManager.init();
 
@@ -22,6 +23,7 @@ async function main() {
         helper,
         assetManager
     );
+    const flawGenerator = new FlawGenerator(helper, assetManager);
 
     while (true) {
         try {
@@ -45,10 +47,25 @@ async function main() {
                     entangleCnt,
                     idxFee
                 );
-                const assetTransferTxGenerated = assetTransferTxGenerator.generateAssetTransferTxEntangled(
+
+                if (Math.random() < 0.1) {
+                    console.log("Santa's order was polluted by the air");
+                    entangledOrders[0] = flawGenerator.polluteOrder(
+                        entangledOrders[0]
+                    );
+                }
+
+                let assetTransferTxGenerated = assetTransferTxGenerator.generateAssetTransferTxEntangled(
                     entangledOrders,
                     idxFee
                 );
+
+                if (Math.random() < 0.1) {
+                    console.log("Santa's transaction was polluted by the air");
+                    assetTransferTxGenerated = flawGenerator.polluteTransaction(
+                        assetTransferTxGenerated
+                    );
+                }
 
                 for (let i = 0; i < entangleCnt; i++) {
                     await helper.signTransactionInput(
@@ -68,11 +85,13 @@ async function main() {
                 );
 
                 console.log(result);
+
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
                     assetManager.idxBox[0]
                 );
-                await asyncSleep(1000);
+
+                await asyncSleep(5000);
             } else {
                 const [idxFrom, idxTo, idxFeeCandidate] = [
                     assetManager.idxBox[0],
@@ -84,11 +103,17 @@ async function main() {
                 if (idxFee) {
                     console.log("Fee introduced");
                 }
-                const orderGenerated = orderGenerator.generateOrder({
+                let orderGenerated = orderGenerator.generateOrder({
                     idxFrom,
                     idxTo,
                     idxFee
                 });
+
+                if (Math.random() < 0.1) {
+                    console.log("Santa's order was polluted by the air");
+                    orderGenerated = flawGenerator.polluteOrder(orderGenerated);
+                }
+
                 const dualOrder =
                     Math.random() < 0.5
                         ? undefined
@@ -99,7 +124,7 @@ async function main() {
                 if (dualOrder) {
                     console.log("Dual order generated");
                 }
-                const assetTransferTxGenerated = assetTransferTxGenerator.generateAssetTransferTx(
+                let assetTransferTxGenerated = assetTransferTxGenerator.generateAssetTransferTx(
                     {
                         idxFrom,
                         idxTo,
@@ -108,6 +133,13 @@ async function main() {
                     orderGenerated,
                     dualOrder
                 );
+
+                if (Math.random() < 0.1) {
+                    console.log("Santa's transaction was polluted by the air");
+                    assetTransferTxGenerated = flawGenerator.polluteTransaction(
+                        assetTransferTxGenerated
+                    );
+                }
 
                 await helper.signTransactionInput(assetTransferTxGenerated, 0);
                 await helper.signTransactionInput(assetTransferTxGenerated, 1);
@@ -122,11 +154,12 @@ async function main() {
                 );
 
                 console.log(result);
+
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
                     idxFrom
                 );
-                await asyncSleep(1000);
+                await asyncSleep(5000);
 
                 if (Math.random() < 0.5) {
                     console.log(
@@ -139,11 +172,19 @@ async function main() {
                         : 0;
                     // console.log(prevSpent.toString())
                     // console.log(assetManager.wallets[idxFrom].asset.quantity.toString());
-                    const orderConsumed = orderGenerated.consume(prevSpent);
+                    let orderConsumed = orderGenerated.consume(prevSpent);
+
+                    if (Math.random() < 0.1) {
+                        console.log("Santa's order was polluted by the air");
+                        orderConsumed = flawGenerator.polluteOrder(
+                            orderConsumed
+                        );
+                    }
+
                     const dualOrderConsumed = dualOrder
                         ? dualOrder.consume(prevSpentDual)
                         : undefined;
-                    const assetTransferTxContinue = assetTransferTxGenerator.generateAssetTransferTx(
+                    let assetTransferTxContinue = assetTransferTxGenerator.generateAssetTransferTx(
                         {
                             idxFrom,
                             idxTo,
@@ -152,6 +193,15 @@ async function main() {
                         orderConsumed,
                         dualOrderConsumed
                     );
+
+                    if (Math.random() < 0.1) {
+                        console.log(
+                            "Santa's transaction was polluted by the air"
+                        );
+                        assetTransferTxContinue = flawGenerator.polluteTransaction(
+                            assetTransferTxContinue
+                        );
+                    }
 
                     await helper.signTransactionInput(
                         assetTransferTxContinue,
@@ -162,11 +212,12 @@ async function main() {
                     );
 
                     console.log(result2);
+
                     await assetManager.renewWalletsAfterTx(
                         assetTransferTxContinue,
                         idxFrom
                     );
-                    await asyncSleep(1000);
+                    await asyncSleep(5000);
                 }
             }
         } catch (e) {
