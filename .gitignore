@@ -3,7 +3,7 @@ node_modules
 keystore.db
 
 /build/
-/config/production.json
+config/
 
 # Visual Studio Code - https://code.visualstudio.com/
 .settings/
