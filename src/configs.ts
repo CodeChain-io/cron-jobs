@@ -73,13 +73,15 @@ export const ASSET_ACCOUNTS: H160[] = [
     "9df2f9e12013050d433859a442c285e7ef716130", // tcaqyqemuheuyspxpgdgvu9nfzzc2z70mm3vycqutehka
 ].map(H160.ensure);
 
-export const ASSET_SCHEMES: AssetScheme[] = [
+export const PROTO_ASSET_SCHEME = [
     { name: "SCC1", supply: 1000000 },
     { name: "SCC2", supply: 1000000 },
     { name: "SCC3", supply: 1000000 },
     { name: "SCC4", supply: 1000000 },
     { name: "SCC5", supply: 1000000 },
-].map(({ name, supply }) => {
+];
+
+export const ASSET_SCHEMES: AssetScheme[] = PROTO_ASSET_SCHEME.map(({ name, supply }) => {
     const postfix = process.env.POSTFIX;
     let fullName: string;
     if (postfix) {

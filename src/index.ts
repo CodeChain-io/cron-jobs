@@ -7,6 +7,7 @@ import {
     ASSET_ACCOUNTS,
     ASSET_SCHEMES,
     PLATFORM_ADDRESSES,
+    PROTO_ASSET_SCHEME,
     PSUEDO_FAUCET,
     REGULATOR,
     REGULATOR_ALT,
@@ -91,14 +92,7 @@ async function initForLocal(state: State): Promise<EnsureCCC> {
     await ensure(state);
 
     const randomPostfix = makeRandomString(5);
-
-    const tempAssetSchemes: AssetScheme[] = [
-        { name: "SCC1", supply: 1000000 },
-        { name: "SCC2", supply: 1000000 },
-        { name: "SCC3", supply: 1000000 },
-        { name: "SCC4", supply: 1000000 },
-        { name: "SCC5", supply: 1000000 },
-    ].map(
+    const tempAssetSchemes: AssetScheme[] = PROTO_ASSET_SCHEME.map(
         ({ name, supply }) =>
             new AssetScheme({
                 networkId: sdk.networkId,
