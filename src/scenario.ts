@@ -18,13 +18,13 @@ function give(
         {
             assetType: utxo.asset.assetType,
             receiver: utxo.owner,
-            type: "p2pkh",
+            type: "P2PKH",
             quantity: utxo.asset.quantity.minus(quantity),
         },
         {
             assetType: utxo.asset.assetType,
             receiver,
-            type: "p2pkh",
+            type: "P2PKH",
             quantity: U64.ensure(quantity),
         },
     ];

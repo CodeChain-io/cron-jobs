@@ -13,6 +13,10 @@ import * as request from "request-promise-native";
 import { CreateAsset } from "./actions/CreateAsset";
 import { INDEXER_URL, REGULATOR, sdk } from "./configs";
 import { assert } from "./util";
+import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
+import { P2PKHBurn } from "codechain-sdk/lib/key/P2PKHBurn";
+
+export type LockScriptType = "P2PKH" | "P2PKHBurn";
 
 export class Utxo {
     public owner: H160;
@@ -107,6 +111,13 @@ export class State {
                         tracker: utxo.transactionTracker,
                         transactionOutputIndex: utxo.transactionOutputIndex,
                     });
+                    let type: LockScriptType;
+                    if (
+                        !asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash()) ||
+                        !asset.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())
+                    ) {
+                        throw Error("Unrecognizable lockScriptHash");
+                    }
                     return new Utxo(account, asset);
                 });
                 this.utxos[account.value].push(...utxos);

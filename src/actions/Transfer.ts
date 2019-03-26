@@ -11,10 +11,12 @@ import { sdk } from "../configs";
 import { State, Utxo } from "../State";
 import { assert, createApprovedTx } from "../util";
 import { Action, havePermission } from "./Action";
+import { P2PKHBurn } from "codechain-sdk/lib/key/P2PKHBurn";
+import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
 
 export interface TransferOutput {
     receiver: H160;
-    type: "burn" | "p2pkh";
+    type: "P2PKHBurn" | "P2PKH";
     assetType: H160;
     quantity: U64Value;
 }
@@ -33,7 +35,7 @@ export class Transfer extends Action<TransferAsset> {
             outputs: (params.outputs || []).map(output =>
                 sdk.core.createAssetTransferOutput({
                     recipient: AssetTransferAddress.fromTypeAndPayload(
-                        output.type === "p2pkh" ? 1 : 2,
+                        output.type === "P2PKH" ? 1 : 2,
                         output.receiver,
                         { networkId: sdk.networkId },
                     ),
@@ -93,6 +95,17 @@ export class Transfer extends Action<TransferAsset> {
             // actually owns it
             assert(() => state.getUtxos(input.owner).indexOf(input) >= 0);
             if (!havePermission(state, input.asset.assetType, this.sender, this.approvers)) {
+                return false;
+            }
+        }
+
+        for (const burn of this.burns) {
+            if (!burn.asset.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())) {
+                return false;
+            }
+        }
+        for (const input of this.inputs) {
+            if (!input.asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash())) {
                 return false;
             }
         }
