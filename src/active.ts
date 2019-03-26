@@ -1,8 +1,11 @@
 import { SDK } from "codechain-sdk";
 import { calculateSeq, sendTransaction } from "./sendTx";
-import { wait } from "./src/wait";
+import { wait } from "./wait";
 
-export async function isActiveAccount(sdk: SDK, account: string): Promise<boolean> {
+export async function isActiveAccount(
+    sdk: SDK,
+    account: string
+): Promise<boolean> {
     const balance = await sdk.rpc.chain.getBalance(account);
     if (!balance.isEqualTo(0)) {
         return true;
@@ -69,4 +72,3 @@ export async function activateApprovers(
         hashes = nextHashes;
     }
 }
-

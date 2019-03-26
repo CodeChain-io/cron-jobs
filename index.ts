@@ -4,8 +4,7 @@ import { Asset } from "codechain-sdk/lib/core/Asset";
 import { AssetTransferInput } from "codechain-sdk/lib/core/transaction/AssetTransferInput";
 import * as config from "config";
 import { shuffle } from "underscore";
-import { activateApprovers } from "./active";
-import { sendMints, sendTransaction } from "./sendTx";
+import { activateApprovers } from "./src/active";
 import { approve } from "./src/approve";
 import {
     createApprovers,
@@ -13,6 +12,7 @@ import {
     storeApprovers
 } from "./src/approvers";
 import { mintHands } from "./src/mintHands";
+import { sendMints, sendTransaction } from "./src/sendTx";
 import { createShardId, loadShardId, storeShardId } from "./src/shard";
 import { createUsers, loadUsers, storeUsers } from "./src/users";
 import { wait } from "./src/wait";

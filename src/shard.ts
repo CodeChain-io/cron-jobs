@@ -1,6 +1,6 @@
 import { SDK } from "codechain-sdk";
 import * as fs from "fs";
-import { calculateSeq } from "../sendTx";
+import { calculateSeq } from "./sendTx";
 import { wait } from "./wait";
 
 export function loadShardId(filename: string): Promise<number> {
