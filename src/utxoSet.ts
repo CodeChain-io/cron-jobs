@@ -11,13 +11,13 @@ const faucetAddress: string = getConfig<string>("faucetAddress");
 
 export default class UTXOSet {
     private sdk: SDK;
-    private assets: Asset[];
+    private pbkhAssets: Asset[];
     private assetOwner: AssetTransferAddress | null;
     private keyStore: KeyStore;
 
     public constructor(sdk: SDK, keyStore: KeyStore) {
         this.sdk = sdk;
-        this.assets = [];
+        this.pbkhAssets = [];
         this.assetOwner = null;
         this.keyStore = keyStore;
     }
@@ -32,12 +32,12 @@ export default class UTXOSet {
             }
         );
         const asset = await this.mintAsset();
-        const splittedAssets = await this.splitAsset(asset);
-        this.assets = splittedAssets;
+        const splittedAssets = await this.splitToPBKHAssets(asset);
+        this.pbkhAssets = splittedAssets;
     };
 
     public popAsset = (): Asset => {
-        const asset = this.assets.pop();
+        const asset = this.pbkhAssets.pop();
         assert.isDefined(asset);
         return asset as Asset;
     };
@@ -85,7 +85,7 @@ export default class UTXOSet {
         return transaction.getMintedAsset();
     };
 
-    private splitAsset = async (asset: Asset): Promise<Asset[]> => {
+    private splitToPBKHAssets = async (asset: Asset): Promise<Asset[]> => {
         const outputs = _.range(0, 100).map(() => ({
             recipient: this.assetOwner!,
             quantity: 1,
