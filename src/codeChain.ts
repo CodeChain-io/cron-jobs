@@ -52,8 +52,9 @@ export default class CodeChain {
             });
     }
 
-    public getCurrentBlockHeight = (): Promise<number> => {
-        return this.sdk.rpc.chain.getBestBlockNumber();
+    public getCurrentBlock = async (): Promise<Block> => {
+        const bestBlockNumber = await this.sdk.rpc.chain.getBestBlockNumber();
+        return (await this.sdk.rpc.chain.getBlock(bestBlockNumber))!;
     };
 
     public prepareUTXOs = async (): Promise<UTXOSet> => {

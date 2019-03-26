@@ -1,32 +1,35 @@
-import * as chai from "chai";
+import { Block, Timelock } from "codechain-sdk/lib/core/classes";
 import CodeChain from "../codeChain";
 import { delay } from "../util";
 
 let emptyTransaction: boolean = false;
 
-export async function run(codeChain: CodeChain) {
+export async function run(
+    codeChain: CodeChain,
+    timelockType: Timelock["type"]
+) {
     try {
         emptyTransaction = true;
         await codeChain.fillMoneyForNoop();
         runEmptyTransaction(codeChain);
 
-        const startBlockHeight = await codeChain.getCurrentBlockHeight();
-        console.log(`StartBlockHeight: ${startBlockHeight}`);
+        const startBlock = await codeChain.getCurrentBlock();
+        console.log(
+            "StartBlockHeight: %d %d, %s",
+            startBlock.number,
+            startBlock.timestamp,
+            timelockType
+        );
         const utxoSet = await codeChain.prepareUTXOs();
 
         const transaction = await codeChain.createTimeLockTransaction({
             input: utxoSet.popAsset(),
-            timelock: {
-                type: "block",
-                value: startBlockHeight + 10
-            }
+            timelock: createTimelock(startBlock, timelockType)
         });
         await codeChain.sendTransaction(transaction);
         const leastBlock = await codeChain.waitFutureBlock({
             canHandle: transaction
         });
-
-        chai.assert.isAtLeast(leastBlock.number, startBlockHeight + 10);
 
         const result = await codeChain.getResult(transaction);
         if (result === null) {
@@ -47,9 +50,13 @@ export async function run(codeChain: CodeChain) {
         }
 
         console.log("Timelock success");
-        console.log(`StartBlockHeight: ${startBlockHeight}`);
-        console.log(`leastBlockHeight: ${leastBlock.number}`);
-        console.log(`minedBlockHeight: ${block.number}`);
+        console.log(
+            `StartBlockHeight: ${startBlock.number} ${startBlock.timestamp}`
+        );
+        console.log(
+            `leastBlockHeight: ${leastBlock.number} ${leastBlock.timestamp}`
+        );
+        console.log(`minedBlockHeight: ${block.number} ${block.timestamp}`);
 
         emptyTransaction = false;
     } catch (err) {
@@ -66,5 +73,33 @@ async function runEmptyTransaction(codeChain: CodeChain) {
             console.error(err);
         }
         await delay(3 * 1000);
+    }
+}
+
+function createTimelock(
+    currentBlock: Block,
+    timelockType: Timelock["type"]
+): Timelock {
+    switch (timelockType) {
+        case "block":
+            return {
+                type: "block",
+                value: currentBlock.number + 10
+            };
+        case "blockAge":
+            return {
+                type: "blockAge",
+                value: 10
+            };
+        case "time":
+            return {
+                type: "time",
+                value: currentBlock.timestamp + 30
+            };
+        case "timeAge":
+            return {
+                type: "timeAge",
+                value: 30
+            };
     }
 }

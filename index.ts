@@ -10,7 +10,10 @@ async function main() {
     let errorCount = 0;
     while (true) {
         try {
-            await runWaitUntilTimelock(codeChain);
+            await runWaitUntilTimelock(codeChain, "time");
+            await runWaitUntilTimelock(codeChain, "timeAge");
+            await runWaitUntilTimelock(codeChain, "block");
+            await runWaitUntilTimelock(codeChain, "blockAge");
             errorCount = 0;
         } catch (err) {
             console.error(err);
