@@ -45,7 +45,9 @@ interface ScenarioResult {
 
 type Scenario = (state: State) => Promise<ScenarioResult | Skip>;
 
-export const scenarios = {
+export const scenarios: {
+    [name: string]: { weight: number; description: string; scenario: Scenario };
+} = {
     airDrop: {
         weight: 10,
         description: "Airdrop",
