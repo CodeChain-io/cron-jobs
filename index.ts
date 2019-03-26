@@ -1,5 +1,5 @@
 import CodeChain from "./src/codeChain";
-import { runWaitUntilTimelock } from "./src/scenario";
+import { runTimelockInInput } from "./src/scenario";
 import { SlackNotification } from "./src/slackNotification";
 import { delay } from "./src/util";
 
@@ -10,10 +10,10 @@ async function main() {
     let errorCount = 0;
     while (true) {
         try {
-            await runWaitUntilTimelock(codeChain, "time");
-            await runWaitUntilTimelock(codeChain, "timeAge");
-            await runWaitUntilTimelock(codeChain, "block");
-            await runWaitUntilTimelock(codeChain, "blockAge");
+            await runTimelockInInput(codeChain, "time");
+            await runTimelockInInput(codeChain, "timeAge");
+            await runTimelockInInput(codeChain, "block");
+            await runTimelockInInput(codeChain, "blockAge");
             errorCount = 0;
         } catch (err) {
             console.error(err);

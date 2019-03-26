@@ -1,3 +1,3 @@
-import { run as runWaitUntilTimelock } from "./waitUntilTimeLock";
+import { run as runTimelockInInput } from "./timelockInInput";
 
-export { runWaitUntilTimelock };
+export { runTimelockInInput };
