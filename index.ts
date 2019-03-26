@@ -1,5 +1,6 @@
 import CodeChain from "./src/codeChain";
 import { runWaitUntilTimelock } from "./src/scenario";
+import { SlackNotification } from "./src/slackNotification";
 import { delay } from "./src/util";
 
 async function main() {
@@ -9,6 +10,7 @@ async function main() {
             await runWaitUntilTimelock(codeChain);
         } catch (err) {
             console.error(err);
+            SlackNotification.instance.sendError(err);
         }
 
         await delay(3 * 1000);
