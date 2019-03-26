@@ -1,7 +1,7 @@
 {
-  "name": "codechain-helicopter",
+  "name": "codechain-time-lock-scenario-test",
   "version": "1.0.0",
-  "description": "An air drop tool for CodeChain",
+  "description": "A time lock scenario test tool for CodeChain",
   "main": "build/index.js",
   "scripts": {
     "start": "ts-node ./index.ts",

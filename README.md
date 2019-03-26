@@ -1,32 +1,33 @@
-# codechain-helicopter [![Build Status](https://travis-ci.org/CodeChain-io/codechain-helicopter.svg?branch=master)](https://travis-ci.org/CodeChain-io/codechain-helicopter)
+# codechain-time-lock-scenario-test
 
-codechain-helicopter is a tool for airdropping CCC(CodeChain Coin) at the specified interval.
-
-![helicopter](https://raw.githubusercontent.com/CodeChain-io/codechain-helicopter/master/resource/helicopter.png)
+codechain-time-lock-scenario-test is a tool for testing the timelock feature of CodeChain.
 
 # Getting Started
 
 ## Clone the source code
 
 ```
-git@github.com:CodeChain-io/codechain-helicopter.git
+[https://github.com/majecty/codechain-timelock-tester.git](https://github.com/majecty/codechain-timelock-tester.git)
 ```
 
 ## Install dependencies
 
 ```
-cd codechain-helicopter && yarn install
+cd codechain-timelock-tester && yarn install
 ```
+
+## Prepare keystore.db file
+
+Create keystore.db file and a platform account using `codechain-keystore-cli`.
 
 ## Modify the config file
 
-Open `config/default.json` file and fill `payer.payer`, `payer.passphrase` and `rpc_url` fields.
+Open `config/local.json` file and fill `faucetAddress`, `networkId`, and `codeChainRPCURL`.
+See `config/default.json` as an example.
 
-- payer.payer: the account who gives away CCC
-- payer.passphrase: the passphrase of the payer account.
-- rpc_url: CodeChain RPC URL
-
-You can also adjsut `reward` and `drop_interval`.
+- networkId: the network id of the chain.
+- codeChainRPCURL: the RPC URL of the CodeChain.
+- faucetAddress: Platform address of the CCC holder. The address should be imported in the keystore.db file.
 
 ## Run
 
