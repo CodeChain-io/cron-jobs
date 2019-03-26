@@ -52,12 +52,8 @@ export const scenarios: {
         weight: 10,
         description: "Airdrop",
         async scenario(state: State) {
-            const utxo = pickRandom(
-                state.getUtxos(REGULATOR.accountId),
-                x =>
-                    x.asset.quantity.isGreaterThanOrEqualTo(10) &&
-                    state.getAssetScheme(x.asset.assetType).registrar!.value ===
-                        REGULATOR.platformAddress.value,
+            const utxo = pickRandom(state.getUtxos(REGULATOR.accountId), x =>
+                x.asset.quantity.isGreaterThanOrEqualTo(10),
             );
             if (!utxo) {
                 return new Skip("Asset is depleted");
@@ -72,56 +68,7 @@ export const scenarios: {
             };
         },
     },
-    tryAirDropOthers: {
-        weight: 1,
-        description: "Try Airdrop other's asset",
-        async scenario(state: State) {
-            const utxo = pickRandom(
-                state.getUtxos(REGULATOR.accountId),
-                x =>
-                    x.asset.quantity.isGreaterThanOrEqualTo(10) &&
-                    state.getAssetScheme(x.asset.assetType).registrar!.value !==
-                        REGULATOR.platformAddress.value,
-            );
-            if (!utxo) {
-                return new Skip("Asset is depleted");
-            }
-            return {
-                expected: true,
-                action: await Transfer.create({
-                    sender: REGULATOR.platformAddress,
-                    inputs: [utxo!],
-                    outputs: give(utxo, REGULATOR.platformAddress, pickRandom(ASSET_ACCOUNTS)!, 10),
-                }),
-            };
-        },
-    },
-    airdropOthersButWithApprovals: {
-        weight: 1,
-        description: "Airdrop other's asset with other's approval",
-        async scenario(state: State) {
-            const utxo = pickRandom(
-                state.getUtxos(REGULATOR.accountId),
-                x =>
-                    x.asset.quantity.isGreaterThanOrEqualTo(10) &&
-                    state.getAssetScheme(x.asset.assetType).registrar!.value !==
-                        REGULATOR.platformAddress.value,
-            );
-            if (!utxo) {
-                return new Skip("Asset is depleted");
-            }
-            return {
-                expected: true,
-                action: await Transfer.create({
-                    sender: REGULATOR.platformAddress,
-                    approvers: [REGULATOR_ALT.platformAddress],
-                    inputs: [utxo!],
-                    outputs: give(utxo, REGULATOR.platformAddress, pickRandom(ASSET_ACCOUNTS)!, 10),
-                }),
-            };
-        },
-    },
-    registrarChangesRegistrarOfAssetScheme: {
+    registrarCanChangeRegistrar: {
         weight: 1,
         description: "Registrar can change registrar of AssetScheme",
         async scenario(state: State) {
