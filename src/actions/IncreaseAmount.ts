@@ -10,7 +10,7 @@ import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/Increase
 import { sdk } from "../configs";
 import { State, Utxo } from "../State";
 import { createApprovedTx } from "../util";
-import { Action, isApprovedByAssetRegistrar } from "./Action";
+import { Action, approvedByRegistrar } from "./Action";
 
 export class IncreaseSupply extends Action<IncreaseAssetSupply> {
     public static async create(params: {
@@ -68,7 +68,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
     }
 
     public valid(state: State): boolean {
-        if (!isApprovedByAssetRegistrar(state, this.assetType, this.sender, this.approvers)) {
+        if (!approvedByRegistrar(state, this.assetType, this.sender, this.approvers)) {
             return false;
         }
 

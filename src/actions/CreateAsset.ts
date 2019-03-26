@@ -40,6 +40,7 @@ export class CreateAsset extends Action<MintAsset> {
     }
 
     public valid(state: State): boolean {
+        // Anyone can create Asset
         return state.hasAssetScheme(this.tx.getAssetType()) === false;
     }
 }

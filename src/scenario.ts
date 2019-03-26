@@ -85,7 +85,7 @@ export const scenarios = {
                 return new Skip("Asset is depleted");
             }
             return {
-                expected: false,
+                expected: true,
                 action: await Transfer.create({
                     sender: REGULATOR.platformAddress,
                     inputs: [utxo!],

@@ -57,16 +57,40 @@ export abstract class Action<Tx extends Transaction> {
     }
 }
 
-export function isApprovedByAssetRegistrar(
+export function approvedByRegistrar(
     state: State,
     assetType: H160,
     sender: PlatformAddress,
     approvers: PlatformAddress[],
 ) {
-    const scheme = state.getAssetScheme(assetType);
-    const registrar = scheme.registrar!;
-    if (registrar.value === sender.value) {
+    const { registrar } = state.getAssetScheme(assetType);
+    if (registrar) {
+        if (registrar.value === sender.value) {
+            return true;
+        }
+        return approvers.findIndex(approver => approver.value === registrar.value) !== -1;
+    } else {
+        return false;
+    }
+}
+
+export function havePermission(
+    state: State,
+    assetType: H160,
+    sender: PlatformAddress,
+    approvers: PlatformAddress[],
+) {
+    if (approvedByRegistrar(state, assetType, sender, approvers)) {
         return true;
     }
-    return approvers.findIndex(approver => approver.value === registrar.value) !== -1;
+    const { approver } = state.getAssetScheme(assetType);
+    if (approver) {
+        if (
+            sender.value !== approver.value &&
+            approvers.findIndex(x => sender.value === x.value) !== -1
+        ) {
+            return false;
+        }
+    }
+    return true;
 }

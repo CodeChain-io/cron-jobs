@@ -10,7 +10,7 @@ import { AssetScheme, TransferAsset } from "codechain-sdk/lib/core/classes";
 import { sdk } from "../configs";
 import { State, Utxo } from "../State";
 import { assert, createApprovedTx } from "../util";
-import { Action, isApprovedByAssetRegistrar } from "./Action";
+import { Action, havePermission } from "./Action";
 
 export interface TransferOutput {
     receiver: H160;
@@ -92,14 +92,7 @@ export class Transfer extends Action<TransferAsset> {
         for (const input of this.inputs.concat(this.burns)) {
             // actually owns it
             assert(() => state.getUtxos(input.owner).indexOf(input) >= 0);
-            // this is approved.
-            const approved = isApprovedByAssetRegistrar(
-                state,
-                input.asset.assetType,
-                this.sender,
-                this.approvers,
-            );
-            if (!approved) {
+            if (!havePermission(state, input.asset.assetType, this.sender, this.approvers)) {
                 return false;
             }
         }

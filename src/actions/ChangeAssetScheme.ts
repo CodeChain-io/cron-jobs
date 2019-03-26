@@ -5,7 +5,7 @@ import { ChangeAssetScheme as ChangeAssetSchemeTx } from "codechain-sdk/lib/core
 import { sdk } from "../configs";
 import { State } from "../State";
 import { createApprovedTx, Writable } from "../util";
-import { Action, isApprovedByAssetRegistrar } from "./Action";
+import { Action, approvedByRegistrar } from "./Action";
 
 interface AssetSchemeChanges {
     metadata?: string;
@@ -68,7 +68,7 @@ export class ChangeAssetScheme extends Action<ChangeAssetSchemeTx> {
     }
 
     public valid(state: State): boolean {
-        return isApprovedByAssetRegistrar(state, this.assetType, this.sender, this.approvers);
+        return approvedByRegistrar(state, this.assetType, this.sender, this.approvers);
     }
 
     protected apply(state: State) {
