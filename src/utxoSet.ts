@@ -3,6 +3,7 @@ import { SDK } from "codechain-sdk";
 import { Asset, AssetTransferAddress } from "codechain-sdk/lib/core/classes";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import * as _ from "lodash";
+import { TRANSACTION_TIMEOUT } from "./constant";
 import { getConfig, getCurrentSeq } from "./util";
 
 const networkId: string = getConfig<string>("networkId");
@@ -73,7 +74,7 @@ export default class UTXOSet {
         const result = await this.sdk.rpc.chain.getTransactionResult(
             minedTransaction,
             {
-                timeout: 10 * 1000
+                timeout: TRANSACTION_TIMEOUT
             }
         );
 
@@ -114,7 +115,7 @@ export default class UTXOSet {
         );
 
         const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
-            timeout: 10 * 1000
+            timeout: TRANSACTION_TIMEOUT
         });
 
         if (result !== true) {

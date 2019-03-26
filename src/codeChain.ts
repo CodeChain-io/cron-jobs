@@ -15,6 +15,7 @@ import {
 import { TransferAssetActionJSON } from "codechain-sdk/lib/core/transaction/TransferAsset";
 import { MemoryKeyStore } from "codechain-sdk/lib/key/MemoryKeyStore";
 import * as _ from "lodash";
+import { TRANSACTION_TIMEOUT } from "./constant";
 import {
     createRandomAssetTransferAddress,
     delay,
@@ -151,7 +152,7 @@ export default class CodeChain {
         transaction: SignedTransaction
     ): Promise<boolean | null> => {
         return this.sdk.rpc.chain.getTransactionResult(transaction.hash(), {
-            timeout: 60 * 1000
+            timeout: TRANSACTION_TIMEOUT
         });
     };
 
@@ -195,7 +196,7 @@ export default class CodeChain {
         );
 
         const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
-            timeout: 10 * 1000
+            timeout: TRANSACTION_TIMEOUT
         });
         if (result !== true) {
             throw new Error(`fillMoneyForNoop failed ${result}`);
@@ -233,7 +234,7 @@ export default class CodeChain {
             signedTransaction
         );
         const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
-            timeout: 10 * 1000
+            timeout: TRANSACTION_TIMEOUT
         });
 
         if (result !== true) {
