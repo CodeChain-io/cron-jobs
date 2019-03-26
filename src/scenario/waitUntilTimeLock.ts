@@ -2,16 +2,16 @@ import { Block, Timelock } from "codechain-sdk/lib/core/classes";
 import CodeChain from "../codeChain";
 import { delay } from "../util";
 
-let emptyTransaction: boolean = false;
-
 export async function run(
     codeChain: CodeChain,
     timelockType: Timelock["type"]
 ) {
+    const emptyTransactionCommand = {
+        run: true
+    };
     try {
-        emptyTransaction = true;
         await codeChain.fillMoneyForNoop();
-        runEmptyTransaction(codeChain);
+        runEmptyTransaction(codeChain, emptyTransactionCommand);
 
         const startBlock = await codeChain.getCurrentBlock();
         console.log(
@@ -58,15 +58,18 @@ export async function run(
         );
         console.log(`minedBlockHeight: ${block.number} ${block.timestamp}`);
 
-        emptyTransaction = false;
+        emptyTransactionCommand.run = false;
     } catch (err) {
-        emptyTransaction = false;
+        emptyTransactionCommand.run = false;
         throw err;
     }
 }
 
-async function runEmptyTransaction(codeChain: CodeChain) {
-    while (emptyTransaction) {
+async function runEmptyTransaction(
+    codeChain: CodeChain,
+    command: { run: boolean }
+) {
+    while (command.run) {
         try {
             await codeChain.sendNoopTransaction();
         } catch (err) {
