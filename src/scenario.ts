@@ -14,20 +14,33 @@ function give(
     receiver: H160,
     quantity: U64Value,
 ): TransferOutput[] {
-    return [
-        {
-            assetType: utxo.asset.assetType,
-            receiver: utxo.owner,
-            type: "P2PKH",
-            quantity: utxo.asset.quantity.minus(quantity),
-        },
-        {
-            assetType: utxo.asset.assetType,
-            receiver,
-            type: "P2PKH",
-            quantity: U64.ensure(quantity),
-        },
-    ];
+    if (utxo.asset.quantity.isGreaterThan(quantity)) {
+        return [
+            {
+                assetType: utxo.asset.assetType,
+                receiver: utxo.owner,
+                type: "P2PKH",
+                quantity: utxo.asset.quantity.minus(quantity),
+            },
+            {
+                assetType: utxo.asset.assetType,
+                receiver,
+                type: "P2PKH",
+                quantity: U64.ensure(quantity),
+            },
+        ];
+    } else if (utxo.asset.quantity.isEqualTo(quantity)) {
+        return [
+            {
+                assetType: utxo.asset.assetType,
+                receiver,
+                type: "P2PKH",
+                quantity: U64.ensure(quantity),
+            },
+        ];
+    } else {
+        throw new Error("quantity is less than required");
+    }
 }
 
 export class Skip {
