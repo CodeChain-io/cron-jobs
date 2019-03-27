@@ -94,12 +94,17 @@ export class State {
                 const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, account, {
                     networkId: sdk.networkId,
                 });
-                const utxoResponse: UtxoAttribute[] = await request({
-                    url: `${INDEXER_URL}/api/utxo?address=${
-                        assetAddress.value
-                    }&assetType=${assetType}`,
-                    json: true,
-                });
+                const utxoResponse: UtxoAttribute[] = [];
+                for (let page = 1; ; page++) {
+                    const result: UtxoAttribute[] = await request({
+                        url: `${INDEXER_URL}/api/utxo?address=${
+                            assetAddress.value
+                        }&assetType=${assetType}&page=${page}`,
+                        json: true,
+                    });
+                    if (result.length == 0) break;
+                    utxoResponse.push(...result);
+                }
                 const utxos = utxoResponse.map(utxo => {
                     const asset = Asset.fromJSON({
                         assetType: utxo.assetType,
