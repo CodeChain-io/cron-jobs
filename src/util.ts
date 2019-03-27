@@ -22,9 +22,12 @@ export async function createApprovedTx<Tx extends Transaction & AssetTransaction
     return params.tx as Tx;
 }
 
-export function assert(expr: () => boolean) {
+export function assert(expr: () => boolean, obj?: any) {
     const result = expr();
     if (result === false) {
+        if (obj) {
+            console.error(obj);
+        }
         throw new Error("Assert: " + expr.toString());
     }
 }

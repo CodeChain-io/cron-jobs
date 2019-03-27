@@ -20,7 +20,10 @@ export abstract class Action<Tx extends Transaction> {
 
     public async sendApply(state: State, expected?: boolean) {
         const valid = this.valid(state);
-        assert(() => valid === (expected == null ? true : expected));
+        assert(() => valid === (expected == null ? true : expected), {
+            valid,
+            expected,
+        });
         if (valid) {
             try {
                 const hash = await this.send(state);
