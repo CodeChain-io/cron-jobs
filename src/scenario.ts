@@ -4,9 +4,9 @@ import { Transaction } from "codechain-sdk/lib/core/Transaction";
 import { Action } from "./actions/Action";
 import { ChangeAssetScheme } from "./actions/ChangeAssetScheme";
 import { Transfer, TransferOutput } from "./actions/Transfer";
-import { ASSET_ACCOUNTS, REGULATOR, REGULATOR_ALT } from "./configs";
+import { ASSET_ACCOUNTS, PLATFORM_ADDRESSES, REGULATOR, REGULATOR_ALT } from "./configs";
 import { State, Utxo } from "./State";
-import { pickRandom } from "./util";
+import { pickRandom, pickRandomSize } from "./util";
 
 function give(
     utxo: Utxo,
@@ -81,9 +81,29 @@ export const scenarios: {
             };
         },
     },
-    registrarCanChangeRegistrar: {
+    assetSchemeCannotBeChanged: {
         weight: 1,
-        description: "Registrar can change registrar of AssetScheme",
+        description: "AssetScheme cannot be changed",
+        async scenario(state: State) {
+            const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+            const rogue = pickRandom(PLATFORM_ADDRESSES)!;
+            return {
+                expected: false,
+                action: await ChangeAssetScheme.create({
+                    assetType,
+                    assetScheme,
+                    sender: rogue,
+                    approvers: pickRandomSize(PLATFORM_ADDRESSES, [0, PLATFORM_ADDRESSES.length]),
+                    changes: {
+                        registrar: rogue,
+                    },
+                }),
+            };
+        },
+    },
+    registrarOfAssetSchemeCanBeChangedByRegistrar: {
+        weight: 1,
+        description: "Registrar of AssetScheme can be changed by the registrar",
         async scenario(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
             const currentRegistrar = assetScheme.registrar!;
@@ -100,6 +120,30 @@ export const scenarios: {
                     changes: {
                         registrar: otherRegistrar,
                     },
+                }),
+            };
+        },
+    },
+    registraOfAssetSchemeCanBeChangedWithApprovalOfRegistrar: {
+        weight: 1,
+        description: "Registrar of AssetScheme can be changed with approvals of the registrar",
+        async scenario(state: State) {
+            const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+            const currentRegistrar = assetScheme.registrar!;
+            const otherRegistrar =
+                currentRegistrar.value === REGULATOR.platformAddress.value
+                    ? REGULATOR_ALT.platformAddress
+                    : REGULATOR.platformAddress;
+            return {
+                expected: false,
+                action: await ChangeAssetScheme.create({
+                    assetType,
+                    assetScheme,
+                    sender: otherRegistrar,
+                    changes: {
+                        registrar: otherRegistrar,
+                    },
+                    approvers: [currentRegistrar],
                 }),
             };
         },

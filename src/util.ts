@@ -46,6 +46,27 @@ export function pickRandom<T>(pool: T[], predicate?: (item: T) => boolean): T | 
     return filtered[index];
 }
 
+export function pickRandomSize<T>(
+    pool: T[],
+    range: number | [number, number], // inclusive
+    predicate?: (item: T) => boolean,
+): T[] {
+    let remaining = predicate ? pool.filter(predicate) : [...pool];
+    let [lower, upper] = typeof range === "number" ? [range, range] : range;
+    upper = Math.min(upper, remaining.length);
+
+    assert(() => lower >= 0 && upper <= remaining.length);
+
+    let result = [];
+    const N = Math.floor(Math.random() * (upper + 1 - lower) + lower);
+    for (let i = 0; i < N; i++) {
+        const pick = pickRandom(remaining)!;
+        remaining.splice(remaining.indexOf(pick), 1);
+        result.push(pick);
+    }
+    return result;
+}
+
 export function pickWeightedRandom<T extends { weight: number }>(pool: T[]): T | null {
     if (pool.length === 0) {
         return null;
