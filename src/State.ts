@@ -113,7 +113,7 @@ export class State {
                     });
                     let type: LockScriptType;
                     if (
-                        !asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash()) ||
+                        !asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash()) &&
                         !asset.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())
                     ) {
                         console.error({
