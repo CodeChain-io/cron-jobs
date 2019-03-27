@@ -33,7 +33,7 @@ async function main() {
             //     );
             // }
             assetManager.shuffleBox();
-            console.log("\n");
+            console.log("");
             if (Math.random() > 0.9) {
                 console.log("Entangled orders' transaction is airdropped");
                 const entangleCnt = randRange(2, numberOfAssets);
