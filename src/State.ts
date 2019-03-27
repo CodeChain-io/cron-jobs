@@ -188,21 +188,37 @@ export class State {
             if (utxos.length === 0) {
                 continue;
             }
-            const assetsQuantities: { [assetType: string]: [U64] } = {};
+            const p2pkhBin: { [assetType: string]: [U64] } = {};
+            const p2pkhBurnsBin: { [assetType: string]: [U64] } = {};
+            const assetTypes = new Set();
             for (const utxo of utxos) {
-                if (assetsQuantities.hasOwnProperty(utxo.assetType.value)) {
-                    assetsQuantities[utxo.assetType.value].push(utxo.quantity);
+                assetTypes.add(utxo.assetType.value);
+                let bin: { [assetType: string]: [U64] };
+                if (utxo.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash())) {
+                    bin = p2pkhBin;
+                } else if (utxo.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())) {
+                    bin = p2pkhBurnsBin;
                 } else {
-                    assetsQuantities[utxo.assetType.value] = [utxo.quantity];
+                    throw new Error("Unimplemented");
+                }
+                if (bin.hasOwnProperty(utxo.assetType.value)) {
+                    bin[utxo.assetType.value].push(utxo.quantity);
+                } else {
+                    bin[utxo.assetType.value] = [utxo.quantity];
                 }
             }
+
             console.log(`utxo for ${H160.ensure(accountValue).value}`);
-            for (const assetType of Object.keys(assetsQuantities).sort()) {
-                const quantities = assetsQuantities[assetType]
+            for (const assetType of assetTypes) {
+                const p2pkhs = (p2pkhBin[assetType] || [])
                     .sort(compareU64)
                     .map(quantity => quantity.toString(10))
                     .join(", ");
-                console.log(`  utxo ${assetType}: [${quantities}]`);
+                const p2pkhBurns = (p2pkhBurnsBin[assetType] || [])
+                    .sort(compareU64)
+                    .map(quantity => quantity.toString(10))
+                    .join(", ");
+                console.log(`  utxo ${assetType}: [${p2pkhs}], burns: [${p2pkhBurns}]`);
             }
         }
     }
