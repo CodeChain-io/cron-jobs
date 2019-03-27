@@ -79,7 +79,7 @@ export const PROTO_ASSET_SCHEME = [
     { name: "SCC2", supply: 1000000 },
     { name: "SCC3", supply: 1000000 },
     { name: "SCC4", supply: 1000000 },
-    { name: "SCC5", supply: 1000000 },
+    { name: "SCC5", supply: U64.MAX_VALUE },
 ];
 
 export const ASSET_SCHEMES: AssetScheme[] = PROTO_ASSET_SCHEME.map(({ name, supply }) => {

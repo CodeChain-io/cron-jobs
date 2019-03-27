@@ -135,7 +135,7 @@ export const scenarios: {
                     ? REGULATOR_ALT.platformAddress
                     : REGULATOR.platformAddress;
             return {
-                expected: false,
+                expected: true,
                 action: await ChangeAssetScheme.create({
                     assetType,
                     assetScheme,
