@@ -212,6 +212,10 @@ async function main() {
 
                     await helper.signTransactionInput(
                         assetTransferTxContinue,
+                        0
+                    );
+                    await helper.signTransactionInput(
+                        assetTransferTxContinue,
                         1
                     );
 
