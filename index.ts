@@ -33,6 +33,7 @@ async function main() {
             //     );
             // }
             assetManager.shuffleBox();
+            console.log("\n");
             if (Math.random() > 0.9) {
                 console.log("Entangled orders' transaction is airdropped");
                 const entangleCnt = randRange(2, numberOfAssets);
@@ -84,7 +85,7 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(result);
+                console.log(result, assetTransferTxGenerated.tracker().toString());
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -153,7 +154,7 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(result);
+                console.log(result, assetTransferTxGenerated.tracker().toString());
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -163,7 +164,7 @@ async function main() {
 
                 if (Math.random() < 0.5) {
                     console.log(
-                        "Transaction filling partially filled order was given away."
+                        "Transaction filling a partially filled order was given away."
                     );
                     const prevSpent = assetTransferTxGenerated.orders()[0]
                         .spentQuantity;
@@ -207,11 +208,12 @@ async function main() {
                         assetTransferTxContinue,
                         1
                     );
+
                     const result2 = await helper.sendAssetTransaction(
                         assetTransferTxContinue
                     );
 
-                    console.log(result2);
+                    console.log(result2, assetTransferTxContinue.tracker().toString());
 
                     await assetManager.renewWalletsAfterTx(
                         assetTransferTxContinue,
