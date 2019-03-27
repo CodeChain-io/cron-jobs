@@ -201,7 +201,7 @@ export class State {
             const p2pkhBin: { [assetType: string]: [U64] } = {};
             const p2pkhBurnsBin: { [assetType: string]: [U64] } = {};
             const assetTypes = new Set();
-            for (const utxo of utxos) {
+            for (const utxo of utxos.sort(compareAsset)) {
                 assetTypes.add(utxo.assetType.value);
                 let bin: { [assetType: string]: [U64] };
                 if (utxo.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash())) {
