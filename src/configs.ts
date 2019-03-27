@@ -32,6 +32,7 @@ export const sdk = (() => {
 export const localKeyStore: Promise<KeyStore> = sdk.key.createLocalKeyStore();
 
 const FAUCET_SECRET = "3f3a6a9efc7a0435b32096ea1debdbc77481dc069c65cfefe698aa243845f0cd";
+// tccq9fsvu9pl8auufard59055e6zxu0gzascqsvpsjt
 const FAUCET_ACCOUNT_ID = sdk.util.getAccountIdFromPrivate(FAUCET_SECRET);
 export const PSUEDO_FAUCET = {
     secret: H256.ensure(FAUCET_SECRET),
