@@ -116,6 +116,11 @@ export class State {
                         !asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash()) ||
                         !asset.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())
                     ) {
+                        console.error({
+                            "asset.lockScriptHash": asset.lockScriptHash,
+                            P2PKH: P2PKH.getLockScriptHash(),
+                            P2PKHBurn: P2PKHBurn.getLockScriptHash(),
+                        });
                         throw Error("Unrecognizable lockScriptHash");
                     }
                     return new Utxo(account, asset);
