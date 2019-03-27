@@ -35,3 +35,8 @@ This project aimed to airdrop AssetTransferTransactions including orders for Cod
   - The Generated transaction has consistent inputs and outputs with orders.
   - The trading quantities are randomly determined among the multiples of the given ratios in `Orders`.
   - There is about 50% chance to generate a transaction which continuously fills the previous partially filled order.
+- Using FlawGenerator, Santa contaminates `Order` and `AssetTransferTransaction`.
+  - Here contaminates means Santa injects errors to make them incorrect.   
+  - There is 10% chance each for `Order` and `AssetTranferTransaction` to be contaminated.
+  - Then those contaminated `Order` and `AssetTranferTransaction` are transmitted to SDK.
+  - Errors would be detected during the importation.
