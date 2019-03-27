@@ -11,7 +11,7 @@ import { Asset, AssetScheme } from "codechain-sdk/lib/core/classes";
 import * as request from "request-promise-native";
 
 import { CreateAsset } from "./actions/CreateAsset";
-import { INDEXER_URL, REGULATOR, sdk } from "./configs";
+import { INDEXER_URL, REGULATOR, REGULATOR_ALT, sdk } from "./configs";
 import { assert } from "./util";
 import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
 import { P2PKHBurn } from "codechain-sdk/lib/key/P2PKHBurn";
@@ -169,6 +169,18 @@ export class State {
                 return 1;
             } else {
                 return 0;
+            }
+        }
+
+        for (const regulator of [REGULATOR, REGULATOR_ALT]) {
+            const assetTypes = this.allAssetSchemes()
+                .filter(([_, as]) => as.registrar!.value === regulator.platformAddress.value)
+                .map(([assetType, _]) => assetType);
+            if (assetTypes.length > 0) {
+                console.log(`registrar: ${regulator.platformAddress.value}`);
+                for (const assetType of assetTypes) {
+                    console.log(`    owns: ${assetType}`);
+                }
             }
         }
         for (const accountValue of accountValues) {
