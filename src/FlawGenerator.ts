@@ -74,14 +74,19 @@ export class FlawGenerator {
             lockScriptHashFee,
             parametersFrom,
             parametersFee,
+            assetQuantityFee,
             ...rest
         } = target;
 
+        const newAssetQuantityFee = assetQuantityFee.eq(0)
+            ? assetQuantityFee.plus(1)
+            : assetQuantityFee;
         return this.helper.sdk.core.createOrder({
             lockScriptHashFrom,
             lockScriptHashFee: lockScriptHashFrom,
             parametersFrom,
             parametersFee: parametersFrom,
+            assetQuantityFee: newAssetQuantityFee,
             ...rest
         });
     }
@@ -106,15 +111,15 @@ export class FlawGenerator {
         const inputs = target.inputs();
         const outputs = target.outputs();
 
-        const targetOrder = target.orders()[0];
-        const newSpentQuantity = targetOrder.spentQuantity.minus(1);
+        const { spentQuantity, ...rest } = target.orders()[0];
+        const newSpentQuantity = spentQuantity.minus(1);
 
         result
             .addInputs(inputs)
             .addOutputs(outputs)
             .addOrder({
                 spentQuantity: newSpentQuantity,
-                ...targetOrder
+                ...rest
             });
 
         for (const order of target.orders().slice(1)) {
@@ -129,15 +134,15 @@ export class FlawGenerator {
         const inputs = target.inputs();
         const outputs = target.outputs();
 
-        const targetOrder = target.orders()[0];
-        const newInputIndices = targetOrder.inputIndices.push(0);
+        const { inputIndices, ...rest } = target.orders()[0];
+        inputIndices.push(0);
 
         result
             .addInputs(inputs)
             .addOutputs(outputs)
             .addOrder({
-                inputIndices: newInputIndices,
-                ...targetOrder
+                inputIndices,
+                ...rest
             });
 
         for (const order of target.orders().slice(1)) {
@@ -152,15 +157,15 @@ export class FlawGenerator {
         const inputs = target.inputs();
         const outputs = target.outputs();
 
-        const targetOrder = target.orders()[0];
-        const newOutputIndices = targetOrder.outputIndices.push(0);
+        const { outputIndices, ...rest } = target.orders()[0];
+        outputIndices.push(0);
 
         result
             .addInputs(inputs)
             .addOutputs(outputs)
             .addOrder({
-                outputIndices: newOutputIndices,
-                ...targetOrder
+                outputIndices,
+                ...rest
             });
 
         for (const order of target.orders().slice(1)) {
