@@ -85,7 +85,10 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(result, assetTransferTxGenerated.tracker().toString());
+                console.log(
+                    result,
+                    assetTransferTxGenerated.tracker().toString()
+                );
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -154,7 +157,10 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(result, assetTransferTxGenerated.tracker().toString());
+                console.log(
+                    result,
+                    assetTransferTxGenerated.tracker().toString()
+                );
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -206,6 +212,10 @@ async function main() {
 
                     await helper.signTransactionInput(
                         assetTransferTxContinue,
+                        0
+                    );
+                    await helper.signTransactionInput(
+                        assetTransferTxContinue,
                         1
                     );
 
@@ -213,7 +223,10 @@ async function main() {
                         assetTransferTxContinue
                     );
 
-                    console.log(result2, assetTransferTxContinue.tracker().toString());
+                    console.log(
+                        result2,
+                        assetTransferTxContinue.tracker().toString()
+                    );
 
                     await assetManager.renewWalletsAfterTx(
                         assetTransferTxContinue,
