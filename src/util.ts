@@ -175,6 +175,22 @@ export function sleep(seconds: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+export function time<U>(tag: string, func: () => U): U {
+    const start = Date.now();
+    const result = func();
+    if (result instanceof Promise) {
+        return result.then(value => {
+            const end = Date.now();
+            console.log("time", tag, (end - start).toString());
+            return value;
+        }) as any;
+    } else {
+        const end = Date.now();
+        console.log("time", tag, (end - start).toString());
+        return result;
+    }
+}
+
 export function makeRandomString(length: number) {
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let text = "";

@@ -17,7 +17,7 @@ import {
 import { scenarios, Skip } from "./scenario";
 import { State } from "./State";
 import { TxSender } from "./TxSender";
-import { assert, makeRandomString, pickWeightedRandom } from "./util";
+import { assert, makeRandomString, pickWeightedRandom, time } from "./util";
 
 async function ensureCCC(
     state: State,
@@ -169,13 +169,17 @@ async function main() {
         const picked = pickWeightedRandom(Object.values(scenarios))!;
         console.log(`scenario ${picked.description}`);
 
-        const scenario = await picked.scenario(state);
+        const scenario = await time("create scenario", () => picked.scenario(state));
         if (scenario instanceof Skip) {
             console.warn(`skip: ${scenario.reason}`);
             continue;
+        } else if (scenario instanceof Array) {
+            for (const s of scenario) {
+                await s.action.sendApply(state, s.expected);
+            }
+        } else {
+            await scenario.action.sendApply(state, scenario.expected);
         }
-
-        await scenario.action.sendApply(state, scenario.expected);
 
         state.printUtxos(...[REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS));
 

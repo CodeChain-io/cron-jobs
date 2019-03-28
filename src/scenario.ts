@@ -56,7 +56,7 @@ interface ScenarioResult {
     action: Action<Transaction>;
 }
 
-type Scenario = (state: State) => Promise<ScenarioResult | Skip>;
+type Scenario = (state: State) => Promise<ScenarioResult[] | ScenarioResult | Skip>;
 
 export const scenarios: {
     [name: string]: { weight: number; description: string; scenario: Scenario };
@@ -84,6 +84,36 @@ export const scenarios: {
     takeAllSingleAssetType: {
         weight: 1,
         description: "Take airdropped assets back (one AssetType)",
+        async scenario(state: State) {
+            const account = pickRandom(ASSET_ACCOUNTS)!;
+            const summerized = AssetSummarization.summerizeBy(
+                state.getUtxos(account),
+                x => x.asset,
+            );
+            const assetType = pickRandom(summerized.assetTypes());
+            if (!assetType) {
+                return new Skip("Picked account doesn't have any assets");
+            }
+            return {
+                expected: true,
+                action: await Transfer.create({
+                    sender: REGULATOR.platformAddress,
+                    inputs: summerized.get(assetType).values,
+                    outputs: [
+                        {
+                            assetType: H160.ensure(assetType),
+                            quantity: summerized.get(assetType).sum,
+                            type: "P2PKH",
+                            receiver: REGULATOR.accountId,
+                        },
+                    ],
+                }),
+            };
+        },
+    },
+    takeAllAssets: {
+        weight: 1,
+        description: "Take all airdropped assets back",
         async scenario(state: State) {
             const account = pickRandom(ASSET_ACCOUNTS)!;
             const summerized = AssetSummarization.summerizeBy(

@@ -3,7 +3,7 @@ import { Transaction } from "codechain-sdk/lib/core/classes";
 
 import { State } from "../State";
 import { TxSender } from "../TxSender";
-import { assert } from "../util";
+import { assert, time } from "../util";
 
 export abstract class Action<Tx extends Transaction> {
     public readonly tag: string;
@@ -19,15 +19,15 @@ export abstract class Action<Tx extends Transaction> {
     }
 
     public async sendApply(state: State, expected?: boolean) {
-        const valid = this.valid(state);
+        const valid = time("validate", () => this.valid(state));
         assert(() => valid === (expected == null ? true : expected), {
             valid,
             expected,
         });
         if (valid) {
             try {
-                const hash = await this.send(state);
-                this.apply(state);
+                const hash = await time("send", () => this.send(state));
+                await time("apply", () => this.apply(state));
                 console.log(`succeed: ${hash.value}`);
             } catch (e) {
                 console.error(`failed to send tx: `);
@@ -36,7 +36,7 @@ export abstract class Action<Tx extends Transaction> {
             }
         } else {
             try {
-                const hash = await this.send(state);
+                const hash = await time("send", () => this.send(state));
                 console.error(`expected to be failed, but succeed: ${hash.value}`);
                 console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
             } catch (e) {
