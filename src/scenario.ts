@@ -6,7 +6,7 @@ import { ChangeAssetScheme } from "./actions/ChangeAssetScheme";
 import { Transfer, TransferOutput } from "./actions/Transfer";
 import { ASSET_ACCOUNTS, PLATFORM_ADDRESSES, REGULATOR, REGULATOR_ALT } from "./configs";
 import { State, Utxo } from "./State";
-import { pickRandom, pickRandomSize } from "./util";
+import { AssetSummarization, pickRandom, pickRandomSize } from "./util";
 
 function give(
     utxo: Utxo,
@@ -77,6 +77,36 @@ export const scenarios: {
                     sender: REGULATOR.platformAddress,
                     inputs: [utxo!],
                     outputs: give(utxo, REGULATOR.platformAddress, pickRandom(ASSET_ACCOUNTS)!, 10),
+                }),
+            };
+        },
+    },
+    takeAllSingleAssetType: {
+        weight: 1,
+        description: "Take airdropped assets back (one AssetType)",
+        async scenario(state: State) {
+            const account = pickRandom(ASSET_ACCOUNTS)!;
+            const summerized = AssetSummarization.summerizeBy(
+                state.getUtxos(account),
+                x => x.asset,
+            );
+            const assetType = pickRandom(summerized.assetTypes());
+            if (!assetType) {
+                return new Skip("Picked account doesn't have any assets");
+            }
+            return {
+                expected: true,
+                action: await Transfer.create({
+                    sender: REGULATOR.platformAddress,
+                    inputs: summerized.get(assetType).values,
+                    outputs: [
+                        {
+                            assetType: H160.ensure(assetType),
+                            quantity: summerized.get(assetType).sum,
+                            type: "P2PKH",
+                            receiver: REGULATOR.accountId,
+                        },
+                    ],
                 }),
             };
         },
