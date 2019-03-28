@@ -1,9 +1,9 @@
 import { SDK } from "codechain-sdk";
-import * as _ from "lodash";
 import { AssetManager } from "./src/AssetManager";
 import { AssetTransferTxGenerator } from "./src/AssetTransferTxGenerator";
 import { FlawGenerator } from "./src/FlawGenerator";
 import { OrderGenerator } from "./src/OrderGenerator";
+import { SlackNotification } from "./src/Slacknotify";
 import Helper, { asyncSleep, getConfig, randRange } from "./src/util";
 
 async function main() {
@@ -26,6 +26,8 @@ async function main() {
     const flawGenerator = new FlawGenerator(helper, assetManager);
 
     while (true) {
+        let polluted = false;
+        let lastSentTracker: string = "";
         try {
             // for (let i = 0; i < numberOfAssets; i++) {
             //     console.log(
@@ -33,6 +35,7 @@ async function main() {
             //     );
             // }
             assetManager.shuffleBox();
+
             console.log("");
             if (Math.random() > 0.9) {
                 console.log("Entangled orders' transaction is airdropped");
@@ -50,6 +53,7 @@ async function main() {
                 );
 
                 if (Math.random() < 0.1) {
+                    polluted = true;
                     console.log("Santa's order was polluted by the air");
                     entangledOrders[0] = flawGenerator.polluteOrder(
                         entangledOrders[0]
@@ -62,6 +66,7 @@ async function main() {
                 );
 
                 if (Math.random() < 0.1) {
+                    polluted = true;
                     console.log("Santa's transaction was polluted by the air");
                     assetTransferTxGenerated = flawGenerator.polluteTransaction(
                         assetTransferTxGenerated
@@ -85,10 +90,8 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(
-                    result,
-                    assetTransferTxGenerated.tracker().toString()
-                );
+                lastSentTracker = assetTransferTxGenerated.tracker().toString();
+                console.log(result, lastSentTracker);
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -114,6 +117,7 @@ async function main() {
                 });
 
                 if (Math.random() < 0.1) {
+                    polluted = true;
                     console.log("Santa's order was polluted by the air");
                     orderGenerated = flawGenerator.polluteOrder(orderGenerated);
                 }
@@ -139,6 +143,7 @@ async function main() {
                 );
 
                 if (Math.random() < 0.1) {
+                    polluted = true;
                     console.log("Santa's transaction was polluted by the air");
                     assetTransferTxGenerated = flawGenerator.polluteTransaction(
                         assetTransferTxGenerated
@@ -157,10 +162,8 @@ async function main() {
                     assetTransferTxGenerated
                 );
 
-                console.log(
-                    result,
-                    assetTransferTxGenerated.tracker().toString()
-                );
+                lastSentTracker = assetTransferTxGenerated.tracker().toString();
+                console.log(result, lastSentTracker);
 
                 await assetManager.renewWalletsAfterTx(
                     assetTransferTxGenerated,
@@ -182,6 +185,7 @@ async function main() {
                     let orderConsumed = orderGenerated.consume(prevSpent);
 
                     if (Math.random() < 0.1) {
+                        polluted = true;
                         console.log("Santa's order was polluted by the air");
                         orderConsumed = flawGenerator.polluteOrder(
                             orderConsumed
@@ -202,6 +206,7 @@ async function main() {
                     );
 
                     if (Math.random() < 0.1) {
+                        polluted = true;
                         console.log(
                             "Santa's transaction was polluted by the air"
                         );
@@ -223,10 +228,10 @@ async function main() {
                         assetTransferTxContinue
                     );
 
-                    console.log(
-                        result2,
-                        assetTransferTxContinue.tracker().toString()
-                    );
+                    lastSentTracker = assetTransferTxContinue
+                        .tracker()
+                        .toString();
+                    console.log(result2, lastSentTracker);
 
                     await assetManager.renewWalletsAfterTx(
                         assetTransferTxContinue,
@@ -235,7 +240,15 @@ async function main() {
                     await asyncSleep(5000);
                 }
             }
+            if (polluted) {
+                SlackNotification.instance.sendError(
+                    `problematic transaction ${lastSentTracker}`
+                );
+            }
         } catch (e) {
+            if (!polluted) {
+                SlackNotification.instance.sendError(e);
+            }
             console.log(e);
         }
     }
