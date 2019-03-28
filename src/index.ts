@@ -1,6 +1,7 @@
 import { H256, U64, U64Value } from "codechain-primitives";
 import { H160, PlatformAddress } from "codechain-primitives/lib";
 import { AssetScheme } from "codechain-sdk/lib/core/classes";
+import * as fs from "fs";
 
 import { CreateAsset } from "./actions/CreateAsset";
 import {
@@ -13,6 +14,7 @@ import {
     REGULATOR_ALT,
     sdk,
     SERVER,
+    slack,
 } from "./configs";
 import { scenarios, Skip } from "./scenario";
 import { State } from "./State";
@@ -188,5 +190,14 @@ async function main() {
 }
 
 (async () => {
-    await main().catch(error => console.log({ error }));
+    await main().catch(error => {
+        console.log({ error });
+        slack.sendError(error);
+        if (fs.existsSync("./corgi.log")) {
+            slack.sendAttachments(
+                `corgi.${new Date().toISOString()}.log`,
+                (fs.readFileSync("./corgi.log") || "").toString(),
+            );
+        }
+    });
 })();

@@ -2,6 +2,7 @@ import { H160, H256, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
 import { AssetScheme } from "codechain-sdk/lib/core/classes";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
+import { createSlack } from "./Slack";
 
 export const SERVER: string = (() => {
     const server = process.env.SERVER || "local";
@@ -103,3 +104,5 @@ export const ASSET_SCHEMES: AssetScheme[] = PROTO_ASSET_SCHEME.map(({ name, supp
         }),
     });
 });
+
+export const slack = createSlack(process.env.SLACK);
