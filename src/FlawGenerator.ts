@@ -112,7 +112,10 @@ export class FlawGenerator {
         const outputs = target.outputs();
 
         const { spentQuantity, ...rest } = target.orders()[0];
-        const newSpentQuantity = spentQuantity.minus(1);
+        const newSpentQuantity =
+            Math.random() < 0.5
+                ? spentQuantity.plus(1)
+                : spentQuantity.times(100);
 
         result
             .addInputs(inputs)
