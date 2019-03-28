@@ -1,4 +1,4 @@
-import { PlatformAddress } from "codechain-primitives/lib";
+import { H160, H160Value, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { AssetTransaction, Transaction } from "codechain-sdk/lib/core/Transaction";
 import { localKeyStore, sdk } from "./configs";
 
@@ -80,6 +80,95 @@ export function pickWeightedRandom<T extends { weight: number }>(pool: T[]): T |
     const threshold = Math.random() * sum;
     const index = accum.findIndex(x => threshold <= x);
     return pool[index];
+}
+
+export class AssetSummarization<T> {
+    summaries: { [assetType: string]: { sum: U64; values: T[] } };
+    constructor(summerizes: { [assetType: string]: { sum: U64; values: T[] } }) {
+        this.summaries = summerizes;
+    }
+
+    public get(assetTypeValue: H160Value) {
+        const assetType = H160.ensure(assetTypeValue);
+        if (this.summaries.hasOwnProperty(assetType.value)) {
+            return this.summaries[assetType.value];
+        } else {
+            return {
+                sum: new U64(0),
+                values: [],
+            };
+        }
+    }
+
+    public assetTypes(): H160[] {
+        return Object.keys(this.summaries).map(H160.ensure);
+    }
+
+    all(): { assetType: H160; summary: { sum: U64; values: T[] } }[] {
+        const result = [];
+        for (const assetType of this.assetTypes()) {
+            result.push({ assetType, summary: this.get(assetType) });
+        }
+        return result;
+    }
+
+    public isEquivalentTo<U>(other: AssetSummarization<U>): boolean {
+        if (!Object.keys(this.summaries).every(k => other.summaries.hasOwnProperty(k))) {
+            return false;
+        }
+        if (!Object.keys(other.summaries).every(k => this.summaries.hasOwnProperty(k))) {
+            return false;
+        }
+        for (const { assetType, summary } of this.all()) {
+            if (!summary.sum.isEqualTo(other.get(assetType).sum)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static summerize<T extends { assetType: H160; quantity: U64 }>(
+        assetLikes: T[],
+    ): AssetSummarization<T> {
+        return AssetSummarization.summerizeBy(assetLikes, x => x);
+    }
+
+    static summerizeBy<T>(
+        assetLikes: T[],
+        extract: (value: T) => { assetType: H160; quantity: U64 },
+    ): AssetSummarization<T> {
+        const result: { [assetType: string]: { sum: U64; values: T[] } } = {};
+        for (const assetLike of assetLikes) {
+            const asset = extract(assetLike);
+            if (asset.quantity.isEqualTo(0)) {
+                continue;
+            }
+            const assetType = asset.assetType.value;
+            if (result.hasOwnProperty(assetType)) {
+                result[assetType].sum = result[assetType].sum.plus(asset.quantity);
+                result[assetType].values.push(assetLike);
+            } else {
+                result[assetType] = {
+                    sum: asset.quantity,
+                    values: [assetLike],
+                };
+            }
+        }
+        for (const summary of Object.values(result)) {
+            summary.values = summary.values.sort((a, b) => {
+                const quantityA = extract(a).quantity;
+                const quantityB = extract(b).quantity;
+                if (quantityA.isGreaterThan(quantityB)) {
+                    return -1;
+                } else if (quantityB.isGreaterThan(quantityA)) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+        return new AssetSummarization(result);
+    }
 }
 
 export function sleep(seconds: number): Promise<void> {

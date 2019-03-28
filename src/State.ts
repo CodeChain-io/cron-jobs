@@ -12,7 +12,7 @@ import * as request from "request-promise-native";
 
 import { CreateAsset } from "./actions/CreateAsset";
 import { INDEXER_URL, REGULATOR, REGULATOR_ALT, sdk } from "./configs";
-import { assert } from "./util";
+import { assert, AssetSummarization } from "./util";
 import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
 import { P2PKHBurn } from "codechain-sdk/lib/key/P2PKHBurn";
 
@@ -198,33 +198,28 @@ export class State {
             if (utxos.length === 0) {
                 continue;
             }
-            const p2pkhBin: { [assetType: string]: [U64] } = {};
-            const p2pkhBurnsBin: { [assetType: string]: [U64] } = {};
-            const assetTypes = new Set();
-            for (const utxo of utxos.sort(compareAsset)) {
-                assetTypes.add(utxo.assetType.value);
-                let bin: { [assetType: string]: [U64] };
-                if (utxo.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash())) {
-                    bin = p2pkhBin;
-                } else if (utxo.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())) {
-                    bin = p2pkhBurnsBin;
-                } else {
-                    throw new Error("Unimplemented");
-                }
-                if (bin.hasOwnProperty(utxo.assetType.value)) {
-                    bin[utxo.assetType.value].push(utxo.quantity);
-                } else {
-                    bin[utxo.assetType.value] = [utxo.quantity];
-                }
-            }
+            const assetTypes = new Set(utxos.map(utxo => utxo.assetType.value));
+
+            const p2pkhHash = P2PKH.getLockScriptHash();
+            const p2pkhBurnHash = P2PKHBurn.getLockScriptHash();
+            const p2pkhBin = AssetSummarization.summerize(
+                utxos.filter(utxo => utxo.lockScriptHash.isEqualTo(p2pkhHash)),
+            );
+            const p2pkhBurnsBin = AssetSummarization.summerize(
+                utxos.filter(utxo => utxo.lockScriptHash.isEqualTo(p2pkhBurnHash)),
+            );
 
             console.log(`utxo for ${H160.ensure(accountValue).value}`);
-            for (const assetType of assetTypes) {
-                const p2pkhs = (p2pkhBin[assetType] || [])
+            for (const assetType of [...assetTypes].sort()) {
+                const p2pkhs = p2pkhBin
+                    .get(assetType)
+                    .values.map(x => x.quantity)
                     .sort(compareU64)
                     .map(quantity => quantity.toString(10))
                     .join(", ");
-                const p2pkhBurns = (p2pkhBurnsBin[assetType] || [])
+                const p2pkhBurns = p2pkhBurnsBin
+                    .get(assetType)
+                    .values.map(x => x.quantity)
                     .sort(compareU64)
                     .map(quantity => quantity.toString(10))
                     .join(", ");

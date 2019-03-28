@@ -9,7 +9,7 @@ import { AssetScheme, TransferAsset } from "codechain-sdk/lib/core/classes";
 
 import { sdk } from "../configs";
 import { State, Utxo } from "../State";
-import { assert, createApprovedTx } from "../util";
+import { assert, createApprovedTx, AssetSummarization } from "../util";
 import { Action, havePermission } from "./Action";
 import { P2PKHBurn } from "codechain-sdk/lib/key/P2PKHBurn";
 import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
@@ -111,42 +111,22 @@ export class Transfer extends Action<TransferAsset> {
         }
 
         // check input and output is balanced.
-        function summarize(
-            quantities: { assetType: H160; quantity: U64Value }[],
-        ): { [assetType: string]: U64 } {
-            const result: { [assetType: string]: U64 } = {};
-            for (const { assetType, quantity } of quantities) {
-                const key = assetType.value;
-                if (result.hasOwnProperty(key)) {
-                    result[key] = result[key].plus(quantity);
-                } else {
-                    result[key] = U64.ensure(quantity);
-                }
-            }
-            return result;
-        }
-        const inputSummary = summarize(this.inputs.map(utxo => utxo.asset));
-        const outputSummary = summarize(this.outputs);
-
-        for (const key of Object.keys(inputSummary)) {
-            if (!outputSummary.hasOwnProperty(key)) {
-                return false;
-            }
-        }
-        for (const key of Object.keys(outputSummary)) {
-            if (!inputSummary.hasOwnProperty(key)) {
-                return false;
-            }
-            if (!inputSummary[key].isEqualTo(outputSummary[key])) {
-                return false;
-            }
+        const inputSummary = AssetSummarization.summerizeBy(this.inputs, utxo => utxo.asset);
+        const outputSummary = AssetSummarization.summerizeBy(this.outputs, utxo => {
+            return {
+                assetType: utxo.assetType,
+                quantity: U64.ensure(utxo.quantity),
+            };
+        });
+        if (!inputSummary.isEquivalentTo(outputSummary)) {
+            return false;
         }
 
         // enough supplies
-        const burnSummary = summarize(this.burns.map(utxo => utxo.asset));
-        for (const assetType of Object.keys(burnSummary)) {
+        const burnSummary = AssetSummarization.summerizeBy(this.burns, utxo => utxo.asset);
+        for (const assetType of burnSummary.assetTypes()) {
             const assetScheme = state.getAssetScheme(assetType);
-            if (assetScheme.supply.isLessThan(burnSummary[assetType])) {
+            if (assetScheme.supply.isLessThan(burnSummary.get(assetType).sum)) {
                 return false;
             }
         }
