@@ -31,6 +31,7 @@ async function main() {
         fee,
     });
     const hash = await sdk.rpc.chain.sendSignedTransaction(signedTx);
+    console.log("hash", hash);
     const result = await containsTransaction(hash);
     if (!result) {
         const reason = await sdk.rpc.chain.getErrorHint(hash);
