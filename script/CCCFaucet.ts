@@ -3,7 +3,7 @@ import { SDK } from "codechain-sdk";
 import * as readline from "readline";
 
 import { PSUEDO_FAUCET } from "../src/configs";
-import { containsTransaction } from "../src/util";
+import { checkTransaction } from "../src/util";
 
 const genesis = "wccqx6n79wgvye8l8rx49xuqvm3vtwkffz28sff8axv";
 const sdk = new SDK({
@@ -32,12 +32,7 @@ async function main() {
     });
     const hash = await sdk.rpc.chain.sendSignedTransaction(signedTx);
     console.log("hash", hash);
-    const result = await containsTransaction(hash);
-    if (!result) {
-        const reason = await sdk.rpc.chain.getErrorHint(hash);
-        throw new Error(reason || "Error with no reason");
-    }
-    return hash;
+    await checkTransaction(hash);
 }
 
 async function getPassphrase(): Promise<string> {

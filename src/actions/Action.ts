@@ -28,20 +28,20 @@ export abstract class Action<Tx extends Transaction> {
             try {
                 const hash = await time("send", () => this.send(state));
                 await time("apply", () => this.apply(state));
-                console.log(`succeed: ${hash.value}`);
+                console.log(`succeed`);
             } catch (e) {
-                console.error(`failed to send tx: `);
+                console.error(`failed to send tx`);
                 console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
                 throw e;
             }
         } else {
             try {
-                const hash = await time("send", () => this.send(state));
-                console.error(`expected to be failed, but succeed: ${hash.value}`);
+                await time("send", () => this.send(state));
+                console.error(`expected to be failed, but succeed`);
                 console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
             } catch (e) {
                 this.txSender.applyFee(state);
-                console.log("failed as expected");
+                console.log("failed as expected: ", e);
                 return;
             }
             throw new Error("Should fail but not failed");
@@ -50,9 +50,9 @@ export abstract class Action<Tx extends Transaction> {
 
     public abstract valid(state: State): boolean;
 
-    protected async send(state: State): Promise<H256> {
+    protected async send(state: State): Promise<void> {
         console.log(`send ${this.tag}`);
-        return await this.txSender.send(state);
+        await this.txSender.send(state);
     }
 
     protected apply(state: State) {

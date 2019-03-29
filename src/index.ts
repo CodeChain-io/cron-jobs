@@ -19,7 +19,7 @@ import {
 import { scenarios, Skip } from "./scenario";
 import { State } from "./State";
 import { TxSender } from "./TxSender";
-import { assert, makeRandomString, pickWeightedRandom, time } from "./util";
+import { assert, makeRandomString, pickWeightedRandom, sleep, time } from "./util";
 
 async function ensureCCC(
     state: State,
@@ -184,7 +184,7 @@ async function main() {
         }
 
         state.printUtxos(...[REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS));
-
+        await sleep(1.0);
         await ensureAmountOfCCC(state);
     }
 }

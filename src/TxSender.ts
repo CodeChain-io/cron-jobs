@@ -3,7 +3,7 @@ import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 import { Transaction } from "codechain-sdk/lib/core/Transaction";
 import { FEE, sdk } from "./configs";
 import { State } from "./State";
-import { containsTransaction } from "./util";
+import { checkTransaction } from "./util";
 
 export class TxSender {
     private readonly fee: U64;
@@ -38,17 +38,13 @@ export class TxSender {
         }
     }
 
-    public async send(state: State): Promise<H256> {
+    public async send(state: State): Promise<void> {
         const seq = state.nextSeq(this.sender);
         console.log(`seq++ ${this.sender.value}: ${seq}`);
         const signedTx = await this.getSignedTransaction(seq);
         const hash = await sdk.rpc.chain.sendSignedTransaction(signedTx);
-        const result = await containsTransaction(hash);
-        if (!result) {
-            const reason = await sdk.rpc.chain.getErrorHint(hash);
-            throw new Error(reason || "Error with no reason");
-        }
-        return hash;
+        console.log("hash", hash.value);
+        await checkTransaction(hash);
     }
 
     public applyFee(state: State) {

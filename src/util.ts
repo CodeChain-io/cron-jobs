@@ -1,6 +1,6 @@
 import { H160, H160Value, H256Value, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { AssetTransaction, Transaction } from "codechain-sdk/lib/core/Transaction";
-import { localKeyStore, sdk } from "./configs";
+import { localKeyStore, sdk, TIMEOUT } from "./configs";
 
 export type Writable<T> = { -readonly [P in keyof T]-?: T[P] };
 
@@ -201,15 +201,20 @@ export function makeRandomString(length: number) {
     return text;
 }
 
-export async function containsTransaction(hash: H256Value, timeout?: number): Promise<boolean> {
-    timeout = timeout || 120.0;
+export async function checkTransaction(hash: H256Value, timeout?: number): Promise<void> {
+    timeout = timeout || TIMEOUT;
     const start = Date.now();
     while (Date.now() - start < timeout * 1000.0) {
         const result = await sdk.rpc.chain.containTransaction(hash);
         if (result) {
-            return true;
+            return;
+        } else {
+            const hint = await sdk.rpc.chain.getErrorHint(hash);
+            if (hint) {
+                throw new Error(hint);
+            }
         }
         await sleep(1.0);
     }
-    return false;
+    throw new Error(`Transaction check timeout: ${Date.now() - start} ms`);
 }

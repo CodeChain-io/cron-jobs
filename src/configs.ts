@@ -135,4 +135,15 @@ export const FEE: { [txType: string]: U64 } = (() => {
     }
 })();
 
+export const TIMEOUT: number = (() => {
+    switch (SERVER) {
+        case "local":
+            return 1.0;
+        case "corgi":
+            return 10.0;
+        default:
+            throw Error("Invalid server configuration");
+    }
+})();
+
 export const slack = createSlack(process.env.SLACK);
