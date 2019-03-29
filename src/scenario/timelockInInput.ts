@@ -1,6 +1,6 @@
 import { Timelock } from "codechain-sdk/lib/core/classes";
 import CodeChain from "../codeChain";
-import { createTimelock, delay, waitContainTransacitonSuccess } from "../util";
+import { createTimelock, delay } from "../util";
 
 export async function run(
     codeChain: CodeChain,
