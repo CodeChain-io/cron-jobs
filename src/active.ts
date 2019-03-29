@@ -1,3 +1,4 @@
+import { H256 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { calculateSeq, sendTransaction } from "./sendTx";
 import { wait } from "./wait";
@@ -31,7 +32,7 @@ export async function activateApprovers(
         return;
     }
 
-    let hashes = [];
+    let hashes: H256[] = [];
     let seq = await calculateSeq(sdk, payer);
     for (const recipient of recipients) {
         const pay = sdk.core.createPayTransaction({
@@ -47,24 +48,21 @@ export async function activateApprovers(
             break;
         }
         const results = await Promise.all(
-            hashes.map(hash => sdk.rpc.chain.getTransactionResult(hash))
+            hashes.map(hash => sdk.rpc.chain.containTransaction(hash))
         );
         const len = results.length;
         const nextHashes = [];
         for (let index = 0; index < len; index += 1) {
-            const hash = hashes[index];
-            if (results[index] == null) {
-                nextHashes.push(hashes[index]);
+            if (results[index]) {
                 continue;
             }
 
-            if (!results[index]) {
-                throw Error(
-                    `Cannot activate the account: ${await sdk.rpc.chain.getErrorHint(
-                        hash
-                    )}`
-                );
+            const hash = hashes[index];
+            const error = await sdk.rpc.chain.getErrorHint(hash);
+            if (error != null) {
+                throw Error(`Cannot activate the account: ${error}`);
             }
+            nextHashes.push(hash);
         }
         if (nextHashes.length !== 0) {
             await wait(1_000);

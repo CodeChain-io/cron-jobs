@@ -102,20 +102,14 @@ if (require.main === module) {
 
         for (const hash of mintHashes) {
             while (true) {
-                const result = await sdk.rpc.chain.getTransactionResult(hash);
-                if (result) {
+                if (await sdk.rpc.chain.containTransaction(hash)) {
                     break;
                 }
-                if (result == null) {
-                    await wait(1_000);
-                    continue;
+                const error = await sdk.rpc.chain.getErrorHint(hash);
+                if (error != null) {
+                    throw Error(`Cannot mint the clock hand: ${error}`);
                 }
-                console.error(
-                    `Cannot mint the clock hand: ${await sdk.rpc.chain.getErrorHint(
-                        hash
-                    )}`
-                );
-                return;
+                await wait(1_000);
             }
         }
 
@@ -272,22 +266,19 @@ if (require.main === module) {
             try {
                 while (pendings.length !== 0) {
                     const hash = pendings[0][0];
-                    const result = await sdk.rpc.chain.getTransactionResult(
-                        hash
-                    );
-                    if (result) {
+                    if (await sdk.rpc.chain.containTransaction(hash)) {
                         pendings.pop();
                         break;
                     }
                     const current = pendings[0][4];
-                    if (result == null) {
+                    const reason = await sdk.rpc.chain.getErrorHint(hash);
+                    if (reason == null) {
                         console.log(
                             `Wait the result of ${hash} sent at ${current}`
                         );
                         setTimeout(resultFunction, 1_000);
                         return;
                     }
-                    const reason = await sdk.rpc.chain.getErrorHint(hash);
                     console.log(
                         `Tx(${hash} sent at ${current} failed: ${reason}`
                     );
