@@ -40,7 +40,6 @@ export abstract class Action<Tx extends Transaction> {
                 console.error(`expected to be failed, but succeed`);
                 console.error(JSON.stringify(this.tx.toJSON(), null, "     "));
             } catch (e) {
-                this.txSender.applyFee(state);
                 console.log("failed as expected: ", e);
                 return;
             }
