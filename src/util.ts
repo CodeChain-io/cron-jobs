@@ -1,4 +1,4 @@
-import { H160, H160Value, PlatformAddress, U64 } from "codechain-primitives/lib";
+import { H160, H160Value, H256Value, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { AssetTransaction, Transaction } from "codechain-sdk/lib/core/Transaction";
 import { localKeyStore, sdk } from "./configs";
 
@@ -199,4 +199,17 @@ export function makeRandomString(length: number) {
     }
 
     return text;
+}
+
+export async function containsTransaction(hash: H256Value, timeout?: number): Promise<boolean> {
+    timeout = timeout || 10.0;
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+        const result = await sdk.rpc.chain.containTransaction(hash);
+        if (result) {
+            return true;
+        }
+        await sleep(1.0);
+    }
+    return false;
 }
