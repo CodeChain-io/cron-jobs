@@ -116,17 +116,17 @@ export const FEE = (() => {
     switch (SERVER) {
         case "local":
             return {
-                [ChangeAssetSchemeTx.name]: new U64(10),
-                [MintAsset.name]: new U64(10),
-                [IncreaseAssetSupply.name]: new U64(10),
-                [TransferAsset.name]: new U64(10),
+                ["ChangeAssetScheme"]: new U64(10),
+                ["MintAsset"]: new U64(10),
+                ["IncreaseAssetSupply"]: new U64(10),
+                ["TransferAsset"]: new U64(10),
             };
         case "corgi":
             return {
-                [ChangeAssetSchemeTx.name]: new U64(100000),
-                [MintAsset.name]: new U64(100000),
-                [IncreaseAssetSupply.name]: new U64(100000),
-                [TransferAsset.name]: new U64(100),
+                ["ChangeAssetSchemeTx"]: new U64(100000),
+                ["MintAsset"]: new U64(100000),
+                ["IncreaseAssetSupply"]: new U64(100000),
+                ["TransferAsset"]: new U64(100),
             };
         default:
             throw Error("Invalid server configuration");
