@@ -1,8 +1,14 @@
 import { H160, H256, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
-import { AssetScheme } from "codechain-sdk/lib/core/classes";
+import {
+    AssetScheme,
+    MintAsset,
+    ChangeAssetScheme as ChangeAssetSchemeTx,
+    TransferAsset,
+} from "codechain-sdk/lib/core/classes";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import { createSlack } from "./Slack";
+import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
 
 export const SERVER: string = (() => {
     const server = process.env.SERVER || "local";
@@ -105,5 +111,26 @@ export const ASSET_SCHEMES: AssetScheme[] = PROTO_ASSET_SCHEME.map(({ name, supp
         }),
     });
 });
+
+export const FEE = (() => {
+    switch (SERVER) {
+        case "local":
+            return {
+                [ChangeAssetSchemeTx.name]: new U64(10),
+                [MintAsset.name]: new U64(10),
+                [IncreaseAssetSupply.name]: new U64(10),
+                [TransferAsset.name]: new U64(10),
+            };
+        case "corgi":
+            return {
+                [ChangeAssetSchemeTx.name]: new U64(100000),
+                [MintAsset.name]: new U64(100000),
+                [IncreaseAssetSupply.name]: new U64(100000),
+                [TransferAsset.name]: new U64(100),
+            };
+        default:
+            throw Error("Invalid server configuration");
+    }
+})();
 
 export const slack = createSlack(process.env.SLACK);

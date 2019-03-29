@@ -1,22 +1,25 @@
 import { H256, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 import { Transaction } from "codechain-sdk/lib/core/Transaction";
-import { sdk } from "./configs";
+import { FEE, sdk } from "./configs";
 import { State } from "./State";
 import { containsTransaction } from "./util";
 
 export class TxSender {
-    public fee: U64 = new U64(100);
+    private readonly fee: U64;
+
     public sender: PlatformAddress;
     public getSignedTransaction: (seq: number) => Promise<SignedTransaction>;
 
     public constructor(sender: PlatformAddress | H256, tx: Transaction) {
+        const fee = FEE[tx.constructor.name];
+        this.fee = fee;
         if (sender instanceof PlatformAddress) {
             this.sender = sender;
             this.getSignedTransaction = async (seq: number) => {
                 return await sdk.key.signTransaction(tx, {
                     account: sender,
-                    fee: this.fee,
+                    fee,
                     seq,
                 });
             };
@@ -28,7 +31,7 @@ export class TxSender {
             this.getSignedTransaction = async (seq: number) => {
                 return tx.sign({
                     secret: sender,
-                    fee: this.fee,
+                    fee,
                     seq,
                 });
             };
