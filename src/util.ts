@@ -1,7 +1,7 @@
 import {
     AssetTransferAddress,
-    PlatformAddressValue,
-    H256
+    H256,
+    PlatformAddressValue
 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
 import { Block } from "codechain-sdk/lib/core/Block";
