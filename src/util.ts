@@ -48,7 +48,7 @@ export default class Helper {
             seq?: number;
         }
     ): Promise<H256> {
-        const { account, fee = 10 } = params;
+        const { account, fee = 100000 } = params;
         const { seq = await this.sdk.rpc.chain.getSeq(account) } = params;
         const signed = await this.sdk.key.signTransaction(tx, {
             keyStore: this.keyStore,
@@ -70,7 +70,7 @@ export default class Helper {
     ): Promise<boolean | null> {
         const {
             seq = (await this.sdk.rpc.chain.getSeq(faucetAddress)) || 0,
-            fee = 10,
+            fee = 100000,
             awaitResult = true,
             secret = faucetSecret
         } = options || {};
