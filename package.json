@@ -6,7 +6,7 @@
   "author": "Seulgi Kim <seulgi.kim@kodebox.io>",
   "license": "ISC",
   "scripts": {
-    "clean": "rm -f .approvers .shard .test-gen/* .users",
+    "clean": "rm -f .approvers .test-gen/* .users",
     "start": "ts-node ./index.ts",
     "build": "tsc -p .",
     "test": "mocha -r ts-node/register --timeout 5000 src/**/*.test.ts",
