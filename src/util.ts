@@ -81,9 +81,15 @@ export default class Helper {
         });
         await this.sdk.rpc.chain.sendSignedTransaction(signed);
         if (awaitResult) {
-            return this.sdk.rpc.chain.getTransactionResult(signed.hash(), {
-                timeout: 300 * 1000
-            });
+            let cnt = 0;
+            while (
+                !(await this.sdk.rpc.chain.containTransaction(signed.hash())) &&
+                cnt < 3000
+            ) {
+                cnt++;
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            return cnt < 3000;
         } else {
             return null;
         }
