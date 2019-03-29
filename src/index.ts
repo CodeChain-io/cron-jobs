@@ -129,8 +129,8 @@ async function initUsingIndexer(state: State): Promise<EnsureCCC> {
             st,
             PSUEDO_FAUCET,
             [REGULATOR, REGULATOR_ALT].map(x => x.platformAddress).concat(PLATFORM_ADDRESSES),
-            1000,
-            2000,
+            10000000,
+            20000000,
         );
 
     await state.recover(
