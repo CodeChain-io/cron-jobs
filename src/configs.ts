@@ -120,6 +120,7 @@ export const FEE: { [txType: string]: U64 } = (() => {
                 MintAsset: new U64(10),
                 IncreaseAssetSupply: new U64(10),
                 TransferAsset: new U64(10),
+                Pay: new U64(10),
             };
         case "corgi":
             return {
@@ -127,6 +128,7 @@ export const FEE: { [txType: string]: U64 } = (() => {
                 MintAsset: new U64(100000),
                 IncreaseAssetSupply: new U64(100000),
                 TransferAsset: new U64(100),
+                Pay: new U64(100),
             };
         default:
             throw Error("Invalid server configuration");
