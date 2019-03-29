@@ -17,7 +17,7 @@
     "@types/lodash": "^4.14.123",
     "bignumber.js": "^7.2.1",
     "chai": "^4.2.0",
-    "codechain-sdk": "https://github.com/majecty/codechain-sdk-js-1.git#f/get-transactions-by-tracker-build",
+    "codechain-sdk": "^0.7.0",
     "config": "^2.0.1",
     "lodash": "^4.17.11",
     "request-json": "^0.6.3",

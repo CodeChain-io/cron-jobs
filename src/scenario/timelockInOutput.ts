@@ -1,6 +1,7 @@
+import * as chai from "chai";
 import { Timelock } from "codechain-sdk/lib/core/classes";
 import CodeChain from "../codeChain";
-import { createTimelock, delay, waitContainTransacitonSuccess } from "../util";
+import { createTimelock, delay } from "../util";
 
 export async function run(
     codeChain: CodeChain,
@@ -22,24 +23,37 @@ export async function run(
         );
         const utxoSet = await codeChain.prepareUTXOs(startBlock);
 
-        const transaction = await codeChain.createTransaction({
-            input: utxoSet.popPBKHAsset(),
+        const invalidTransaction = await codeChain.createTransaction({
+            input: utxoSet.getTimelockAsset(timelockType),
+            timelock: createTimelock(startBlock, timelockType),
+            useTimelockOnInput: false
+        });
+
+        const invalidTxHash = await codeChain.sendTransaction(
+            invalidTransaction
+        );
+
+        const validTransaction = await codeChain.createTransaction({
+            input: utxoSet.getTimelockAsset(timelockType),
             timelock: createTimelock(startBlock, timelockType),
             useTimelockOnInput: true
         });
-        await codeChain.sendTransaction(transaction);
+
+        const validTxHash = await codeChain.sendTransaction(validTransaction);
+        await codeChain.waitTransactionMined(validTxHash);
+        const containsInvalid = await codeChain.containsTransaction(
+            invalidTxHash
+        );
+        chai.assert.strictEqual(false, containsInvalid);
+
         const leastBlock = await codeChain.waitFutureBlock({
-            canHandle: transaction
+            canHandle: validTransaction
         });
 
-        await codeChain.waitTransactionMined(transaction.hash());
-
-        const block = await codeChain.getBlockOfTransaction(transaction);
-        if (block.number < leastBlock.number) {
-            throw new Error(
-                "TimeLockTransaction executed before the time lock"
-            );
-        }
+        chai.assert(
+            (await codeChain.getBlockOfTransaction(validTransaction)).number >=
+                leastBlock.number
+        );
 
         console.log("Timelock success");
         console.log(
@@ -48,7 +62,6 @@ export async function run(
         console.log(
             `leastBlockHeight: ${leastBlock.number} ${leastBlock.timestamp}`
         );
-        console.log(`minedBlockHeight: ${block.number} ${block.timestamp}`);
 
         emptyTransactionCommand.run = false;
     } catch (err) {
@@ -69,4 +82,16 @@ async function runEmptyTransaction(
         }
         await delay(3 * 1000);
     }
+}
+
+if (require.main === module) {
+    async function main() {
+        const codeChain = new CodeChain();
+        await run(codeChain, "block");
+        await run(codeChain, "blockAge");
+        await run(codeChain, "time");
+        await run(codeChain, "timeAge");
+    }
+
+    main().catch(console.error);
 }

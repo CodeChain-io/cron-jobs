@@ -3,11 +3,11 @@ import { SDK } from "codechain-sdk";
 import {
     Asset,
     Block,
+    H256,
     PlatformAddress,
     SignedTransaction,
     Timelock
 } from "codechain-sdk/lib/core/classes";
-import { H256 } from "codechain-sdk/lib/core/H256";
 import {
     AssetTransferInput,
     AssetTransferInputJSON
@@ -16,11 +16,13 @@ import { TransferAssetActionJSON } from "codechain-sdk/lib/core/transaction/Tran
 import { MemoryKeyStore } from "codechain-sdk/lib/key/MemoryKeyStore";
 import * as _ from "lodash";
 import { TRANSACTION_TIMEOUT } from "./constant";
+import * as timelockScript from "./timelockScript";
 import {
     createRandomAssetTransferAddress,
     delay,
     getConfig,
-    getCurrentSeq
+    getCurrentSeq,
+    waitContainTransacitonSuccess
 } from "./util";
 import UTXOSet from "./utxoSet";
 
@@ -34,6 +36,7 @@ export default class CodeChain {
     private sdk: SDK;
     private noopAccountId: string | null;
     private transientKeyStore: MemoryKeyStore;
+
     public constructor() {
         this.sdk = new SDK({
             server: codeChainRPCURL,
@@ -57,24 +60,43 @@ export default class CodeChain {
         return (await this.sdk.rpc.chain.getBlock(bestBlockNumber))!;
     };
 
-    public prepareUTXOs = async (): Promise<UTXOSet> => {
-        const utxoSet = new UTXOSet(this.sdk, this.transientKeyStore);
+    public prepareUTXOs = async (startBlock: Block): Promise<UTXOSet> => {
+        const utxoSet = new UTXOSet(
+            this.sdk,
+            this.transientKeyStore,
+            startBlock
+        );
         await utxoSet.prepare();
         return utxoSet;
     };
 
-    public createTimeLockTransaction = async (params: {
+    public createTransaction = async (params: {
         input: Asset;
-        timelock: Timelock;
+        timelock: Timelock | null;
+        useTimelockOnInput: boolean;
     }): Promise<SignedTransaction> => {
+        const useCustomLockScript = _.some(
+            timelockScript.getAllLockScriptHashes(),
+            hash => hash.isEqualTo(params.input.outPoint.lockScriptHash!)
+        );
+
+        let transactionInput;
+        if (useCustomLockScript) {
+            transactionInput = new AssetTransferInput({
+                prevOut: params.input.outPoint,
+                timelock: params.useTimelockOnInput ? params.timelock : null,
+                lockScript: timelockScript.getLockScript(params.timelock!.type),
+                unlockScript: timelockScript.getUnlockScript()
+            });
+        } else {
+            transactionInput = new AssetTransferInput({
+                prevOut: params.input.outPoint,
+                timelock: params.timelock
+            });
+        }
         const transaction = this.sdk.core
             .createTransferAssetTransaction()
-            .addInputs(
-                new AssetTransferInput({
-                    prevOut: params.input.outPoint,
-                    timelock: params.timelock
-                })
-            )
+            .addInputs(transactionInput)
             .addOutputs({
                 recipient: await createRandomAssetTransferAddress(),
                 quantity: params.input.quantity,
@@ -82,9 +104,12 @@ export default class CodeChain {
                 shardId: params.input.shardId
             });
 
-        await this.sdk.key.signTransactionInput(transaction, 0, {
-            keyStore: this.transientKeyStore
-        });
+        if (!useCustomLockScript) {
+            await this.sdk.key.signTransactionInput(transaction, 0, {
+                keyStore: this.transientKeyStore
+            });
+        }
+
         const signedTransaction = await this.sdk.key.signTransaction(
             transaction,
             {
@@ -149,12 +174,16 @@ export default class CodeChain {
         }
     };
 
-    public getResult = async (
-        transaction: SignedTransaction
-    ): Promise<boolean | null> => {
-        return this.sdk.rpc.chain.getTransactionResult(transaction.hash(), {
-            timeout: TRANSACTION_TIMEOUT
-        });
+    public waitTransactionMined = async (txHash: H256): Promise<void> => {
+        await waitContainTransacitonSuccess(
+            this.sdk,
+            txHash,
+            TRANSACTION_TIMEOUT
+        );
+    };
+
+    public containsTransaction = async (txHash: H256): Promise<boolean> => {
+        return this.sdk.rpc.chain.containTransaction(txHash);
     };
 
     public getBlockOfTransaction = async (
@@ -196,12 +225,11 @@ export default class CodeChain {
             signedTransaction
         );
 
-        const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
-            timeout: TRANSACTION_TIMEOUT
-        });
-        if (result !== true) {
-            throw new Error(`fillMoneyForNoop failed ${result}`);
-        }
+        await waitContainTransacitonSuccess(
+            this.sdk,
+            txHash,
+            TRANSACTION_TIMEOUT
+        );
     };
 
     public sendNoopTransaction = async (): Promise<void> => {
@@ -234,13 +262,12 @@ export default class CodeChain {
         const txHash = await this.sdk.rpc.chain.sendSignedTransaction(
             signedTransaction
         );
-        const result = await this.sdk.rpc.chain.getTransactionResult(txHash, {
-            timeout: TRANSACTION_TIMEOUT
-        });
 
-        if (result !== true) {
-            throw new Error("Noop transaction faield");
-        }
+        await waitContainTransacitonSuccess(
+            this.sdk,
+            txHash,
+            TRANSACTION_TIMEOUT
+        );
     };
 
     private checkTimelock = (
@@ -271,11 +298,10 @@ export default class CodeChain {
     private getPrevOutBlockInfo = async (
         input: AssetTransferInputJSON
     ): Promise<{ blockNumber: number; timestamp: number }> => {
-        const txs = await this.sdk.rpc.chain.getTransactionsByTracker(
+        const tx = await this.sdk.rpc.chain.getTransactionByTracker(
             input.prevOut.tracker
         );
-        const lastTx = txs[txs.length - 1];
-        const prevOutBlockHash = lastTx.blockHash!;
+        const prevOutBlockHash = tx!.blockHash!;
 
         const block = (await this.sdk.rpc.chain.getBlock(prevOutBlockHash))!;
         return {
