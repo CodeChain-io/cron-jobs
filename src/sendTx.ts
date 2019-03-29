@@ -23,11 +23,12 @@ export async function sendTransaction(
     account: string,
     passphrase: string,
     seq: number,
+    fee: number,
     transaction: Transaction
 ): Promise<H256> {
     const signedTransaction = await sdk.key.signTransaction(transaction, {
         account,
-        fee: 10,
+        fee,
         seq,
         passphrase
     });
@@ -49,8 +50,14 @@ export async function sendMints(
     const hashes = [];
     for (let i = 0; i < mints.length; i += 1) {
         hashes.push(
-            (await sendTransaction(sdk, payer, passphrase, seq + i, mints[i]))
-                .value
+            (await sendTransaction(
+                sdk,
+                payer,
+                passphrase,
+                seq + i,
+                100_000,
+                mints[i]
+            )).value
         );
     }
 

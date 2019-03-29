@@ -217,6 +217,7 @@ if (require.main === module) {
                     payer,
                     passphrase,
                     seq,
+                    100,
                     transfer
                 );
                 if (failedTransaction) {

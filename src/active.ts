@@ -39,7 +39,9 @@ export async function activateApprovers(
             recipient,
             quantity: 1
         });
-        hashes.push(await sendTransaction(sdk, payer, passphrase, seq, pay));
+        hashes.push(
+            await sendTransaction(sdk, payer, passphrase, seq, 100, pay)
+        );
         seq += 1;
     }
 
