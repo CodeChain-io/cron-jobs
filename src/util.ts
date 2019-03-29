@@ -202,7 +202,7 @@ export function makeRandomString(length: number) {
 }
 
 export async function containsTransaction(hash: H256Value, timeout?: number): Promise<boolean> {
-    timeout = timeout || 10.0;
+    timeout = timeout || 120.0;
     const start = Date.now();
     while (Date.now() - start < timeout * 1000.0) {
         const result = await sdk.rpc.chain.containTransaction(hash);
