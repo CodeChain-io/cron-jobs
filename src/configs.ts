@@ -112,21 +112,21 @@ export const ASSET_SCHEMES: AssetScheme[] = PROTO_ASSET_SCHEME.map(({ name, supp
     });
 });
 
-export const FEE = (() => {
+export const FEE: { [txType: string]: U64 } = (() => {
     switch (SERVER) {
         case "local":
             return {
-                ["ChangeAssetScheme"]: new U64(10),
-                ["MintAsset"]: new U64(10),
-                ["IncreaseAssetSupply"]: new U64(10),
-                ["TransferAsset"]: new U64(10),
+                ChangeAssetScheme: new U64(10),
+                MintAsset: new U64(10),
+                IncreaseAssetSupply: new U64(10),
+                TransferAsset: new U64(10),
             };
         case "corgi":
             return {
-                ["ChangeAssetSchemeTx"]: new U64(100000),
-                ["MintAsset"]: new U64(100000),
-                ["IncreaseAssetSupply"]: new U64(100000),
-                ["TransferAsset"]: new U64(100),
+                ChangeAssetScheme: new U64(100000),
+                MintAsset: new U64(100000),
+                IncreaseAssetSupply: new U64(100000),
+                TransferAsset: new U64(100),
             };
         default:
             throw Error("Invalid server configuration");
