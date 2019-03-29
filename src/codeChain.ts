@@ -114,7 +114,7 @@ export default class CodeChain {
             transaction,
             {
                 account: faucetAddress,
-                fee: 10,
+                fee: 100,
                 seq: await getCurrentSeq(this.sdk, faucetAddress)
             }
         );
@@ -216,7 +216,7 @@ export default class CodeChain {
             payTransaction,
             {
                 account: faucetAddress,
-                fee: 10,
+                fee: 100,
                 seq: await getCurrentSeq(this.sdk, faucetAddress)
             }
         );
@@ -254,7 +254,7 @@ export default class CodeChain {
             {
                 keyStore: this.transientKeyStore,
                 account: noopPlatformAddress,
-                fee: 10,
+                fee: 100,
                 seq: await getCurrentSeq(this.sdk, noopPlatformAddress)
             }
         );

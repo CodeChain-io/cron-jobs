@@ -104,7 +104,7 @@ export default class UTXOSet {
             transaction,
             {
                 account: faucetAddress,
-                fee: 10,
+                fee: 100_000,
                 seq: await getCurrentSeq(this.sdk, faucetAddress)
             }
         );
@@ -142,7 +142,7 @@ export default class UTXOSet {
             transaction,
             {
                 account: faucetAddress,
-                fee: 10,
+                fee: 100,
                 seq: await getCurrentSeq(this.sdk, faucetAddress)
             }
         );
@@ -201,7 +201,7 @@ export default class UTXOSet {
             transaction,
             {
                 account: faucetAddress,
-                fee: 10,
+                fee: 100,
                 seq: await getCurrentSeq(this.sdk, faucetAddress)
             }
         );
