@@ -6,7 +6,7 @@ import { State } from "./State";
 import { containsTransaction } from "./util";
 
 export class TxSender {
-    public fee: U64 = new U64(10);
+    public fee: U64 = new U64(100);
     public sender: PlatformAddress;
     public getSignedTransaction: (seq: number) => Promise<SignedTransaction>;
 
