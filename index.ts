@@ -14,6 +14,7 @@ async function main() {
     const keyStore = await sdk.key.createLocalKeyStore();
 
     const helper = new Helper(sdk, keyStore);
+    await helper.setRegularKey();
     const numberOfAssets = 10;
     const assetManager = new AssetManager(helper, numberOfAssets);
     await assetManager.init();
@@ -37,6 +38,10 @@ async function main() {
             assetManager.shuffleBox();
 
             console.log("");
+            if (Math.random() < 0.02) {
+                await helper.setRegularKey();
+            }
+
             if (Math.random() > 0.9) {
                 console.log("Entangled orders' transaction is airdropped");
                 const entangleCnt = randRange(2, numberOfAssets);

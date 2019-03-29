@@ -21,6 +21,9 @@ This project is aimed to airdrop AssetTransferTransactions, including orders for
 - Santa mints 20 assets.
   - Each asset address will have two assets: One of them will be used to trade with other assets, and
     the other will be used to pay fees for orders.
+- Santa creates regular key for the faucet address.
+   - Initially a regular key is created.
+   - There is a 2% chance every iteration for the regular key to be renewed. 
 - Santa creates and mints every time it is initialized.
 
 ## What Santa does

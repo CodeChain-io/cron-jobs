@@ -19,12 +19,12 @@ import * as config from "config";
 // secret ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd
 // faucetAddress tccq9h7vnl68frvqapzv3tujrxtxtwqdnxw6yamrrgd
 
-const faucetSecret = getConfig<string>("faucet_secret");
-const faucetAddress = getConfig<string>("faucet_address");
-
 export default class Helper {
-    private keyStore: KeyStore;
-    private _sdk: SDK;
+    private readonly keyStore: KeyStore;
+    private readonly _sdk: SDK;
+    private readonly faucetSecret: string;
+    private readonly faucetAddress: string;
+    private regularSecret?: string;
 
     public get sdk() {
         return this._sdk;
@@ -33,6 +33,31 @@ export default class Helper {
     constructor(sdk: SDK, keyStore: KeyStore) {
         this._sdk = sdk;
         this.keyStore = keyStore;
+        this.faucetSecret = getConfig<string>("faucet_secret");
+        this.faucetAddress = getConfig<string>("faucet_address");
+        this.regularSecret = undefined;
+    }
+
+    public async setRegularKey() {
+        console.log("New Regular key is now registered.");
+        this.regularSecret = SDK.util.generatePrivateKey();
+        const regularPublic = SDK.util.getPublicFromPrivate(this.regularSecret);
+
+        const setRegularKeyTx = this.sdk.core.createSetRegularKeyTransaction({
+            key: regularPublic
+        });
+        const seq = await this.sdk.rpc.chain.getSeq(this.faucetAddress);
+        const hash = await this.sdk.rpc.chain.sendSignedTransaction(
+            setRegularKeyTx.sign({
+                secret: this.faucetSecret,
+                seq,
+                fee: 10000
+            })
+        );
+
+        while (!(await this.sdk.rpc.chain.containTransaction(hash))) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
 
     public createP2PKHAddress() {
@@ -69,10 +94,10 @@ export default class Helper {
         }
     ): Promise<boolean | null> {
         const {
-            seq = (await this.sdk.rpc.chain.getSeq(faucetAddress)) || 0,
+            seq = (await this.sdk.rpc.chain.getSeq(this.faucetAddress)) || 0,
             fee = 100000,
             awaitResult = true,
-            secret = faucetSecret
+            secret = this.regularSecret || this.faucetSecret
         } = options || {};
         const signed = tx.sign({
             secret,
