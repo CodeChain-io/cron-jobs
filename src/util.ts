@@ -56,7 +56,7 @@ export default class Helper {
         );
 
         while (!(await this.sdk.rpc.chain.containTransaction(hash))) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
     }
 
@@ -95,7 +95,7 @@ export default class Helper {
     ): Promise<boolean | null> {
         const {
             seq = (await this.sdk.rpc.chain.getSeq(this.faucetAddress)) || 0,
-            fee = 100000,
+            fee = 100,
             awaitResult = true,
             secret = this.regularSecret || this.faucetSecret
         } = options || {};
@@ -109,12 +109,12 @@ export default class Helper {
             let cnt = 0;
             while (
                 !(await this.sdk.rpc.chain.containTransaction(signed.hash())) &&
-                cnt < 3000
+                cnt < 300
             ) {
                 cnt++;
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            return cnt < 3000;
+            return cnt < 300;
         } else {
             return null;
         }
@@ -145,7 +145,8 @@ export default class Helper {
         const awaitMint = true;
         await this.sendAssetTransaction(tx, {
             secret,
-            seq
+            seq,
+            fee: 100000
         });
 
         if (!awaitMint) {

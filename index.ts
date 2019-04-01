@@ -246,13 +246,13 @@ async function main() {
                 }
             }
             if (polluted) {
-                SlackNotification.instance.sendError(
+                return SlackNotification.instance.sendError(
                     `problematic transaction ${lastSentTracker}`
                 );
             }
         } catch (e) {
             if (!polluted) {
-                SlackNotification.instance.sendError(e);
+                return SlackNotification.instance.sendError(e);
             }
             console.log(e);
         }
