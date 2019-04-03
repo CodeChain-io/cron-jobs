@@ -152,24 +152,31 @@ export const scenarios: {
         description: "AssetScheme cannot be changed",
         async scenario(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
-            const rogue = pickRandom(PLATFORM_ADDRESSES)!;
+            const currentRegistrar = assetScheme.registrar!;
+            const otherRegistrar =
+                currentRegistrar.value === REGULATOR.platformAddress.value
+                    ? REGULATOR_ALT.platformAddress
+                    : REGULATOR.platformAddress;
+            const nonRegistrars = PLATFORM_ADDRESSES.concat([otherRegistrar]);
+            const nonRegistrar = pickRandom(nonRegistrars)!;
+            const someone = pickRandom(nonRegistrars)!;
             return {
                 expected: false,
                 action: await ChangeAssetScheme.create({
                     assetType,
                     assetScheme,
-                    sender: rogue,
-                    approvers: pickRandomSize(PLATFORM_ADDRESSES, [0, PLATFORM_ADDRESSES.length]),
+                    sender: nonRegistrar,
+                    approvers: pickRandomSize(nonRegistrars, [0, nonRegistrars.length]),
                     changes: {
-                        registrar: rogue,
+                        registrar: someone,
                     },
                 }),
             };
         },
     },
-    registrarOfAssetSchemeCanBeChangedByRegistrar: {
+    assetSchemeCanBeChangedByRegistrar: {
         weight: 1,
-        description: "Registrar of AssetScheme can be changed by the registrar",
+        description: "AssetScheme can be changed by the registrar",
         async scenario(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
             const currentRegistrar = assetScheme.registrar!;
@@ -190,9 +197,9 @@ export const scenarios: {
             };
         },
     },
-    registraOfAssetSchemeCanBeChangedWithApprovalOfRegistrar: {
+    assetSchemeCanBeChangedWithApprovalOfRegistrar: {
         weight: 1,
-        description: "Registrar of AssetScheme can be changed with approvals of the registrar",
+        description: "AssetScheme can be changed with an approval of the registrar",
         async scenario(state: State) {
             const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
             const currentRegistrar = assetScheme.registrar!;
@@ -200,12 +207,15 @@ export const scenarios: {
                 currentRegistrar.value === REGULATOR.platformAddress.value
                     ? REGULATOR_ALT.platformAddress
                     : REGULATOR.platformAddress;
+            const nonRegistrars = PLATFORM_ADDRESSES.concat([otherRegistrar]);
+            const anyone = pickRandom(nonRegistrars)!;
             return {
                 expected: true,
                 action: await ChangeAssetScheme.create({
                     assetType,
                     assetScheme,
-                    sender: otherRegistrar,
+                    sender: anyone,
+                    approvers: [currentRegistrar],
                     changes: {
                         registrar: otherRegistrar,
                     },
