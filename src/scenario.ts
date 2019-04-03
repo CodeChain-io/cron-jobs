@@ -3,6 +3,7 @@ import { Transaction } from "codechain-sdk/lib/core/Transaction";
 
 import { Action } from "./actions/Action";
 import { ChangeAssetScheme } from "./actions/ChangeAssetScheme";
+import { IncreaseSupply } from "./actions/IncreaseAmount";
 import { Transfer, TransferOutput } from "./actions/Transfer";
 import { ASSET_ACCOUNTS, PLATFORM_ADDRESSES, REGULATOR, REGULATOR_ALT } from "./configs";
 import { State, Utxo } from "./State";
@@ -219,7 +220,90 @@ export const scenarios: {
                     changes: {
                         registrar: otherRegistrar,
                     },
+                }),
+            };
+        },
+    },
+    assetCannotBeIncreased: {
+        weight: 1,
+        description: "Asset supply cannot be increased",
+        async scenario(state: State) {
+            const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+            const currentRegistrar = assetScheme.registrar!;
+            const otherRegistrar =
+                currentRegistrar.value === REGULATOR.platformAddress.value
+                    ? REGULATOR_ALT.platformAddress
+                    : REGULATOR.platformAddress;
+            const nonRegistrars = PLATFORM_ADDRESSES.concat([otherRegistrar]);
+            const nonRegistrar = pickRandom(nonRegistrars)!;
+            const someone = pickRandom(
+                [REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS),
+            )!;
+            return {
+                expected: false,
+                action: await IncreaseSupply.create({
+                    sender: nonRegistrar,
+                    receiver: someone,
+                    assetType,
+                    supplyValue: 10000,
+                }),
+            };
+        },
+    },
+    assetMightBeIncreasedByRegistrar: {
+        weight: 1,
+        description: "Asset supply might be increased by the registrar",
+        async scenario(state: State) {
+            const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+            const currentRegistrar = assetScheme.registrar!;
+            const someone = pickRandom(
+                [REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS),
+            )!;
+            const increaseAmount = 100;
+            const hasEnoughHeadroom = U64.MAX_VALUE.minus(
+                assetScheme.supply,
+            ).isGreaterThanOrEqualTo(increaseAmount);
+
+            return {
+                expected: hasEnoughHeadroom,
+                action: await IncreaseSupply.create({
+                    sender: currentRegistrar,
+                    receiver: someone,
+                    assetType,
+                    supplyValue: increaseAmount,
+                }),
+            };
+        },
+    },
+    assetMightBeIncreasedWithApprovalOfRegistrar: {
+        weight: 1,
+        description: "Asset supply might be increased with an approval of the registrar",
+        async scenario(state: State) {
+            const [assetType, assetScheme] = pickRandom(state.allAssetSchemes())!;
+            const currentRegistrar = assetScheme.registrar!;
+            const otherRegistrar =
+                currentRegistrar.value === REGULATOR.platformAddress.value
+                    ? REGULATOR_ALT.platformAddress
+                    : REGULATOR.platformAddress;
+            const nonRegistrars = PLATFORM_ADDRESSES.concat([otherRegistrar]);
+            const nonRegistrar = pickRandom(nonRegistrars)!;
+            const someone = pickRandom(
+                [REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS),
+            )!;
+
+            const increaseAmount = 100;
+            const hasEnoughHeadroom = U64.MAX_VALUE.minus(
+                assetScheme.supply,
+            ).isGreaterThanOrEqualTo(increaseAmount);
+
+            return {
+                expected: hasEnoughHeadroom,
+                action: await IncreaseSupply.create({
+                    sender: nonRegistrar,
+                    receiver: someone,
                     approvers: [currentRegistrar],
+                    assetType,
+                    supplyValue: increaseAmount,
                 }),
             };
         },
