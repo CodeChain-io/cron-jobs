@@ -1,0 +1,39 @@
+{
+  "name": "codechain-santa",
+  "version": "1.0.0",
+  "description": "The santa gives transaction presents including order for CodeChain",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "ts-node ./index.ts",
+    "build": "tsc -p .",
+    "test": "npm run lint",
+    "lint": "tslint -p . && prettier '**/*.ts' -l",
+    "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
+  },
+  "author": "CodeChain Team <codechain@kodebox.io>",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/client": "^4.12.0",
+    "@types/lodash": "^4.14.123",
+    "@sendgrid/mail": "^6.3.1",
+    "bignumber.js": "^7.2.1",
+    "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#result-lib",
+    "config": "^2.0.1",
+    "request-json": "^0.6.3",
+    "request-promise-native": "^1.0.5"
+  },
+  "devDependencies": {
+    "@types/bignumber.js": "^5.0.0",
+    "@types/config": "^0.0.34",
+    "@types/node": "^10.9.1",
+    "@types/request": "^2.47.1",
+    "@types/request-promise-native": "^1.0.15",
+    "@types/sleep": "^0.0.7",
+    "prettier": "1.14.2",
+    "ts-node": "^7.0.1",
+    "tsc": "^1.20150623.0",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.10.0",
+    "typescript": "^3.1.6"
+  }
+}
