@@ -1,0 +1,7 @@
+{
+    "rpc_url": "http://localhost:8080",
+    "network_id": "tc",
+    "faucet_secret": "ede1d4ccb4ec9a8bbbae9a13db3f4a7b56ea04189be86ac3a6a439d9a0a1addd",
+    "faucet_address": "tccq9h7vnl68frvqapzv3tujrxtxtwqdnxw6yamrrgd",
+    "slackWebhookURL": ""
+}
