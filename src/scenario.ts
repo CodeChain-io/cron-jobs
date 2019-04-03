@@ -81,9 +81,9 @@ export const scenarios: {
             };
         },
     },
-    takeAllSingleAssetType: {
+    singleTypeOfAssetCanBeTransferred: {
         weight: 1,
-        description: "Take airdropped assets back (one AssetType)",
+        description: "Assets can be transferred by Reigstrar",
         async scenario(state: State) {
             const account = pickRandom(ASSET_ACCOUNTS)!;
             const summerized = AssetSummarization.summerizeBy(
@@ -94,26 +94,29 @@ export const scenarios: {
             if (!assetType) {
                 return new Skip("Picked account doesn't have any assets");
             }
+            const receiver = pickRandom(
+                [REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS),
+            )!;
             return {
                 expected: true,
                 action: await Transfer.create({
-                    sender: REGULATOR.platformAddress,
-                    inputs: summerized.get(assetType).values,
+                    sender: pickRandom(PLATFORM_ADDRESSES)!,
+                    inputs: summerized.get(assetType).values, // SDK will sign inputs correctly. don't worry
                     outputs: [
                         {
                             assetType: H160.ensure(assetType),
                             quantity: summerized.get(assetType).sum,
                             type: "P2PKH",
-                            receiver: REGULATOR.accountId,
+                            receiver,
                         },
                     ],
                 }),
             };
         },
     },
-    takeAllAssets: {
+    singleTypeOfAssetCanBeTransferredByRegistrar: {
         weight: 1,
-        description: "Take all airdropped assets back",
+        description: "Assets can be transferred by Reigstrar",
         async scenario(state: State) {
             const account = pickRandom(ASSET_ACCOUNTS)!;
             const summerized = AssetSummarization.summerizeBy(
@@ -124,6 +127,9 @@ export const scenarios: {
             if (!assetType) {
                 return new Skip("Picked account doesn't have any assets");
             }
+            const receiver = pickRandom(
+                [REGULATOR.accountId, REGULATOR_ALT.accountId].concat(ASSET_ACCOUNTS),
+            )!;
             return {
                 expected: true,
                 action: await Transfer.create({
@@ -134,7 +140,7 @@ export const scenarios: {
                             assetType: H160.ensure(assetType),
                             quantity: summerized.get(assetType).sum,
                             type: "P2PKH",
-                            receiver: REGULATOR.accountId,
+                            receiver,
                         },
                     ],
                 }),
