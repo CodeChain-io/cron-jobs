@@ -1,0 +1,5 @@
+{
+  "rpc_url": "http://localhost:8080",
+  "network_id": "tc",
+  "slackWebhookURL": ""
+}
