@@ -1,0 +1,28 @@
+{
+  "name": "codechain-scenario",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "local": "SERVER=local ts-node src/index.ts",
+    "corgi": "SERVER=corgi ts-node src/index.ts",
+    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
+  },
+  "dependencies": {
+    "@slack/client": "^4.12.0",
+    "@types/lodash": "^4.14.123",
+    "codechain-primitives": "^0.4.8",
+    "codechain-sdk": "https://github.com/foriequal0/codechain-sdk-js.git#dist",
+    "request-promise-native": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/request": "^2.48.1",
+    "@types/request-promise-native": "^1.0.15",
+    "@typescript-eslint/eslint-plugin": "^1.5.0",
+    "@typescript-eslint/parser": "^1.5.0",
+    "eslint": "^5.15.3",
+    "prettier": "^1.16.4",
+    "ts-node": "^8.0.3",
+    "typescript": "^3.3.3333"
+  }
+}
