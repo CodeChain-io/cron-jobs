@@ -1,0 +1,12 @@
+{
+    "server": "http://localhost:3485",
+    "network": "tc",
+    "left": {
+        "address": null,
+        "passphrase": null
+    },
+    "right": {
+        "address": null,
+        "passphrase": null
+    }
+}

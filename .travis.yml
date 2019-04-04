@@ -11,7 +11,7 @@ jobs:
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.13.0"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
-              - cd tick-tock
+              - cd $TRAVIS_JOB_NAME
               - yarn install
           before_script:
               - docker pull kodebox/codechain:203779d31b100bf0495ac48bb493d1d0a45e5668
@@ -29,6 +29,19 @@ jobs:
               - yarn start &
               - popd
               - NODE_ENV=test yarn test
+        - stage: test
+          name: juggle-ccc
+          os: linux
+          before_install:
+              - CHANGED=$(.travis/check-change '^juggle-ccc/') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.13.0"
+              - export PATH="$HOME/.yarn/bin:$PATH"
+          install:
+              - cd $TRAVIS_JOB_NAME
+              - yarn install
+          script:
+              - yarn lint
+              - yarn build
 services:
   - docker
   - postgresql
