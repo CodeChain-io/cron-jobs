@@ -1,0 +1,31 @@
+{
+  "name": "juggle-ccc",
+  "version": "0.1.0",
+  "description": "Juggle with CCC",
+  "main": "index.js",
+  "author": "Seulgi Kim <seulgi.kim@kodebox.io>",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node ./src/index.ts",
+    "build": "tsc -p .",
+    "test": "mocha -r ts-node/register --timeout 5000 src/**/*.test.ts",
+    "lint": "tslint -p . && prettier './src/**.ts' -l",
+    "fmt": "tslint -p . --fix && prettier './src/**.ts' --write"
+  },
+  "dependencies": {
+    "codechain-sdk": "^1.0.1",
+    "config": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/config": "^0.0.34",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^11.13.0",
+    "mocha": "^6.0.2",
+    "prettier": "^1.16.4",
+    "ts-node": "^8.0.3",
+    "tslint": "^5.15.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-no-unused-expression-chai": "^0.1.4",
+    "typescript": "^3.4.1"
+  }
+}
