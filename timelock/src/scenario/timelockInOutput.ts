@@ -1,0 +1,97 @@
+import * as chai from "chai";
+import { Timelock } from "codechain-sdk/lib/core/classes";
+import CodeChain from "../codeChain";
+import { createTimelock, delay } from "../util";
+
+export async function run(
+    codeChain: CodeChain,
+    timelockType: Timelock["type"]
+) {
+    const emptyTransactionCommand = {
+        run: true
+    };
+    try {
+        await codeChain.fillMoneyForNoop();
+        runEmptyTransaction(codeChain, emptyTransactionCommand);
+
+        const startBlock = await codeChain.getCurrentBlock();
+        console.log(
+            "StartBlockHeight: %d %d, %s",
+            startBlock.number,
+            startBlock.timestamp,
+            timelockType
+        );
+        const utxoSet = await codeChain.prepareUTXOs(startBlock);
+
+        const invalidTransaction = await codeChain.createTransaction({
+            input: utxoSet.getTimelockAsset(timelockType),
+            timelock: createTimelock(startBlock, timelockType),
+            useTimelockOnInput: false
+        });
+
+        const invalidTxHash = await codeChain.sendTransaction(
+            invalidTransaction
+        );
+
+        const validTransaction = await codeChain.createTransaction({
+            input: utxoSet.getTimelockAsset(timelockType),
+            timelock: createTimelock(startBlock, timelockType),
+            useTimelockOnInput: true
+        });
+
+        const validTxHash = await codeChain.sendTransaction(validTransaction);
+        await codeChain.waitTransactionMined(validTxHash);
+        const containsInvalid = await codeChain.containsTransaction(
+            invalidTxHash
+        );
+        chai.assert.strictEqual(false, containsInvalid);
+
+        const leastBlock = await codeChain.waitFutureBlock({
+            canHandle: validTransaction
+        });
+
+        chai.assert(
+            (await codeChain.getBlockOfTransaction(validTransaction)).number >=
+                leastBlock.number
+        );
+
+        console.log("Timelock success");
+        console.log(
+            `StartBlockHeight: ${startBlock.number} ${startBlock.timestamp}`
+        );
+        console.log(
+            `leastBlockHeight: ${leastBlock.number} ${leastBlock.timestamp}`
+        );
+
+        emptyTransactionCommand.run = false;
+    } catch (err) {
+        emptyTransactionCommand.run = false;
+        throw err;
+    }
+}
+
+async function runEmptyTransaction(
+    codeChain: CodeChain,
+    command: { run: boolean }
+) {
+    while (command.run) {
+        try {
+            await codeChain.sendNoopTransaction();
+        } catch (err) {
+            console.error(err);
+        }
+        await delay(3 * 1000);
+    }
+}
+
+if (require.main === module) {
+    async function main() {
+        const codeChain = new CodeChain();
+        await run(codeChain, "block");
+        await run(codeChain, "blockAge");
+        await run(codeChain, "time");
+        await run(codeChain, "timeAge");
+    }
+
+    main().catch(console.error);
+}
