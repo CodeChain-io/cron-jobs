@@ -3,7 +3,7 @@ import { U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
 import {
     Asset,
-    AssetTransferAddress,
+    AssetAddress,
     AssetTransferOutput,
     Block,
     Timelock
@@ -30,7 +30,7 @@ export default class UTXOSet {
     private sdk: SDK;
     private pbkhAssets: Asset[];
     private timelockAssets: Asset[];
-    private assetOwner: AssetTransferAddress | null;
+    private assetOwner: AssetAddress | null;
     private keyStore: KeyStore;
     private currentBlock: Block;
 
@@ -45,13 +45,9 @@ export default class UTXOSet {
 
     public prepare = async () => {
         const assetOwnerKey = await this.keyStore.asset.createKey();
-        this.assetOwner = AssetTransferAddress.fromTypeAndPayload(
-            1,
-            assetOwnerKey,
-            {
-                networkId
-            }
-        );
+        this.assetOwner = AssetAddress.fromTypeAndPayload(1, assetOwnerKey, {
+            networkId
+        });
         {
             const asset = await this.mintAsset();
             const splittedAssets = await this.splitToPBKHAssets(asset);

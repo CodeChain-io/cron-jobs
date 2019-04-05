@@ -1,5 +1,5 @@
 import {
-    AssetTransferAddress,
+    AssetAddress,
     H256,
     PlatformAddressValue
 } from "codechain-primitives/lib";
@@ -10,9 +10,7 @@ import { MemoryKeyStore } from "codechain-sdk/lib/key/MemoryKeyStore";
 import { P2PKH } from "codechain-sdk/lib/key/P2PKH";
 import * as config from "config";
 
-export async function createRandomAssetTransferAddress(): Promise<
-    AssetTransferAddress
-> {
+export async function createRandomAssetAddress(): Promise<AssetAddress> {
     try {
         const networkId = getConfig<string>("networkId");
         const p2pkh = new P2PKH({
@@ -24,7 +22,7 @@ export async function createRandomAssetTransferAddress(): Promise<
             passphrase: "pass"
         });
     } catch (err) {
-        console.error("Error while createRandomAssetTransferAddress");
+        console.error("Error while createRandomAssetAddress");
         throw err;
     }
 }
@@ -90,7 +88,7 @@ export async function waitContainTransacitonSuccess(
     timeout: number
 ) {
     while (true) {
-        const contains = await sdk.rpc.chain.containTransaction(txHash);
+        const contains = await sdk.rpc.chain.containsTransaction(txHash);
         if (contains) {
             return;
         }

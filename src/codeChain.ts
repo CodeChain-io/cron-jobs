@@ -18,7 +18,7 @@ import * as _ from "lodash";
 import { TRANSACTION_TIMEOUT } from "./constant";
 import * as timelockScript from "./timelockScript";
 import {
-    createRandomAssetTransferAddress,
+    createRandomAssetAddress,
     delay,
     getConfig,
     getCurrentSeq,
@@ -98,7 +98,7 @@ export default class CodeChain {
             .createTransferAssetTransaction()
             .addInputs(transactionInput)
             .addOutputs({
-                recipient: await createRandomAssetTransferAddress(),
+                recipient: await createRandomAssetAddress(),
                 quantity: params.input.quantity,
                 assetType: params.input.assetType,
                 shardId: params.input.shardId
@@ -183,7 +183,7 @@ export default class CodeChain {
     };
 
     public containsTransaction = async (txHash: H256): Promise<boolean> => {
-        return this.sdk.rpc.chain.containTransaction(txHash);
+        return this.sdk.rpc.chain.containsTransaction(txHash);
     };
 
     public getBlockOfTransaction = async (
