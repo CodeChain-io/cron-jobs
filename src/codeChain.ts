@@ -209,7 +209,7 @@ export default class CodeChain {
             recipient: PlatformAddress.fromAccountId(this.noopAccountId!, {
                 networkId
             }),
-            quantity: 1000
+            quantity: 10000
         });
 
         const signedTransaction = await this.sdk.key.signTransaction(
