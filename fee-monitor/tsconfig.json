@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "lib": ["es7", "dom"],
+    "types": ["node"],
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "lib",
+    "strict": true,
+    "noImplicitAny": true,
+    "downlevelIteration": true
+  },
+  "include": ["./src/**/*.ts"]
+}
