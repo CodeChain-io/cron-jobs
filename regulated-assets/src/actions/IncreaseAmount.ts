@@ -1,10 +1,4 @@
-import {
-    AssetAddress,
-    H160,
-    PlatformAddress,
-    U64,
-    U64Value,
-} from "codechain-primitives";
+import { AssetAddress, H160, PlatformAddress, U64, U64Value } from "codechain-primitives";
 
 import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
 import { sdk } from "../configs";

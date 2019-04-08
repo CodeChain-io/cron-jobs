@@ -102,7 +102,7 @@ export class State {
                         }&assetType=${assetType}&page=${page}`,
                         json: true,
                     });
-                    if (result.length == 0) break;
+                    if (result.length === 0) break;
                     utxoResponse.push(...result);
                 }
                 const utxos = utxoResponse.map(utxo => {
@@ -116,7 +116,6 @@ export class State {
                         tracker: utxo.transactionTracker,
                         transactionOutputIndex: utxo.transactionOutputIndex,
                     });
-                    let type: LockScriptType;
                     if (
                         !asset.lockScriptHash.isEqualTo(P2PKH.getLockScriptHash()) &&
                         !asset.lockScriptHash.isEqualTo(P2PKHBurn.getLockScriptHash())

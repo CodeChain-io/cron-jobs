@@ -83,8 +83,8 @@ export function pickWeightedRandom<T extends { weight: number }>(pool: T[]): T |
 }
 
 export class AssetSummarization<T> {
-    summaries: { [assetType: string]: { sum: U64; values: T[] } };
-    constructor(summerizes: { [assetType: string]: { sum: U64; values: T[] } }) {
+    private summaries: { [assetType: string]: { sum: U64; values: T[] } };
+    public constructor(summerizes: { [assetType: string]: { sum: U64; values: T[] } }) {
         this.summaries = summerizes;
     }
 
@@ -104,7 +104,7 @@ export class AssetSummarization<T> {
         return Object.keys(this.summaries).map(H160.ensure);
     }
 
-    all(): { assetType: H160; summary: { sum: U64; values: T[] } }[] {
+    public all(): { assetType: H160; summary: { sum: U64; values: T[] } }[] {
         const result = [];
         for (const assetType of this.assetTypes()) {
             result.push({ assetType, summary: this.get(assetType) });
@@ -127,13 +127,13 @@ export class AssetSummarization<T> {
         return true;
     }
 
-    static summerize<T extends { assetType: H160; quantity: U64 }>(
+    public static summerize<T extends { assetType: H160; quantity: U64 }>(
         assetLikes: T[],
     ): AssetSummarization<T> {
         return AssetSummarization.summerizeBy(assetLikes, x => x);
     }
 
-    static summerizeBy<T>(
+    public static summerizeBy<T>(
         assetLikes: T[],
         extract: (value: T) => { assetType: H160; quantity: U64 },
     ): AssetSummarization<T> {

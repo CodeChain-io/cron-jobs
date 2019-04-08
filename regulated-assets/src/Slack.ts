@@ -1,25 +1,24 @@
 import * as _ from "lodash";
-
-const { IncomingWebhook } = require("@slack/client");
+import { IncomingWebhook } from "@slack/client";
 
 interface Attachment {
     title: string;
     text: string;
 }
 
-export interface ISlack {
+export interface Slack {
     sendMessage(msg: string): void;
     sendError(msg: string): void;
     sendAttachments(title: string, text: string): void;
 }
 
-class NullSlack implements ISlack {
-    sendMessage(msg: string) {}
-    sendError(msg: string) {}
-    sendAttachments(title: string, text: string) {}
+class NullSlack implements Slack {
+    public sendMessage(_msg: string) {}
+    public sendError(_msg: string) {}
+    public sendAttachments(_title: string, _text: string) {}
 }
 
-class Slack implements ISlack {
+class ConcreteSlack implements Slack {
     private webhook: any;
     private unsentMessage: string[] = [];
     private unsentAttachments: Attachment[] = [];
@@ -69,10 +68,10 @@ class Slack implements ISlack {
     }
 }
 
-export function createSlack(slackWebhookUrl: string | undefined): ISlack {
+export function createSlack(slackWebhookUrl: string | undefined): Slack {
     if (slackWebhookUrl) {
         console.log("Slack connected");
-        return new Slack(slackWebhookUrl);
+        return new ConcreteSlack(slackWebhookUrl);
     } else {
         console.log("Slack not connected");
         return new NullSlack();
