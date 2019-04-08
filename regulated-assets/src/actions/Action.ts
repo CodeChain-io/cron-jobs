@@ -1,4 +1,4 @@
-import { H160, H256, PlatformAddress } from "codechain-primitives/lib";
+import { H160, PlatformAddress } from "codechain-primitives/lib";
 import { Transaction } from "codechain-sdk/lib/core/classes";
 
 import { State } from "../State";
@@ -26,7 +26,7 @@ export abstract class Action<Tx extends Transaction> {
         });
         if (valid) {
             try {
-                const hash = await time("send", () => this.send(state));
+                await time("send", () => this.send(state));
                 await time("apply", () => this.apply(state));
                 console.log(`succeed`);
             } catch (e) {

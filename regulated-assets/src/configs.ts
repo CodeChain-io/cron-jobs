@@ -1,14 +1,8 @@
 import { H160, H256, PlatformAddress, U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
-import {
-    AssetScheme,
-    MintAsset,
-    ChangeAssetScheme as ChangeAssetSchemeTx,
-    TransferAsset,
-} from "codechain-sdk/lib/core/classes";
+import { AssetScheme } from "codechain-sdk/lib/core/classes";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import { createSlack } from "./Slack";
-import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
 
 export const SERVER: string = (() => {
     const server = process.env.SERVER || "local";
