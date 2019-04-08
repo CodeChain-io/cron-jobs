@@ -17,12 +17,11 @@ async function main() {
   let prevBestBlockNumber = 0;
 
   while (true) {
-    await new Promise(resolve => setTimeout(resolve, 360));
+    await new Promise(resolve => setTimeout(resolve, 60 * 60 * 1000));
     const currentBestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
     if (prevBestBlockNumber === currentBestBlockNumber) {
       SlackNotification.instance.sendError(content);
       await emailClient.sendAnnouncement(targetEmail, title, content);
-      return;
     }
     prevBestBlockNumber = currentBestBlockNumber;
   }

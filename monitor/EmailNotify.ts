@@ -1,18 +1,19 @@
 import * as sgMail from "@sendgrid/mail";
+import { getConfig, haveConfig } from "./util";
 
 export class EmailClient {
   private from: string;
   private publicUrl: string;
 
   public constructor(publicUrl: string) {
-    if (process.env.SENDGRID_API_KEY == null) {
+    if (!haveConfig("sendgrid_api_key")) {
       if (process.env.NODE_ENV === "production") {
         throw Error(`SENDGRID_API_KEY not found`);
       } else {
         console.log("SENDGRID_API_KEY is null");
       }
     }
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+    sgMail.setApiKey(getConfig("sendgrid_api_key"));
     this.from = "no-reply@kodebox.io";
     this.publicUrl = publicUrl;
   }
