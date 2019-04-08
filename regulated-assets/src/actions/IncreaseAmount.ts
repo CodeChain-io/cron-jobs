@@ -1,10 +1,10 @@
 import {
-    AssetTransferAddress,
+    AssetAddress,
     H160,
     PlatformAddress,
     U64,
     U64Value,
-} from "codechain-primitives/lib";
+} from "codechain-primitives";
 
 import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
 import { sdk } from "../configs";
@@ -21,7 +21,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
         supplyValue: U64Value;
     }): Promise<IncreaseSupply> {
         const supply = U64.ensure(params.supplyValue);
-        const recipient = AssetTransferAddress.fromTypeAndPayload(1, params.receiver, {
+        const recipient = AssetAddress.fromTypeAndPayload(1, params.receiver, {
             networkId: sdk.networkId,
         });
         const tx = await createApprovedTx({

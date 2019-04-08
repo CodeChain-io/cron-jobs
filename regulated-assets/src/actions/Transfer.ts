@@ -1,10 +1,10 @@
 import {
-    AssetTransferAddress,
+    AssetAddress,
     H160,
     PlatformAddress,
     U64,
     U64Value,
-} from "codechain-primitives/lib";
+} from "codechain-primitives";
 import { AssetScheme, TransferAsset } from "codechain-sdk/lib/core/classes";
 
 import { sdk } from "../configs";
@@ -34,7 +34,7 @@ export class Transfer extends Action<TransferAsset> {
             inputs: (params.inputs || []).map(utxo => utxo.asset.createTransferInput()),
             outputs: (params.outputs || []).map(output =>
                 sdk.core.createAssetTransferOutput({
-                    recipient: AssetTransferAddress.fromTypeAndPayload(
+                    recipient: AssetAddress.fromTypeAndPayload(
                         output.type === "P2PKH" ? 1 : 2,
                         output.receiver,
                         { networkId: sdk.networkId },
