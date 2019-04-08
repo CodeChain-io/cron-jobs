@@ -3,7 +3,7 @@ import { getConfig } from "./util";
 
 const { IncomingWebhook } = require("@slack/client");
 
-const slackWebhookUrl = getConfig<string>("slackWebhookURL");
+const slackWebhookUrl = getConfig<string>("slack_webhook_url");
 
 interface Attachment {
   title: string;
