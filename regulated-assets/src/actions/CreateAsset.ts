@@ -1,4 +1,4 @@
-import { AssetTransferAddress, H160, PlatformAddress } from "codechain-primitives/lib";
+import { AssetAddress, H160, PlatformAddress } from "codechain-primitives";
 import { AssetScheme, MintAsset } from "codechain-sdk/lib/core/classes";
 
 import { sdk } from "../configs";
@@ -19,7 +19,7 @@ export class CreateAsset extends Action<MintAsset> {
             tag: "CreateAsset",
             sender: params.regulator,
             tx: params.assetScheme.createMintTransaction({
-                recipient: AssetTransferAddress.fromTypeAndPayload(1, params.recipient, {
+                recipient: AssetAddress.fromTypeAndPayload(1, params.recipient, {
                     networkId: sdk.networkId,
                 }),
             }),

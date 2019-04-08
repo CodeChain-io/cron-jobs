@@ -205,7 +205,7 @@ export async function checkTransaction(hash: H256Value, timeout?: number): Promi
     timeout = timeout || TIMEOUT;
     const start = Date.now();
     while (Date.now() - start < timeout * 1000.0) {
-        const result = await sdk.rpc.chain.containTransaction(hash);
+        const result = await sdk.rpc.chain.containsTransaction(hash);
         if (result) {
             return;
         } else {

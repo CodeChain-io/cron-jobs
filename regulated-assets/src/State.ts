@@ -1,12 +1,12 @@
 import {
-    AssetTransferAddress,
+    AssetAddress,
     H160,
     H160Value,
     PlatformAddress,
     PlatformAddressValue,
     U64,
     U64Value,
-} from "codechain-primitives/lib";
+} from "codechain-primitives";
 import { Asset, AssetScheme } from "codechain-sdk/lib/core/classes";
 import * as request from "request-promise-native";
 
@@ -91,7 +91,7 @@ export class State {
                     transactionTracker: string;
                     transactionOutputIndex: number;
                 }
-                const assetAddress = AssetTransferAddress.fromTypeAndPayload(1, account, {
+                const assetAddress = AssetAddress.fromTypeAndPayload(1, account, {
                     networkId: sdk.networkId,
                 });
                 const utxoResponse: UtxoAttribute[] = [];
