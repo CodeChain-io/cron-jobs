@@ -1,0 +1,14 @@
+{
+  "name": "move-ccc",
+  "version": "1.0.0",
+  "main": "move-ccc.js",
+  "license": "MIT",
+  "scripts": {
+    "lint": "prettier 'move-ccc.js' -l",
+    "fmt": "prettier 'move-ccc.js' --write"
+  },
+  "dependencies": {
+    "codechain-sdk": "^1.1.0",
+    "prettier": "1.14.2"
+  }
+}
