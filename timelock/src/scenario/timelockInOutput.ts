@@ -32,6 +32,7 @@ export async function run(
         const invalidTxHash = await codeChain.sendTransaction(
             invalidTransaction
         );
+        console.log(`Send InvalidTx, Hash: ${invalidTxHash.toString()}`);
 
         const validTransaction = await codeChain.createTransaction({
             input: utxoSet.getTimelockAsset(timelockType),
@@ -40,6 +41,8 @@ export async function run(
         });
 
         const validTxHash = await codeChain.sendTransaction(validTransaction);
+        console.log(`Send validTxHash, Hash: ${validTxHash.toString()}`);
+
         await codeChain.waitTransactionMined(validTxHash);
         const containsInvalid = await codeChain.containsTransaction(
             invalidTxHash
@@ -50,9 +53,8 @@ export async function run(
             canHandle: validTransaction
         });
 
-        chai.assert(
-            (await codeChain.getBlockOfTransaction(validTransaction)).number >=
-                leastBlock.number
+        const insertedBlock = await codeChain.getBlockOfTransaction(
+            validTransaction
         );
 
         console.log("Timelock success");
@@ -62,6 +64,12 @@ export async function run(
         console.log(
             `leastBlockHeight: ${leastBlock.number} ${leastBlock.timestamp}`
         );
+        console.log(
+            `InsertedBlockHeight: ${insertedBlock.number} ${
+                insertedBlock.timestamp
+            }`
+        );
+        chai.assert(insertedBlock.number >= leastBlock.number);
 
         emptyTransactionCommand.run = false;
     } catch (err) {
