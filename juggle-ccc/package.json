@@ -13,6 +13,7 @@
     "fmt": "tslint -p . --fix && prettier './src/**.ts' --write"
   },
   "dependencies": {
+    "@slack/client": "^5.0.0",
     "codechain-sdk": "^1.0.1",
     "config": "^3.0.1"
   },
