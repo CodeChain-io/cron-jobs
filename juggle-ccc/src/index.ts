@@ -131,8 +131,14 @@ async function main() {
                     seq
                 });
 
-                const hash = await sdk.rpc.chain.sendSignedTransaction(signed);
-                console.log(`${hash} sent`);
+                try {
+                    const hash = await sdk.rpc.chain.sendSignedTransaction(
+                        signed
+                    );
+                    console.log(`${hash} sent`);
+                } catch (err) {
+                    console.error(`Cannot send transaction: ${err.message}`);
+                }
 
                 isLeftTurn = !isLeftTurn;
 
