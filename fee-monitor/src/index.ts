@@ -155,7 +155,23 @@ async function main() {
     for (;;) {
         console.log();
         console.log(`BlockNumber: ${blockNumber}`);
-        await checkBlock(blockNumber);
+        for (let retry = 1; ; retry++) {
+            try {
+                await checkBlock(blockNumber);
+                break;
+            } catch (e) {
+                if (e.prototype.name === "FetchError") {
+                    if (retry == 10) {
+                        console.error(`Too many retries: ${retry}`);
+                        throw e;
+                    }
+                    console.error(`Retry FetchError. wait for ${retry} sec(s)`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retry));
+                } else {
+                    throw e;
+                }
+            }
+        }
         blockNumber = await getNextBlockNumber(blockNumber);
     }
 }
