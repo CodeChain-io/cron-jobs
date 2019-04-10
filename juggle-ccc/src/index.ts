@@ -55,66 +55,86 @@ async function main() {
         isLeftTurn = false;
     }
 
+    let retry = 0;
     while (true) {
-        const address = isLeftTurn ? leftAddress : rightAddress;
-        const recipient = isLeftTurn ? rightAddress : leftAddress;
-        const passphrase = isLeftTurn ? leftPassphrase : rightPassphrase;
-
-        const currentBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
-        if (currentBlockNumber <= previousBlockNumber) {
-            console.error("Wait 3 seconds");
-            await wait(3_000);
-            continue;
-        }
-        previousBlockNumber = currentBlockNumber;
-
-        const seq = await sdk.rpc.chain.getSeq(address, currentBlockNumber);
-        const currentBalance = await sdk.rpc.chain.getBalance(
-            address,
-            currentBlockNumber
-        );
-        if (currentBalance.isLessThan(500)) {
-            const oppositeBalance = await sdk.rpc.chain.getBalance(
-                recipient,
-                currentBlockNumber
-            );
-            if (oppositeBalance.isLessThan(500)) {
-                const left = isLeftTurn ? currentBalance : oppositeBalance;
-                const right = isLeftTurn ? oppositeBalance : currentBalance;
-                throw Error(
-                    `Too less balance on both address. left: ${
-                        left.value
-                    } right: ${right.value}`
-                );
-            }
-            isLeftTurn = !isLeftTurn;
-            continue;
-        }
-
-        const fee = Math.max(
-            Math.floor(Math.random() * 3 * defaultFee),
-            defaultFee
-        );
-        const quantity = Math.floor(Math.random() * 10 * defaultQuantity);
-
-        const tx = sdk.core.createPayTransaction({ recipient, quantity });
-        const signed = await sdk.key.signTransaction(tx, {
-            account: address,
-            passphrase,
-            fee,
-            seq
-        });
-
         try {
-            const hash = await sdk.rpc.chain.sendSignedTransaction(signed);
-            console.log(`${hash} sent`);
-        } catch (ex) {
-            console.error(`Cannot send ${address}:${seq}: ${ex.message}`);
+            while (true) {
+                const address = isLeftTurn ? leftAddress : rightAddress;
+                const recipient = isLeftTurn ? rightAddress : leftAddress;
+                const passphrase = isLeftTurn
+                    ? leftPassphrase
+                    : rightPassphrase;
+
+                const currentBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+                if (currentBlockNumber <= previousBlockNumber) {
+                    console.log("Wait 3 seconds");
+                    await wait(3_000);
+                    continue;
+                }
+                previousBlockNumber = currentBlockNumber;
+
+                const seq = await sdk.rpc.chain.getSeq(
+                    address,
+                    currentBlockNumber
+                );
+                const currentBalance = await sdk.rpc.chain.getBalance(
+                    address,
+                    currentBlockNumber
+                );
+                if (currentBalance.isLessThan(500)) {
+                    const oppositeBalance = await sdk.rpc.chain.getBalance(
+                        recipient,
+                        currentBlockNumber
+                    );
+                    if (oppositeBalance.isLessThan(500)) {
+                        const left = isLeftTurn
+                            ? currentBalance
+                            : oppositeBalance;
+                        const right = isLeftTurn
+                            ? oppositeBalance
+                            : currentBalance;
+                        throw Error(
+                            `Too less balance on both address. left: ${
+                                left.value
+                            } right: ${right.value}`
+                        );
+                    }
+                    isLeftTurn = !isLeftTurn;
+                    continue;
+                }
+
+                const fee = Math.max(
+                    Math.floor(Math.random() * 3 * defaultFee),
+                    defaultFee
+                );
+                const quantity = Math.floor(
+                    Math.random() * 10 * defaultQuantity
+                );
+
+                const tx = sdk.core.createPayTransaction({
+                    recipient,
+                    quantity
+                });
+                const signed = await sdk.key.signTransaction(tx, {
+                    account: address,
+                    passphrase,
+                    fee,
+                    seq
+                });
+
+                const hash = await sdk.rpc.chain.sendSignedTransaction(signed);
+                console.log(`${hash} sent`);
+
+                isLeftTurn = !isLeftTurn;
+
+                retry = 0;
+                await wait(10_000);
+            }
+        } catch (err) {
+            console.error(err.message);
+            retry += 1;
         }
-
-        isLeftTurn = !isLeftTurn;
-
-        await wait(10_000);
+        await wait(1_000 * Math.min(retry, 30));
     }
 }
 
