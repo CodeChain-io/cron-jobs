@@ -10,7 +10,8 @@
     "no-var-requires": false,
     "array-type": false,
     "variable-name": [true, "allow-leading-underscore"],
-    "max-classes-per-file": true
+    "max-classes-per-file": true,
+    "no-bitwise": false
   },
   "jsRules": {
     "no-console": false,
