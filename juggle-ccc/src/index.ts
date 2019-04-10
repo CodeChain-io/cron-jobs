@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import * as mail from "@sendgrid/mail";
 import { SDK } from "codechain-sdk";
 import { get } from "config";
 
@@ -31,6 +32,8 @@ async function main() {
     const rightAddress = getConfig("right.address");
     const rightPassphrase = getConfig("right.passphrase");
     const slackWebHook = get<string | null>("slack_webhook_url");
+    const sendgridApiKey = get<string | null>("sendgrid.api_key");
+    const sendgridTo = get<string | null>("sendgrid.to");
 
     const networkId = getConfig("network");
     const server = getConfig("server");
@@ -149,6 +152,17 @@ async function main() {
                     console.error(`Cannot send slack message: ${err.message}`);
                     retry = 0;
                 }
+                try {
+                    await sendMail(
+                        sendgridApiKey,
+                        sendgridTo,
+                        networkId,
+                        err.message
+                    );
+                } catch (err) {
+                    console.error(`Cannot send mail: ${err.message}`);
+                    retry = 0;
+                }
             }
             retry += 1;
         }
@@ -170,4 +184,27 @@ async function sendSlackWebHook(
     }
     const webHook = new IncomingWebhook(slackWebHook);
     await webHook.send(`[JUGGLE-CCC][${networkId.toUpperCase()}] ${message}`);
+}
+
+async function sendMail(
+    sendgridApiKey: string | null,
+    to: string | null,
+    networkId: string,
+    text: string
+): Promise<void> {
+    if (sendgridApiKey == null) {
+        return;
+    }
+    if (to == null) {
+        throw Error("to is not specified");
+    }
+    mail.setApiKey(sendgridApiKey);
+    const from = "no-reply@kodebox.io";
+    const subject = `[JUGGLE-CCC][${networkId.toUpperCase()}] has a problem`;
+    await mail.send({
+        from,
+        to,
+        subject,
+        text
+    });
 }

@@ -9,5 +9,9 @@
         "address": null,
         "passphrase": null
     },
+    "sendgrid": {
+        "api_key": null,
+        "to": null
+    },
     "slack_webhook_url": null
 }
