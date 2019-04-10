@@ -3,6 +3,11 @@
 import { SDK } from "codechain-sdk";
 import { get } from "config";
 
+// FIXME: Cannot import with the below error message
+//     node_modules/@slack/rtm-api/dist/RTMClient.d.ts:3:8 - error TS1192: Module '".../cron-jobs/juggle-ccc/node_modules/eventemitter3/index"' has no default export.
+//     3 import EventEmitter from 'eventemitter3';
+const { IncomingWebhook } = require("@slack/client");
+
 function wait(timeout: number): Promise<void> {
     return new Promise(resolve => {
         setTimeout(resolve, timeout);
@@ -25,6 +30,7 @@ async function main() {
     const leftPassphrase = getConfig("left.passphrase");
     const rightAddress = getConfig("right.address");
     const rightPassphrase = getConfig("right.passphrase");
+    const slackWebHook = get<string | null>("slack_webhook_url");
 
     const networkId = getConfig("network");
     const server = getConfig("server");
@@ -132,6 +138,18 @@ async function main() {
             }
         } catch (err) {
             console.error(err.message);
+            if (retry === 0) {
+                try {
+                    await sendSlackWebHook(
+                        slackWebHook,
+                        networkId,
+                        err.message
+                    );
+                } catch (err) {
+                    console.error(`Cannot send slack message: ${err.message}`);
+                    retry = 0;
+                }
+            }
             retry += 1;
         }
         await wait(1_000 * Math.min(retry, 30));
@@ -140,4 +158,16 @@ async function main() {
 
 if (typeof require !== "undefined" && require.main === module) {
     main().catch(console.error);
+}
+
+async function sendSlackWebHook(
+    slackWebHook: string | null,
+    networkId: string,
+    message: string
+): Promise<void> {
+    if (slackWebHook == null) {
+        return;
+    }
+    const webHook = new IncomingWebhook(slackWebHook);
+    await webHook.send(`[JUGGLE-CCC][${networkId.toUpperCase()}] ${message}`);
 }

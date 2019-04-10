@@ -8,5 +8,6 @@
     "right": {
         "address": null,
         "passphrase": null
-    }
+    },
+    "slack_webhook_url": null
 }
