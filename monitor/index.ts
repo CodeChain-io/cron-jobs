@@ -1,8 +1,8 @@
 import { SDK } from "codechain-sdk";
 import * as chainErrors from "./Alert";
-import { getConfig, unsetBitIndices } from "./util";
-import { SlackNotification } from "./SlackNotify";
 import { CodeChainAlert } from "./Alert";
+import { SlackNotification } from "./SlackNotify";
+import { getConfig, unsetBitIndices } from "./util";
 
 const targetEmail = "devop@kodebox.io";
 const emailClient = new EmailClient("");

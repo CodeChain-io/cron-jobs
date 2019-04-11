@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2018",
     "types": [
-      "node"
+      "mocha", "node"
     ],
     "module": "commonjs",
     "declaration": true,

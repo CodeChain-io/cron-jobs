@@ -21,7 +21,7 @@ export function unsetBitIndices(
     const arrayIndex = Math.floor(i / 8);
     const bitIndex = i % 8;
 
-    if (~((bitset[arrayIndex] >> bitIndex) & 1)) {
+    if (!((bitset[arrayIndex] >> bitIndex) & 1)) {
       indices.push(i);
     }
   }
