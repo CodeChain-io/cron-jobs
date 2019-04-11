@@ -1,6 +1,17 @@
 import { SDK } from "codechain-sdk";
 import * as chainErrors from "./Alert";
-import { getConfig, sendNotice, unsetBitIndices } from "./util";
+import { getConfig, unsetBitIndices } from "./util";
+import { SlackNotification } from "./SlackNotify";
+import { CodeChainAlert } from "./Alert";
+
+const targetEmail = "devop@kodebox.io";
+const emailClient = new EmailClient("");
+import { EmailClient } from "./EmailNotify";
+
+async function sendNotice(error: CodeChainAlert) {
+  SlackNotification.instance.sendError(error.title + "\n" + error.content);
+  await emailClient.sendAnnouncement(targetEmail, error.title, error.content);
+}
 
 const checkDeath = (() => {
   let prevBestBlockNumber = 0;
