@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import { sdk, slack, MINIMUM_FEES, SERVER } from "./config";
 import { Pay, PlatformAddress, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
@@ -145,9 +146,21 @@ async function startFrom() {
             throw new Error("LOOK_BEHIND must be an integer");
         }
         return bestBlockNumber - lookBehind;
-    } else {
-        return bestBlockNumber - 100;
     }
+
+    if (fs.existsSync("lastBlockNumber")) {
+        const content = fs.readFileSync("lastBlockNumber", "utf8");
+        if (content == null) {
+            throw new Error("Cannot read lastBlockNumber file in some reason");
+        }
+        const blockNumber = parseInt(content);
+        if (isNaN(blockNumber)) {
+            throw new Error("lastBlockNumber file contains invalid number");
+        }
+        return blockNumber;
+    }
+
+    return bestBlockNumber - 100;
 }
 
 async function main() {
@@ -173,6 +186,7 @@ async function main() {
             }
         }
         blockNumber = await getNextBlockNumber(blockNumber);
+        fs.writeFileSync("lastBlockNumber", blockNumber.toString(10), "utf8");
     }
 }
 
