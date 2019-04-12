@@ -3,5 +3,6 @@
   "network_id": "tc",
   "slack_webhook_url": "",
   "sendgrid_api_key": "",
-  "view_alert_level": 3
+  "view_alert_level": 3,
+  "notification_target_email": "" 
 }

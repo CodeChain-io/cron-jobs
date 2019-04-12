@@ -20,7 +20,16 @@ describe("BitSet interpretation test", () => {
     const bitSet = [bitSetEntry1, bitSetEntry2, bitSetEntry3, bitSetEntry4];
 
     expect(unsetBitIndices(bitSet, validatorCount)).to.deep.equal([
-      0, 2, 4, 5, 10, 11, 13, 15, 24, 25
+      0,
+      2,
+      4,
+      5,
+      10,
+      11,
+      13,
+      15,
+      24,
+      25
     ]);
   });
 });
