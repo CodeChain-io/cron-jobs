@@ -31,9 +31,15 @@ const checkDeath = (() => {
 
 const checkSealField = (() => {
   let prevAllSet = true;
+  let prevBestBlockNumber = 0;
   return async (sdk: SDK, targetEmail: string) => {
     const viewAlertLevel = new U64(getConfig<number>("view_alert_level"));
     const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+
+    if (prevBestBlockNumber === bestBlockNumber) {
+      return;
+    }
+    prevBestBlockNumber = bestBlockNumber;
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
       // FIXME: When dynatmic validator is deployed, get validator count dynamically.
