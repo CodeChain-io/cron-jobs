@@ -1,4 +1,6 @@
+import { U64 } from "codechain-primitives";
 import * as config from "config";
+import * as RLP from "rlp";
 
 export function getConfig<T>(field: string): T {
   const c = config.get<T>(field);
@@ -26,4 +28,16 @@ export function unsetBitIndices(
     }
   }
   return indices;
+}
+
+export function decodeViewField(encodedView: number[]): U64 {
+  const buffer = Buffer.from(encodedView);
+  return U64.fromBytes(buffer);
+}
+
+export function decodeBitsetField(encodedBitSet: number[]): number[] {
+  const buffer = Buffer.from(encodedBitSet);
+  const decoded = RLP.decode(buffer);
+
+  return Array.from(decoded.values());
 }
