@@ -1,3 +1,4 @@
+import { U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import * as chainErrors from "./Alert";
 import { CodeChainAlert } from "./Alert";
@@ -26,7 +27,7 @@ const checkDeath = (() => {
 const checkSealField = (() => {
   let prevAllSet = true;
   return async (sdk: SDK, targetEmail: string) => {
-    const viewAlertLevel = getConfig<number>("view_alert_level");
+    const viewAlertLevel = new U64(getConfig<number>("view_alert_level"));
     const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
@@ -37,9 +38,12 @@ const checkSealField = (() => {
       const precommitBitsetIdx = 3;
       const bestBlockSealField = bestBlock.seal;
 
-      const currentView = bestBlockSealField[currentViewIdx][0];
-      if (currentView >= viewAlertLevel) {
-        sendNotice(new chainErrors.ViewTooHigh(currentView), targetEmail);
+      const currentView = new U64(bestBlockSealField[currentViewIdx][0]);
+      if (currentView.gte(viewAlertLevel)) {
+        sendNotice(
+          new chainErrors.ViewTooHigh(bestBlockNumber, currentView),
+          targetEmail
+        );
       }
 
       const precommitBitset = bestBlockSealField[precommitBitsetIdx];
@@ -49,19 +53,18 @@ const checkSealField = (() => {
       );
 
       const someNodesStartSleeping =
-        sleepingNodeIndices.length !== 0 && prevAllSet === true;
-      const allNodesNowAwake =
-        sleepingNodeIndices.length === 0 && prevAllSet === false;
+        sleepingNodeIndices.length !== 0 && prevAllSet;
+      const allNodesNowAwake = sleepingNodeIndices.length === 0 && !prevAllSet;
 
       if (someNodesStartSleeping) {
         prevAllSet = false;
         sendNotice(
-          new chainErrors.NodeIsSleeping(sleepingNodeIndices),
+          new chainErrors.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
           targetEmail
         );
       } else if (allNodesNowAwake) {
         prevAllSet = true;
-        sendNotice(new chainErrors.AllNodesAwake(), targetEmail);
+        sendNotice(new chainErrors.AllNodesAwake(bestBlockNumber), targetEmail);
       }
     } else {
       sendNotice(new chainErrors.GetBlockFailed(bestBlockNumber), targetEmail);
