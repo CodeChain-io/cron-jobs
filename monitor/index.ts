@@ -4,7 +4,12 @@ import * as chainErrors from "./Alert";
 import { CodeChainAlert } from "./Alert";
 import { EmailClient } from "./EmailNotify";
 import { SlackNotification } from "./SlackNotify";
-import { getConfig, unsetBitIndices } from "./util";
+import {
+  decodeBitsetField,
+  decodeViewField,
+  getConfig,
+  unsetBitIndices
+} from "./util";
 
 const emailClient = new EmailClient("");
 
@@ -38,7 +43,7 @@ const checkSealField = (() => {
       const precommitBitsetIdx = 3;
       const bestBlockSealField = bestBlock.seal;
 
-      const currentView = new U64(bestBlockSealField[currentViewIdx][0]);
+      const currentView = decodeViewField(bestBlockSealField[currentViewIdx]);
       if (currentView.gte(viewAlertLevel)) {
         sendNotice(
           new chainErrors.ViewTooHigh(bestBlockNumber, currentView),
@@ -46,7 +51,9 @@ const checkSealField = (() => {
         );
       }
 
-      const precommitBitset = bestBlockSealField[precommitBitsetIdx];
+      const precommitBitset = decodeBitsetField(
+        bestBlockSealField[precommitBitsetIdx]
+      );
       const sleepingNodeIndices = unsetBitIndices(
         precommitBitset,
         validatorCount
