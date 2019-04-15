@@ -49,7 +49,7 @@ export class SlackNotification {
       return;
     }
 
-    msg = `"[CodeChain Death Confirmation]" ${msg}`;
+    msg = `${msg}`;
     this.unsentMessage.push(msg);
     this.sendDebounced();
   }
