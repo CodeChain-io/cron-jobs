@@ -189,7 +189,7 @@ async function sendSlackWebHook(
         return;
     }
     const webHook = new IncomingWebhook(slackWebHook);
-    await webHook.send(`[JUGGLE-CCC][${networkId.toUpperCase()}] ${message}`);
+    await webHook.send(`[juggle-ccc][${networkId}] ${message}`);
 }
 
 async function sendMail(
@@ -206,7 +206,7 @@ async function sendMail(
     }
     mail.setApiKey(sendgridApiKey);
     const from = "no-reply@kodebox.io";
-    const subject = `[JUGGLE-CCC][${networkId.toUpperCase()}] has a problem`;
+    const subject = `[juggle-ccc][${networkId}] has a problem`;
     await mail.send({
         from,
         to,
