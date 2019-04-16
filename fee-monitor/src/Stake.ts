@@ -35,7 +35,10 @@ async function getCCSBalance(address: PlatformAddress, blockNumber: number): Pro
     return decodeU64(RLP.decode(Buffer.from(data, "hex")));
 }
 
-type Delegation = { delegatee: PlatformAddress; quantity: U64 };
+interface Delegation {
+    delegatee: PlatformAddress;
+    quantity: U64;
+}
 
 async function getDelegations(
     delegator: PlatformAddress,
@@ -58,7 +61,10 @@ async function getDelegations(
     });
 }
 
-export type Weight = { account: PlatformAddress; weight: U64 };
+export interface Weight {
+    account: PlatformAddress;
+    weight: U64;
+}
 
 async function getWeight(account: PlatformAddress, blockNumber: number): Promise<U64> {
     const balance = await getCCSBalance(account, blockNumber);
