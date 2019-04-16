@@ -35,7 +35,7 @@ export async function createUsers(
 ): Promise<string[]> {
     const users = [];
     for (let i = 0; i < 60; i += 1) {
-        const user = await sdk.key.createAssetTransferAddress({
+        const user = await sdk.key.createAssetAddress({
             type: "P2PKH",
             passphrase
         });

@@ -102,7 +102,7 @@ if (require.main === module) {
 
         for (const hash of mintHashes) {
             while (true) {
-                if (await sdk.rpc.chain.containTransaction(hash)) {
+                if (await sdk.rpc.chain.containsTransaction(hash)) {
                     break;
                 }
                 const error = await sdk.rpc.chain.getErrorHint(hash);
@@ -267,7 +267,7 @@ if (require.main === module) {
             try {
                 while (pendings.length !== 0) {
                     const hash = pendings[0][0];
-                    if (await sdk.rpc.chain.containTransaction(hash)) {
+                    if (await sdk.rpc.chain.containsTransaction(hash)) {
                         pendings.pop();
                         break;
                     }

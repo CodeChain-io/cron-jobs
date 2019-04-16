@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { AssetTransferAddress } from "codechain-primitives";
+import { AssetAddress } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { KeyStore } from "codechain-sdk/lib/key/KeyStore";
 import * as config from "config";
@@ -46,7 +46,7 @@ describe("Clock hands", async function() {
         users = [];
         this.timeout(60_000);
         for (let i = 0; i < 60; i += 1) {
-            const user = await sdk.key.createAssetTransferAddress({
+            const user = await sdk.key.createAssetAddress({
                 type: "P2PKH",
                 passphrase
             });
@@ -80,7 +80,7 @@ describe("Clock hands", async function() {
         );
 
         const hourOwner = Buffer.from(
-            AssetTransferAddress.fromString(
+            AssetAddress.fromString(
                 users[date.getUTCHours()]
             ).payload.toString(),
             "hex"
@@ -88,7 +88,7 @@ describe("Clock hands", async function() {
         expect(hour.getMintedAsset().parameters).deep.equal([hourOwner]);
 
         const minuteOwner = Buffer.from(
-            AssetTransferAddress.fromString(
+            AssetAddress.fromString(
                 users[date.getUTCMinutes()]
             ).payload.toString(),
             "hex"
@@ -96,7 +96,7 @@ describe("Clock hands", async function() {
         expect(minute.getMintedAsset().parameters).deep.equal([minuteOwner]);
 
         const secondOwner = Buffer.from(
-            AssetTransferAddress.fromString(
+            AssetAddress.fromString(
                 users[date.getUTCSeconds()]
             ).payload.toString(),
             "hex"
