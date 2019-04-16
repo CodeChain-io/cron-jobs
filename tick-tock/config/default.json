@@ -3,6 +3,10 @@
   "network_id": "tc",
   "rpc_url" : "http://localhost:8080",
   "passphrase": "passphrase",
-  "payer": "tccqxpzqhaclle00nvrqc797ps0sntr09htpvd4w5q5"
+  "payer": "tccqxpzqhaclle00nvrqc797ps0sntr09htpvd4w5q5",
+  "sendgrid": {
+    "to": null,
+    "api_key": null
+  }
 }
 
