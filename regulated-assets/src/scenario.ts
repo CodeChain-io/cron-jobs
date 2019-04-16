@@ -245,6 +245,7 @@ export const scenarios: {
                     sender: nonRegistrar,
                     receiver: someone,
                     assetType,
+                    assetScheme,
                     supplyValue: 10000,
                 }),
             };
@@ -270,6 +271,7 @@ export const scenarios: {
                     sender: currentRegistrar,
                     receiver: someone,
                     assetType,
+                    assetScheme,
                     supplyValue: increaseAmount,
                 }),
             };
@@ -303,6 +305,7 @@ export const scenarios: {
                     receiver: someone,
                     approvers: [currentRegistrar],
                     assetType,
+                    assetScheme,
                     supplyValue: increaseAmount,
                 }),
             };

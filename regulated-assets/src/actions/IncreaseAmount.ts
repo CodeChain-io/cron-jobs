@@ -1,9 +1,10 @@
 import { AssetAddress, H160, PlatformAddress, U64, U64Value } from "codechain-primitives";
-
+import { AssetScheme } from "codechain-sdk/lib/core/classes";
 import { IncreaseAssetSupply } from "codechain-sdk/lib/core/transaction/IncreaseAssetSupply";
+
 import { sdk } from "../configs";
 import { State, Utxo } from "../State";
-import { createApprovedTx } from "../util";
+import { createApprovedTx, Writable } from "../util";
 import { Action, approvedByRegistrar } from "./Action";
 
 export class IncreaseSupply extends Action<IncreaseAssetSupply> {
@@ -12,6 +13,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
         receiver: H160;
         approvers?: PlatformAddress[];
         assetType: H160;
+        assetScheme: AssetScheme;
         supplyValue: U64Value;
     }): Promise<IncreaseSupply> {
         const supply = U64.ensure(params.supplyValue);
@@ -22,6 +24,7 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
             approvers: params.approvers || [],
             tx: sdk.core.createIncreaseAssetSupplyTransaction({
                 assetType: params.assetType,
+                seq: params.assetScheme.seq,
                 shardId: 0,
                 recipient,
                 supply,
@@ -78,13 +81,13 @@ export class IncreaseSupply extends Action<IncreaseAssetSupply> {
     protected apply(state: State) {
         super.apply(state);
         state.getUtxos(this.receiver).push(new Utxo(this.receiver, this.tx.getMintedAsset()));
-        const assetScheme = state.getAssetScheme(this.assetType) as {
-            supply: U64;
-        };
+        const assetScheme = state.getAssetScheme(this.assetType) as Writable<AssetScheme>;
         console.log(
             `increase ${this.assetType} ${assetScheme.supply.toString(10)}` +
                 ` => ${assetScheme.supply.plus(this.supply)}`,
         );
+        const prevSeq = assetScheme.seq++;
+        console.log(`seq: ${prevSeq} => ${assetScheme.seq}`);
         assetScheme.supply = assetScheme.supply.plus(this.supply);
     }
 }
