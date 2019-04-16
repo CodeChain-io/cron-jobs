@@ -37,23 +37,29 @@ async function checkBlock(blockNumber: number) {
         tracer.collect(fee, minFee);
 
         if (tx instanceof Pay) {
-            type PayBody = { receiver: PlatformAddress; quantity: U64 };
+            interface PayBody {
+                receiver: PlatformAddress;
+                quantity: U64;
+            }
             let { receiver, quantity }: PayBody = tx as any;
             tracer.withdraw(signer, quantity);
             tracer.deposit(receiver, quantity);
         } else if (tx instanceof WrapCCC) {
-            type WrapCCCBody = { payer: PlatformAddress; quantity: U64 };
+            interface WrapCCCBody {
+                payer: PlatformAddress;
+                quantity: U64;
+            }
             let { payer, quantity }: WrapCCCBody = tx as any;
             tracer.withdraw(payer, quantity);
         } else if (tx instanceof UnwrapCCC) {
-            type UnwrapCCCBody = {
+            interface UnwrapCCCBody {
                 _transaction: {
                     receiver: PlatformAddress;
                     burn: {
                         prevOut: { quantity: U64 };
                     };
                 };
-            };
+            }
             let {
                 _transaction: {
                     receiver,
