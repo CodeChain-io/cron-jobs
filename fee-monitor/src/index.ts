@@ -154,8 +154,8 @@ async function startFrom() {
         return bestBlockNumber - lookBehind;
     }
 
-    if (fs.existsSync("lastBlockNumber")) {
-        const content = fs.readFileSync("lastBlockNumber", "utf8");
+    if (fs.existsSync(`lastBlockNumber.${SERVER}`)) {
+        const content = fs.readFileSync(`lastBlockNumber.${SERVER}`, "utf8");
         if (content == null) {
             throw new Error("Cannot read lastBlockNumber file in some reason");
         }
@@ -192,7 +192,7 @@ async function main() {
             }
         }
         blockNumber = await getNextBlockNumber(blockNumber);
-        fs.writeFileSync("lastBlockNumber", blockNumber.toString(10), "utf8");
+        fs.writeFileSync(`lastBlockNumber.${SERVER}`, blockNumber.toString(10), "utf8");
     }
 }
 
