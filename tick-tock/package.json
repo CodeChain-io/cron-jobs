@@ -32,6 +32,7 @@
     "typescript": "^3.3.3333"
   },
   "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
     "@types/underscore": "^1.8.13",
     "codechain-sdk": "^1.2.0",
     "config": "^3.0.1",

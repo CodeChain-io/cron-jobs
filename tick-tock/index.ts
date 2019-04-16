@@ -11,6 +11,7 @@ import {
     loadApprovers,
     storeApprovers
 } from "./src/approvers";
+import { sendEMail } from "./src/email";
 import { mintHands } from "./src/mintHands";
 import { sendMints, sendTransaction } from "./src/sendTx";
 import { createShardId, loadShardId, storeShardId } from "./src/shard";
@@ -26,6 +27,16 @@ if (require.main === module) {
     const networkId = config.get<string>("network_id")!;
     const passphrase = config.get<string>("passphrase");
     const payer = config.get<string>("payer");
+
+    const sendgridApiKey = config.get<string>("sendgrid.api_key");
+    const sendgridTo = config.get<string>("sendgrid.to");
+
+    if (sendgridApiKey != null) {
+        if (sendgridTo == null) {
+            throw Error("You should set sendgrid.to");
+        }
+        console.log(`Tick-tock will send an notification to ${sendgridTo}`);
+    }
 
     if (!PlatformAddress.check(payer)) {
         throw Error(`Invalid payer ${payer}`);
@@ -125,6 +136,8 @@ if (require.main === module) {
         let pendings: [string, Asset, Asset, Asset, Date, number][] = [];
 
         let previousDate = mintedDate;
+        let numberOfSentTransaction = 0;
+        let numberOfFailedTransaction = 0;
         const transferFunction = async () => {
             try {
                 const current = new Date();
@@ -212,6 +225,7 @@ if (require.main === module) {
                     await approve(sdk, transfer, approver, passphrase);
                 }
 
+                numberOfSentTransaction += 1;
                 const hash = await sendTransaction(
                     sdk,
                     payer,
@@ -221,6 +235,7 @@ if (require.main === module) {
                     transfer
                 );
                 if (failedTransaction) {
+                    numberOfFailedTransaction += 1;
                     console.log(
                         `Send failed transaction at ${current}:${hash}`
                     );
@@ -262,19 +277,24 @@ if (require.main === module) {
             }
         };
 
+        let numberOfAcceptedTransactions = 0;
+        let numberOfRejectedTransactions = 0;
+        let numberOfExpiredTransactions = 0;
         const resultFunction = async () => {
             try {
                 while (pendings.length !== 0) {
                     const hash = pendings[0][0];
                     if (await sdk.rpc.chain.containsTransaction(hash)) {
+                        numberOfAcceptedTransactions += 1;
                         pendings.pop();
                         break;
                     }
                     const current = pendings[0][4];
-                    if (current.getTime() + 60 * 1_000 > Date.now()) {
+                    if (current.getTime() + 60 * 1_000 < Date.now()) {
                         console.log(
                             "The transaction is not accepted over 1 minute ago. Try a different transaction."
                         );
+                        numberOfExpiredTransactions += 1;
                     } else {
                         const reason = await sdk.rpc.chain.getErrorHint(hash);
                         if (reason == null) {
@@ -287,6 +307,7 @@ if (require.main === module) {
                         console.log(
                             `Tx(${hash} sent at ${current} failed: ${reason}`
                         );
+                        numberOfRejectedTransactions += 1;
                     }
 
                     hourAsset = pendings[0][1];
@@ -304,6 +325,43 @@ if (require.main === module) {
         setTimeout(resultFunction, 500);
 
         setTimeout(transferFunction, 1_000);
+
+        let lastDailyReportSentDate = new Date().getUTCDate();
+        const dailyReport = async () => {
+            const now = new Date();
+            const currentDate = now.getUTCDate();
+            if (lastDailyReportSentDate === currentDate) {
+                return;
+            }
+
+            try {
+                const total = numberOfSentTransaction;
+                const failed = numberOfFailedTransaction;
+                numberOfSentTransaction = 0;
+                numberOfFailedTransaction = 0;
+
+                const lines = [
+                    `Tick-tock is using ${payer}.`,
+                    `It sent ${total} transactions and ${failed} of them are intentionally failed transactions.`,
+                    `${numberOfAcceptedTransactions} are accepted. ${numberOfRejectedTransactions} are rejected.`,
+                    `${numberOfExpiredTransactions} are retried because it's not accepted over 1 minute.`
+                ];
+
+                const text = lines.map(line => `${line}<br />`).join("\r\n");
+                await sendEMail(
+                    sendgridApiKey,
+                    sendgridTo,
+                    networkId,
+                    text,
+                    now.toUTCString()
+                );
+
+                lastDailyReportSentDate = currentDate;
+            } catch (ex) {
+                console.error(ex.message);
+            }
+        };
+        setInterval(dailyReport, 60 * 1_000);
     })().catch(console.error);
 }
 
