@@ -151,6 +151,7 @@ async function main() {
                 try {
                     await sendSlackWebHook(
                         slackWebHook,
+                        "warn",
                         networkId,
                         err.message
                     );
@@ -162,6 +163,7 @@ async function main() {
                     await sendMail(
                         sendgridApiKey,
                         sendgridTo,
+                        "warn",
                         networkId,
                         err.message
                     );
@@ -182,6 +184,7 @@ if (typeof require !== "undefined" && require.main === module) {
 
 async function sendSlackWebHook(
     slackWebHook: string | null,
+    level: string,
     networkId: string,
     message: string
 ): Promise<void> {
@@ -189,12 +192,13 @@ async function sendSlackWebHook(
         return;
     }
     const webHook = new IncomingWebhook(slackWebHook);
-    await webHook.send(`[juggle-ccc][${networkId}] ${message}`);
+    await webHook.send(`[${level}][${networkId}][juggle-ccc] ${message}`);
 }
 
 async function sendMail(
     sendgridApiKey: string | null,
     to: string | null,
+    level: string,
     networkId: string,
     text: string
 ): Promise<void> {
@@ -206,7 +210,7 @@ async function sendMail(
     }
     mail.setApiKey(sendgridApiKey);
     const from = "no-reply+juggle-ccc@devop.codechain.io";
-    const subject = `[juggle-ccc][${networkId}] has a problem`;
+    const subject = `[${level}][${networkId}][juggle-ccc] has a problem`;
     await mail.send({
         from,
         to,
