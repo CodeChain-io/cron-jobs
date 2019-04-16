@@ -35,6 +35,11 @@ async function main() {
     const slackWebHook = get<string | null>("slack_webhook_url");
     const sendgridApiKey = get<string | null>("sendgrid.api_key");
     const sendgridTo = get<string | null>("sendgrid.to");
+    if (sendgridApiKey != null) {
+        if (sendgridTo == null) {
+            throw Error("You must set sendgrid.to");
+        }
+    }
 
     const networkId = getConfig("network");
     const server = getConfig("server");
