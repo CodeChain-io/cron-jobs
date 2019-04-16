@@ -225,7 +225,6 @@ if (require.main === module) {
                         `Send failed transaction at ${current}:${hash}`
                     );
 
-                    seq += 1;
                     setTimeout(transferFunction, 0); // Send the next transaction immediately.
                     return;
                 }
