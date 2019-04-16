@@ -205,7 +205,7 @@ async function sendMail(
         throw Error("to is not specified");
     }
     mail.setApiKey(sendgridApiKey);
-    const from = "no-reply@kodebox.io";
+    const from = "no-reply+juggle-ccc@devop.codechain.io";
     const subject = `[juggle-ccc][${networkId}] has a problem`;
     await mail.send({
         from,
