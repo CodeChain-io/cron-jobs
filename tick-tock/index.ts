@@ -271,17 +271,23 @@ if (require.main === module) {
                         break;
                     }
                     const current = pendings[0][4];
-                    const reason = await sdk.rpc.chain.getErrorHint(hash);
-                    if (reason == null) {
+                    if (current.getTime() + 60 * 1_000 > Date.now()) {
                         console.log(
-                            `Wait the result of ${hash} sent at ${current}`
+                            "The transaction is not accepted over 1 minute ago. Try a different transaction."
                         );
-                        setTimeout(resultFunction, 1_000);
-                        return;
+                    } else {
+                        const reason = await sdk.rpc.chain.getErrorHint(hash);
+                        if (reason == null) {
+                            console.log(
+                                `Wait the result of ${hash} sent at ${current}`
+                            );
+                            setTimeout(resultFunction, 1_000);
+                            return;
+                        }
+                        console.log(
+                            `Tx(${hash} sent at ${current} failed: ${reason}`
+                        );
                     }
-                    console.log(
-                        `Tx(${hash} sent at ${current} failed: ${reason}`
-                    );
 
                     hourAsset = pendings[0][1];
                     minuteAsset = pendings[0][2];
