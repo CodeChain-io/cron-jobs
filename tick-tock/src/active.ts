@@ -50,7 +50,7 @@ export async function activateApprovers(
             break;
         }
         const results = await Promise.all(
-            hashes.map(hash => sdk.rpc.chain.containTransaction(hash))
+            hashes.map(hash => sdk.rpc.chain.containsTransaction(hash))
         );
         const len = results.length;
         const nextHashes = [];

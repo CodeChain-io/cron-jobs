@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@types/underscore": "^1.8.13",
-    "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#result-lib",
+    "codechain-sdk": "^1.2.0",
     "config": "^3.0.1",
     "underscore": "^1.9.1"
   }
