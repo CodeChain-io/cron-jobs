@@ -4,6 +4,7 @@
     "main": "src/index.ts",
     "license": "MIT",
     "scripts": {
+        "build": "tsc -p .",
         "corgi": "SERVER=corgi ts-node src/index.ts",
         "mainnet": "SERVER=mainnet ts-node src/index.ts",
         "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
