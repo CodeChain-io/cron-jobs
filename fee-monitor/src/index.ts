@@ -133,7 +133,7 @@ async function getNextBlockNumber(current: number) {
 async function startFrom() {
     if (process.env.BLOCK_NUMBER) {
         let blockNumber = parseInt(process.env.BLOCK_NUMBER, 10);
-        if (isNaN(blockNumber) || blockNumber == 0) {
+        if (isNaN(blockNumber) || blockNumber === 0) {
             throw new Error("BLOCK_NUMBER must be a non-zero positive integer");
         }
         return blockNumber;
@@ -174,7 +174,7 @@ async function main() {
                 break;
             } catch (e) {
                 if (e.prototype.name === "FetchError") {
-                    if (retry == 10) {
+                    if (retry === 10) {
                         console.error(`Too many retries: ${retry}`);
                         throw e;
                     }
