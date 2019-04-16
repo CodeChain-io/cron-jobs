@@ -1,37 +1,37 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": "./tsconfig.json"
-  },
-  "env": {
-    "node": true,
-    "es6": true
-  },
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "rules": {
-    "no-console": "off",
-    "guard-for-in": "error",
-    "no-shadow": ["error", { "hoist": "never" }],
-    "no-shadow-restricted-names": "error",
-    "eqeqeq": ["error", "smart"],
-    "no-unused-vars": ["error", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "caughtErrorsPattern": "^_"
-    }],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "env": {
+        "node": true,
+        "es6": true
+    },
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "no-console": "off",
+        "guard-for-in": "error",
+        "no-shadow": ["error", { "hoist": "never" }],
+        "no-shadow-restricted-names": "error",
+        "eqeqeq": ["error", "smart"],
+        "no-unused-vars": ["error", {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrorsPattern": "^_"
+        }],
 
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/no-unused-vars": ["error", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "caughtErrorsPattern": "^_"
-    }]
-  }
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unused-vars": ["error", {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrorsPattern": "^_"
+        }]
+    }
 }

@@ -1,29 +1,29 @@
 {
-  "name": "codechain-scenario",
-  "version": "1.0.0",
-  "main": "src/index.ts",
-  "license": "MIT",
-  "scripts": {
-    "corgi": "SERVER=corgi ts-node src/index.ts",
-    "mainnet": "SERVER=mainnet ts-node src/index.ts",
-    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
-  },
-  "dependencies": {
-    "@slack/client": "^4.12.0",
-    "codechain-primitives": "^0.5.0",
-    "codechain-sdk": "^1.1.0",
-    "request-promise-native": "^1.0.7",
-    "rlp": "^2.2.3"
-  },
-  "devDependencies": {
-    "@types/lodash": "^4.14.123",
-    "@types/request": "^2.48.1",
-    "@types/request-promise-native": "^1.0.15",
-    "@typescript-eslint/eslint-plugin": "^1.5.0",
-    "@typescript-eslint/parser": "^1.5.0",
-    "eslint": "^5.16.0",
-    "prettier": "^1.16.4",
-    "ts-node": "^8.0.3",
-    "typescript": "^3.4"
-  }
+    "name": "codechain-scenario",
+    "version": "1.0.0",
+    "main": "src/index.ts",
+    "license": "MIT",
+    "scripts": {
+        "corgi": "SERVER=corgi ts-node src/index.ts",
+        "mainnet": "SERVER=mainnet ts-node src/index.ts",
+        "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
+    },
+    "dependencies": {
+        "@slack/client": "^4.12.0",
+        "codechain-primitives": "^0.5.0",
+        "codechain-sdk": "^1.1.0",
+        "request-promise-native": "^1.0.7",
+        "rlp": "^2.2.3"
+    },
+    "devDependencies": {
+        "@types/lodash": "^4.14.123",
+        "@types/request": "^2.48.1",
+        "@types/request-promise-native": "^1.0.15",
+        "@typescript-eslint/eslint-plugin": "^1.5.0",
+        "@typescript-eslint/parser": "^1.5.0",
+        "eslint": "^5.16.0",
+        "prettier": "^1.16.4",
+        "ts-node": "^8.0.3",
+        "typescript": "^3.4"
+    }
 }
