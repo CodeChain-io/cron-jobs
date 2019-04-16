@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as mail from "@sendgrid/mail";
+import { U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { get } from "config";
 
@@ -44,11 +45,11 @@ async function main() {
 
     let previousBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
 
-    const leftBalance = await sdk.rpc.chain.getBalance(
+    let leftBalance = await sdk.rpc.chain.getBalance(
         leftAddress,
         previousBlockNumber
     );
-    const rightBalance = await sdk.rpc.chain.getBalance(
+    let rightBalance = await sdk.rpc.chain.getBalance(
         rightAddress,
         previousBlockNumber
     );
@@ -62,6 +63,53 @@ async function main() {
             );
         }
         isLeftTurn = false;
+    }
+
+    let leftCount = 0;
+    let rightCount = 0;
+    let leftFee = 0;
+    let rightFee = 0;
+    if (sendgridApiKey != null) {
+        let lastDailyReportSentDate = new Date().getUTCDate();
+        setInterval(async () => {
+            const now = new Date();
+            const currentDate = now.getUTCDate();
+            if (lastDailyReportSentDate === currentDate) {
+                return;
+            }
+
+            try {
+                const left = makeDailyReport(
+                    "left",
+                    leftAddress,
+                    leftBalance,
+                    leftCount,
+                    leftFee
+                );
+                const right = makeDailyReport(
+                    "right",
+                    rightAddress,
+                    rightBalance,
+                    rightCount,
+                    rightFee
+                );
+                leftCount = 0;
+                rightCount = 0;
+                leftFee = 0;
+                rightFee = 0;
+                await sendDailyReport(
+                    sendgridApiKey,
+                    sendgridTo!,
+                    networkId,
+                    now,
+                    `${left}\r\n${right}\r\n`
+                );
+
+                lastDailyReportSentDate = currentDate;
+            } catch (ex) {
+                console.error(ex.message);
+            }
+        }, 60_000);
     }
 
     let retry = 0;
@@ -90,6 +138,12 @@ async function main() {
                     address,
                     currentBlockNumber
                 );
+                if (isLeftTurn) {
+                    leftBalance = currentBalance;
+                } else {
+                    rightBalance = currentBalance;
+                }
+
                 if (currentBalance.isLessThan(500)) {
                     const oppositeBalance = await sdk.rpc.chain.getBalance(
                         recipient,
@@ -135,6 +189,13 @@ async function main() {
                     const hash = await sdk.rpc.chain.sendSignedTransaction(
                         signed
                     );
+                    if (isLeftTurn) {
+                        leftCount += 1;
+                        leftFee += fee;
+                    } else {
+                        rightCount += 1;
+                        rightFee += fee;
+                    }
                     console.log(`${hash} sent`);
                 } catch (err) {
                     console.error(`Cannot send transaction: ${err.message}`);
@@ -165,6 +226,7 @@ async function main() {
                         sendgridTo,
                         "warn",
                         networkId,
+                        "has a problem",
                         err.message
                     );
                 } catch (err) {
@@ -200,6 +262,7 @@ async function sendMail(
     to: string | null,
     level: string,
     networkId: string,
+    title: string,
     text: string
 ): Promise<void> {
     if (sendgridApiKey == null) {
@@ -210,11 +273,34 @@ async function sendMail(
     }
     mail.setApiKey(sendgridApiKey);
     const from = "no-reply+juggle-ccc@devop.codechain.io";
-    const subject = `[${level}][${networkId}][juggle-ccc] has a problem`;
+    const subject = `[${level}][${networkId}][juggle-ccc] ${title}`;
     await mail.send({
         from,
         to,
         subject,
         text
     });
+}
+
+async function sendDailyReport(
+    sendgridApiKey: string,
+    sendgridTo: string,
+    networkId: string,
+    now: Date,
+    text: string
+) {
+    const title = `is working - ${now.toUTCString()}`;
+    await sendMail(sendgridApiKey, sendgridTo, "info", networkId, title, text);
+}
+
+function makeDailyReport(
+    side: string,
+    address: string,
+    balance: U64,
+    count: number,
+    fee: number
+): string {
+    return `${side}: ${address} has ${balance.toString(
+        10
+    )} CCC, sends ${count} transactions, uses ${fee} CCC to pay fee.`;
 }
