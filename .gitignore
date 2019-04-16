@@ -1,0 +1,16 @@
+yarn-error.log
+node_modules
+keystore.db
+
+/build/
+/config/production.json
+
+# Visual Studio Code - https://code.visualstudio.com/
+.settings/
+.vscode/
+
+# IntellJ Setting
+.idea/
+
+# rollup-plugin-typescript2
+.rpt2_cache

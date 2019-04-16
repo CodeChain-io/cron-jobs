@@ -1,0 +1,18 @@
+{
+  "indexer_url": "https://husky.codechain.io/explorer",
+  "payer": {
+    "payer" : null,
+    "passphrase" : null
+  },
+  "exclude": [],
+  "oil": {
+    "owner": null,
+    "passphrase" : null,
+    "asset_type": null
+  },
+  "ccc_recipient": null,
+  "network_id": null,
+  "rpc_url" : null,
+  "drop_interval": 120,
+  "reward": 1
+}

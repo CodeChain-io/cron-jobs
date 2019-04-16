@@ -29,6 +29,31 @@ jobs:
               - yarn start &
               - popd
               - NODE_ENV=test yarn test
+        - name: helicopter
+          os: linux
+          before_install:
+              - CHANGED=$(.travis/check-change '^helicopter/|^\.travis.yml$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.13.0"
+              - export PATH="$HOME/.yarn/bin:$PATH"
+          install:
+              - cd $TRAVIS_JOB_NAME
+              - yarn install
+          before_script:
+              - docker pull kodebox/codechain:v1.1.1
+              - docker run -d -p 8080:8080 kodebox/codechain:v1.1.1 --jsonrpc-interface 0.0.0.0 -c solo --reseal-min-period 0 --enable-devel-api
+              - psql -c 'CREATE DATABASE "codechain-indexer-dev";' -U postgres
+              - psql -c "CREATE USER \"user\" WITH ENCRYPTED PASSWORD 'password';" -U postgres
+              - docker ps -a
+          script:
+              - yarn lint
+              - yarn build
+              - git clone --depth 1 https://github.com/CodeChain-io/codechain-indexer.git
+              - pushd codechain-indexer
+              - yarn install
+              - NODE_ENV=dev yarn run migrate
+              - yarn start &
+              - popd
+              - NODE_ENV=test yarn test
         - stage: test
           name: juggle-ccc
           os: linux
