@@ -59,7 +59,9 @@ export async function airdropOilTransaction(
         burns: [],
         inputs: [],
         outputs: [],
-        expiration: dropInterval * airdropOilWaitingLimit + Date.now()
+        expiration:
+            dropInterval * airdropOilWaitingLimit +
+            Math.floor(Date.now() / 1000)
     });
     transaction.addInputs(oilAsset);
 
