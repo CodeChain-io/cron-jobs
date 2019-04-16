@@ -27,6 +27,7 @@ export class ChangeAssetScheme extends Action<ChangeAssetSchemeTx> {
             tx: sdk.core.createChangeAssetSchemeTransaction({
                 assetType: params.assetType,
                 shardId: 0,
+                seq: params.assetScheme.seq,
                 scheme: {
                     networkId: params.assetScheme.networkId,
                     metadata: params.assetScheme.metadata,
@@ -76,6 +77,8 @@ export class ChangeAssetScheme extends Action<ChangeAssetSchemeTx> {
 
         const assetScheme = state.getAssetScheme(this.assetType) as Writable<AssetScheme>;
         console.group(`changes to ${this.assetType.value}`);
+        const prevSeq = assetScheme.seq++;
+        console.log(`seq: ${prevSeq} -> ${assetScheme.seq}`);
         const changes = this.changes;
         if (changes.metadata) {
             console.log(`metadata: ${assetScheme.metadata} -> ${changes.metadata}`);
