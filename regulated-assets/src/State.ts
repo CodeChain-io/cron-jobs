@@ -186,10 +186,11 @@ export class State {
                 .filter(([_, as]) => as.registrar!.value === regulator.platformAddress.value)
                 .map(([assetType, _]) => assetType);
             if (assetTypes.length > 0) {
-                console.log(`registrar: ${regulator.platformAddress.value}`);
+                console.group(`registrar: ${regulator.platformAddress.value}`);
                 for (const assetType of assetTypes) {
-                    console.log(`    owns: ${assetType}`);
+                    console.log(`owns: ${assetType}`);
                 }
+                console.groupEnd();
             }
         }
         for (const accountValue of accountValues) {
@@ -208,7 +209,7 @@ export class State {
                 utxos.filter(utxo => utxo.lockScriptHash.isEqualTo(p2pkhBurnHash)),
             );
 
-            console.log(`utxo for ${H160.ensure(accountValue).value}`);
+            console.group(`utxo for ${H160.ensure(accountValue).value}`);
             for (const assetType of [...assetTypes].sort()) {
                 const p2pkhs = p2pkhBin
                     .get(assetType)
@@ -222,8 +223,9 @@ export class State {
                     .sort(compareU64)
                     .map(quantity => quantity.toString(10))
                     .join(", ");
-                console.log(`  utxo ${assetType}: [${p2pkhs}], burns: [${p2pkhBurns}]`);
+                console.log(`utxo ${assetType}: [${p2pkhs}], burns: [${p2pkhBurns}]`);
             }
+            console.groupEnd();
         }
     }
 

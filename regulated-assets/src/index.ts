@@ -52,17 +52,16 @@ async function ensureCCC(
             existing.minus(toGive),
         );
         const accountPrev = state.modifyBalance(account, existing => existing.plus(toGive));
-
+        console.group();
         console.log(
-            "    " +
-                `pay (sender) ${faucet.platformAddress.value}: ${faucetPrev.toString(10)}` +
+            `pay (sender) ${faucet.platformAddress.value}: ${faucetPrev.toString(10)}` +
                 ` => ${state.getBalance(faucet.platformAddress).toString(10)}`,
         );
         console.log(
-            "    " +
-                `pay (receiver) ${account.value}: ${accountPrev.toString(10)}` +
+            `pay (receiver) ${account.value}: ${accountPrev.toString(10)}` +
                 ` => ${state.getBalance(account).toString(10)}`,
         );
+        console.groupEnd();
     }
 }
 
