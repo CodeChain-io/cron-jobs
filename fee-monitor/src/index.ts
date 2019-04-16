@@ -179,7 +179,7 @@ async function main() {
                 await checkBlock(blockNumber);
                 break;
             } catch (e) {
-                if (e.prototype.name === "FetchError") {
+                if (e.prototype && e.prototype.name === "FetchError") {
                     if (retry === 10) {
                         console.error(`Too many retries: ${retry}`);
                         throw e;
