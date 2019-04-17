@@ -115,7 +115,8 @@ if (require.main === module) {
         let fee = DEFAULT_TRANSFER_FEE;
 
         for (const hash of mintHashes) {
-            while (true) {
+            let i = 0;
+            for (; i < 100; i += 1) {
                 if (await sdk.rpc.chain.containsTransaction(hash)) {
                     break;
                 }
@@ -124,6 +125,9 @@ if (require.main === module) {
                     throw Error(`Cannot mint the clock hand: ${error}`);
                 }
                 await wait(1_000);
+            }
+            if (i === 100) {
+                throw Error("Cannot mint hands");
             }
         }
 

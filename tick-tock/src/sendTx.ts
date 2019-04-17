@@ -45,7 +45,7 @@ export async function sendMints(
 ): Promise<[string[], number]> {
     const { payer, passphrase } = params;
 
-    const seq = await calculateSeq(sdk, payer);
+    const seq = await sdk.rpc.chain.getSeq(payer);
 
     const hashes = [];
     for (let i = 0; i < mints.length; i += 1) {
