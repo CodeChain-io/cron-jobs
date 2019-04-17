@@ -22,6 +22,8 @@ const USERS_FILE_NAME = ".users";
 const SHARD_ID_FILE_NAME = ".shard";
 const APPROVERS_FILE_NAME = ".approvers";
 
+const DEFAULT_TRANSFER_FEE = 100;
+
 if (require.main === module) {
     const rpcUrl = config.get<string>("rpc_url")!;
     const networkId = config.get<string>("network_id")!;
@@ -110,6 +112,7 @@ if (require.main === module) {
             passphrase
         });
         let seq = nextSeq; // TODO: quirks because of tslint
+        let fee = DEFAULT_TRANSFER_FEE;
 
         for (const hash of mintHashes) {
             while (true) {
@@ -231,7 +234,7 @@ if (require.main === module) {
                     payer,
                     passphrase,
                     seq,
-                    100,
+                    fee,
                     transfer
                 );
                 if (failedTransaction) {
@@ -240,6 +243,8 @@ if (require.main === module) {
                         `Send failed transaction at ${current}:${hash}`
                     );
 
+                    // Increase the fee of the next transaction to guarantee the transaction propagation.
+                    fee = Math.min(Math.floor(fee * 1.5), 1_000);
                     setTimeout(transferFunction, 0); // Send the next transaction immediately.
                     return;
                 }
@@ -286,6 +291,10 @@ if (require.main === module) {
                     const hash = pendings[0][0];
                     if (await sdk.rpc.chain.containsTransaction(hash)) {
                         numberOfAcceptedTransactions += 1;
+                        // Decrease the fee because the previous transaction succeed.
+                        fee = Math.floor(
+                            Math.max(DEFAULT_TRANSFER_FEE, fee / 2)
+                        );
                         pendings.pop();
                         break;
                     }
@@ -310,6 +319,8 @@ if (require.main === module) {
                         numberOfRejectedTransactions += 1;
                     }
 
+                    // Increase the fee of the next transaction to guarantee the transaction propagation.
+                    fee = Math.floor(fee * 1.5);
                     hourAsset = pendings[0][1];
                     minuteAsset = pendings[0][2];
                     secondAsset = pendings[0][3];
