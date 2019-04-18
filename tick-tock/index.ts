@@ -248,7 +248,7 @@ if (require.main === module) {
                 if (noSecondApprover || noMinuteApprover || noHourApprover) {
                     numberOfFailedTransaction += 1;
                     console.log(
-                        `Send failed transaction at ${current}.hash: ${hash}. metadata: ${metadata}`
+                        `Send failed transaction at ${current}.hash: ${hash}. metadata: ${metadata}. seq: ${seq}`
                     );
 
                     // Increase the fee of the next transaction to guarantee the transaction propagation.
@@ -258,7 +258,9 @@ if (require.main === module) {
                     setTimeout(transferFunction, 30_000);
                     return;
                 }
-                console.log(`Clock hands are moved at ${current}:${hash}`);
+                console.log(
+                    `Clock hands are moved at ${current}. hash: ${hash}. seq: ${seq}`
+                );
                 pendings.push([
                     hash.value,
                     hourAsset,
