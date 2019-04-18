@@ -281,15 +281,12 @@ if (require.main === module) {
 
                 seq += 1;
 
-                const timeout = Math.max(
-                    current.getTime() + 1_000 - Date.now(),
-                    0
-                );
                 previousDate = current;
-                setTimeout(transferFunction, timeout);
             } catch (ex) {
                 console.error(ex);
             }
+            const timeout = Math.max(Math.floor(Math.random() * 3_000), 500);
+            setTimeout(transferFunction, timeout);
         };
 
         let numberOfAcceptedTransactions = 0;
