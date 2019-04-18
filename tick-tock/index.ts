@@ -253,7 +253,9 @@ if (require.main === module) {
 
                     // Increase the fee of the next transaction to guarantee the transaction propagation.
                     fee = Math.min(Math.floor(fee * 1.5), 1_000);
-                    setTimeout(transferFunction, 0); // Send the next transaction immediately.
+
+                    // Pause sending transactions for a while.
+                    setTimeout(transferFunction, 30_000);
                     return;
                 }
                 console.log(`Clock hands are moved at ${current}:${hash}`);
