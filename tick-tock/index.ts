@@ -306,9 +306,9 @@ if (require.main === module) {
                         break;
                     }
                     const current = pendings[0][4];
-                    if (current.getTime() + 60 * 1_000 < Date.now()) {
+                    if (current.getTime() + 30 * 1_000 < Date.now()) {
                         console.log(
-                            "The transaction is not accepted over 1 minute ago. Try a different transaction."
+                            "The transaction is not accepted over 30 seconds. Try a different transaction."
                         );
                         numberOfExpiredTransactions += 1;
                     } else {
@@ -362,7 +362,7 @@ if (require.main === module) {
                     `Tick-tock is using ${payer}.`,
                     `It sent ${total} transactions and ${failed} of them are intentionally failed transactions.`,
                     `${numberOfAcceptedTransactions} are accepted. ${numberOfRejectedTransactions} are rejected.`,
-                    `${numberOfExpiredTransactions} are retried because it's not accepted over 1 minute.`
+                    `${numberOfExpiredTransactions} are retried because it's not accepted over 30 seconds.`
                 ];
 
                 const text = lines.map(line => `${line}<br />`).join("\r\n");
