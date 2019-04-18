@@ -77,16 +77,37 @@ function getRandomAccount(accounts: Account[]): string {
 async function fetchAccounts(): Promise<Account[]> {
     const indexerUrl = getConfig<string>("indexer_url");
     const accountsUrl = `${indexerUrl}/api/account`;
-    const items: { address: string; balance: string }[] = await request({
-        url: accountsUrl,
+    let count: number = await request({
+        url: `${accountsUrl}/count`,
         json: true
     });
+    let page = 1;
+    const items: { address: string; balance: BigNumber }[] = [];
+    while (count > 0) {
+        const queried: {
+            address: string;
+            balance: string;
+            seq: number;
+        }[] = await request({
+            url: `${accountsUrl}?itemsPerPage=${Math.min(
+                100,
+                count
+            )}&page=${page}`,
+            json: true
+        });
+        queried
+            .filter(item => item.seq !== 0)
+            .forEach(item => {
+                items.push({
+                    address: item.address,
+                    balance: new BigNumber(item.balance, 10)
+                });
+            });
+        page += 1;
+        count -= 100;
+    }
 
-    return items.map(item => {
-        const address = item.address;
-        const balance = new BigNumber(item.balance, 10);
-        return { address, balance };
-    });
+    return items;
 }
 
 export async function chooseAccount(
