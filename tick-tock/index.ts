@@ -191,40 +191,44 @@ if (require.main === module) {
 
                 const inputs = shuffle<AssetTransferInput>(unshuffledInputs);
 
+                let metadata = `Current time is ${current}`;
+                const noSecondApprover = !p99();
+                if (noSecondApprover) {
+                    metadata = `${metadata} : No second approver`;
+                }
+                const noMinuteApprover = minuteChanged && !p99();
+                if (noMinuteApprover) {
+                    metadata = `${metadata} : No minute approver`;
+                }
+                const noHourApprover = hourChanged && !p99();
+                if (noHourApprover) {
+                    metadata = `${metadata} : No hour approver`;
+                }
+
                 const transfer = sdk.core.createTransferAssetTransaction({
                     inputs,
                     outputs,
-                    metadata: `Current time is ${current}`
+                    metadata
                 });
                 await sdk.key.signTransactionInput(transfer, 0, { passphrase });
                 const approvers = [];
-                let failedTransaction = false;
-                if (p99()) {
+                if (!noSecondApprover) {
                     approvers.push(secondApprover);
-                } else {
-                    console.log("Create a failed transaction");
-                    failedTransaction = true;
                 }
 
                 if (minuteChanged) {
                     await sdk.key.signTransactionInput(transfer, 1, {
                         passphrase
                     });
-                    if (p99()) {
+                    if (!noMinuteApprover) {
                         approvers.push(minuteApprover);
-                    } else {
-                        console.log("Create a failed transaction");
-                        failedTransaction = true;
                     }
                     if (hourChanged) {
                         await sdk.key.signTransactionInput(transfer, 2, {
                             passphrase
                         });
-                        if (p99()) {
+                        if (!noHourApprover) {
                             approvers.push(hourApprover);
-                        } else {
-                            console.log("Create a failed transaction");
-                            failedTransaction = true;
                         }
                     }
                 }
@@ -241,10 +245,10 @@ if (require.main === module) {
                     fee,
                     transfer
                 );
-                if (failedTransaction) {
+                if (noSecondApprover || noMinuteApprover || noHourApprover) {
                     numberOfFailedTransaction += 1;
                     console.log(
-                        `Send failed transaction at ${current}:${hash}`
+                        `Send failed transaction at ${current}.hash: ${hash}. metadata: ${metadata}`
                     );
 
                     // Increase the fee of the next transaction to guarantee the transaction propagation.
@@ -380,6 +384,6 @@ if (require.main === module) {
     })().catch(console.error);
 }
 
-function p99() {
+function p99(): boolean {
     return Math.random() * 100 < 99;
 }
