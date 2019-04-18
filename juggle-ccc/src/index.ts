@@ -268,7 +268,7 @@ async function sendMail(
     level: string,
     networkId: string,
     title: string,
-    text: string
+    value: string
 ): Promise<void> {
     if (sendgridApiKey == null) {
         return;
@@ -283,7 +283,12 @@ async function sendMail(
         from,
         to,
         subject,
-        text
+        content: [
+            {
+                type: "text/html",
+                value
+            }
+        ]
     });
 }
 
@@ -305,7 +310,14 @@ function makeDailyReport(
     count: number,
     fee: number
 ): string {
-    return `${side}: ${address} has ${balance.toString(
-        10
-    )} CCC, sends ${count} transactions, uses ${fee} CCC to pay fee.`;
+    const lines = [
+        `has ${balance.toString(10)} CCC`,
+        `sends ${count} transactions`,
+        `uses ${fee} CCC to pay fee`
+    ];
+    const reports = lines
+        .map(line => `&nbsp;&nbsp;<li>${line}</li>\r\n`)
+        .join("");
+
+    return `<p>${side}: ${address}<br /><ul>${reports}</ul><\p>`;
 }
