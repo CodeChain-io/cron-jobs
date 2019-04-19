@@ -179,16 +179,12 @@ async function main() {
                 await checkBlock(blockNumber);
                 break;
             } catch (e) {
-                if (e.prototype && e.prototype.name === "FetchError") {
-                    if (retry === 10) {
-                        console.error(`Too many retries: ${retry}`);
-                        throw e;
-                    }
-                    console.error(`Retry FetchError. wait for ${retry} sec(s)`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * retry));
-                } else {
+                if (retry === 10) {
+                    console.error(`Too many retries: ${retry}`);
                     throw e;
                 }
+                console.error(`Retry ${e}. wait for ${retry} sec(s)`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * retry));
             }
         }
         blockNumber = await getNextBlockNumber(blockNumber);
