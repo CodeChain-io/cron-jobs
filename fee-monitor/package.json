@@ -5,8 +5,8 @@
     "license": "MIT",
     "scripts": {
         "build": "tsc -p .",
-        "corgi": "SERVER=corgi ts-node src/index.ts",
-        "mainnet": "SERVER=mainnet ts-node src/index.ts",
+        "corgi": "tsc -p . && SERVER=corgi node build/index.js",
+        "mainnet": "tsc -p . && SERVER=mainnet node build/index.js",
         "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
         "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different"
     },
