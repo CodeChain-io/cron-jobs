@@ -37,10 +37,15 @@ export class NodeIsSleeping implements CodeChainAlert {
   public title: string;
   public content: string;
 
-  constructor(blockNumber: number, nodeIndices: number[]) {
+  constructor(blockNumber: number, nodeIndices: number[], streak?: number) {
     const suffix = `${new Date().toISOString()}`;
     this.title = `${prefix} CodeChain Node is Sleeping ${suffix}`;
-    this.content = `For the block(${blockNumber}), validating nodes ${nodeIndices} did not precommit.`;
+    if (streak !== undefined) {
+      this.content = `Consecutive ${streak} blocks from the block(${blockNumber -
+        streak}), validating nodes ${nodeIndices} did not precommit.`;
+    } else {
+      this.content = `For the block(${blockNumber}), validating nodes ${nodeIndices} did not precommit.`;
+    }
   }
 }
 

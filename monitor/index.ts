@@ -30,10 +30,14 @@ const checkDeath = (() => {
 })();
 
 const checkSealField = (() => {
-  let prevAllSet = true;
+  let prevHasProblem = false;
   let prevBestBlockNumber = 0;
+  const validatorCount = 30;
+  const errorStreak = Array(validatorCount).fill(0);
+  
   return async (sdk: SDK, targetEmail: string) => {
     const viewAlertLevel = new U64(getConfig<number>("view_alert_level"));
+    const errorStreakAlertLevel = getConfig<number>("error_streak_alert_level");
     const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
 
     if (prevBestBlockNumber === bestBlockNumber) {
@@ -43,8 +47,6 @@ const checkSealField = (() => {
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
       // FIXME: When dynatmic validator is deployed, get validator count dynamically.
-      const validatorCount = 30;
-
       const currentViewIdx = 1;
       const precommitBitsetIdx = 3;
       const bestBlockSealField = bestBlock.seal;
@@ -65,18 +67,47 @@ const checkSealField = (() => {
         validatorCount
       );
 
-      const someNodesStartSleeping =
-        sleepingNodeIndices.length !== 0 && prevAllSet;
-      const allNodesNowAwake = sleepingNodeIndices.length === 0 && !prevAllSet;
-
-      if (someNodesStartSleeping) {
-        prevAllSet = false;
+      const multipleNodesSleeping = sleepingNodeIndices.length > 1;
+      if (multipleNodesSleeping) {
+        prevHasProblem = true;
         sendNotice(
           new chainErrors.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
           targetEmail
         );
-      } else if (allNodesNowAwake) {
-        prevAllSet = true;
+      }
+
+      for (let idx = 0; idx < errorStreak.length; idx++) {
+        if (sleepingNodeIndices.includes(idx)) {
+          errorStreak[idx] += 1;
+        } else {
+          errorStreak[idx] = 0;
+        }
+      }
+      const longTermSleepingIndices = [];
+      for (let idx = 0; idx < errorStreak.length; idx++) {
+        if (errorStreak[idx] >= errorStreakAlertLevel) {
+          longTermSleepingIndices.push(idx);
+        }
+      }
+      if (longTermSleepingIndices.length > 0) {
+        prevHasProblem = true;
+        sendNotice(
+          new chainErrors.NodeIsSleeping(
+            bestBlockNumber,
+            longTermSleepingIndices,
+            errorStreakAlertLevel
+          ),
+          targetEmail
+        );
+        longTermSleepingIndices.forEach(idx => {
+          errorStreak[idx] = 0;
+        });
+      }
+
+      const allNodesNowAwake =
+        sleepingNodeIndices.length === 0 && prevHasProblem;
+      if (allNodesNowAwake) {
+        prevHasProblem = false;
         sendNotice(new chainErrors.AllNodesAwake(bestBlockNumber), targetEmail);
       }
     } else {
