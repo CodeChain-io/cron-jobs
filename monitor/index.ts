@@ -13,6 +13,14 @@ import {
 
 const emailClient = new EmailClient("");
 
+interface CheckSealFieldState {
+  prevHasProblem: boolean;
+  prevBestBlockNumber: number;
+  sleepStreak: number[];
+  viewAlertLevel: U64;
+  sleepStreakAlertLevel: number;
+}
+
 async function sendNotice(error: CodeChainAlert, targetEmail: string) {
   SlackNotification.instance.sendError(error.title + "\n" + error.content);
   await emailClient.sendAnnouncement(targetEmail, error.title, error.content);
@@ -29,21 +37,97 @@ const checkDeath = (() => {
   };
 })();
 
-const checkSealField = (() => {
-  let prevHasProblem = false;
-  let prevBestBlockNumber = 0;
-  const validatorCount = 30;
-  const errorStreak = Array(validatorCount).fill(0);
-  
-  return async (sdk: SDK, targetEmail: string) => {
-    const viewAlertLevel = new U64(getConfig<number>("view_alert_level"));
-    const errorStreakAlertLevel = getConfig<number>("error_streak_alert_level");
-    const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+function alertWhenViewTooHigh(
+  bestBlockNumber: number,
+  targetEmail: string,
+  state: CheckSealFieldState,
+  currentView: U64
+) {
+  if (currentView.gte(state.viewAlertLevel)) {
+    sendNotice(
+      new chainErrors.ViewTooHigh(bestBlockNumber, currentView),
+      targetEmail
+    );
+  }
+}
 
-    if (prevBestBlockNumber === bestBlockNumber) {
+function alertWhenMultipleNodesSleeping(
+  bestBlockNumber: number,
+  targetEmail: string,
+  state: CheckSealFieldState,
+  sleepingNodeIndices: number[]
+) {
+  const multipleNodesSleeping = sleepingNodeIndices.length > 1;
+  if (multipleNodesSleeping) {
+    state.prevHasProblem = true;
+    sendNotice(
+      new chainErrors.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
+      targetEmail
+    );
+  }
+}
+
+function notifyWhenAllNodesWakeUp(
+  bestBlockNumber: number,
+  targetEmail: string,
+  state: CheckSealFieldState,
+  sleepingNodeIndices: number[]
+) {
+  const allNodesNowAwake =
+    sleepingNodeIndices.length === 0 && state.prevHasProblem;
+  if (allNodesNowAwake) {
+    state.prevHasProblem = false;
+    sendNotice(new chainErrors.AllNodesAwake(bestBlockNumber), targetEmail);
+  }
+}
+
+function notifyWhenNodesSleepingLong(
+  bestBlockNumber: number,
+  targetEmail: string,
+  state: CheckSealFieldState,
+  sleepingNodeIndices: number[]
+) {
+  const longTermSleepingIndices = [];
+  for (let idx = 0; idx < state.sleepStreak.length; idx++) {
+    if (sleepingNodeIndices.includes(idx)) {
+      state.sleepStreak[idx] += 1;
+    } else {
+      state.sleepStreak[idx] = 0;
+    }
+    if (state.sleepStreak[idx] >= state.sleepStreakAlertLevel) {
+      longTermSleepingIndices.push(idx);
+      state.sleepStreak[idx] = 0;
+    }
+  }
+
+  if (longTermSleepingIndices.length > 0) {
+    state.prevHasProblem = true;
+    sendNotice(
+      new chainErrors.NodeIsSleeping(
+        bestBlockNumber,
+        longTermSleepingIndices,
+        state.sleepStreakAlertLevel
+      ),
+      targetEmail
+    );
+  }
+}
+
+const checkSealField = (() => {
+  const validatorCount = 30;
+  const state = {
+    prevHasProblem: false,
+    prevBestBlockNumber: 0,
+    sleepStreak: Array(validatorCount).fill(0),
+    viewAlertLevel: new U64(getConfig<number>("view_alert_level")),
+    sleepStreakAlertLevel: getConfig<number>("sleep_streak_alert_level")
+  };
+  return async (sdk: SDK, targetEmail: string) => {
+    const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+    if (state.prevBestBlockNumber === bestBlockNumber) {
       return;
     }
-    prevBestBlockNumber = bestBlockNumber;
+    state.prevBestBlockNumber = bestBlockNumber;
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
       // FIXME: When dynatmic validator is deployed, get validator count dynamically.
@@ -52,13 +136,6 @@ const checkSealField = (() => {
       const bestBlockSealField = bestBlock.seal;
 
       const currentView = decodeViewField(bestBlockSealField[currentViewIdx]);
-      if (currentView.gte(viewAlertLevel)) {
-        sendNotice(
-          new chainErrors.ViewTooHigh(bestBlockNumber, currentView),
-          targetEmail
-        );
-      }
-
       const precommitBitset = decodeBitsetField(
         bestBlockSealField[precommitBitsetIdx]
       );
@@ -67,49 +144,25 @@ const checkSealField = (() => {
         validatorCount
       );
 
-      const multipleNodesSleeping = sleepingNodeIndices.length > 1;
-      if (multipleNodesSleeping) {
-        prevHasProblem = true;
-        sendNotice(
-          new chainErrors.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
-          targetEmail
-        );
-      }
-
-      for (let idx = 0; idx < errorStreak.length; idx++) {
-        if (sleepingNodeIndices.includes(idx)) {
-          errorStreak[idx] += 1;
-        } else {
-          errorStreak[idx] = 0;
-        }
-      }
-      const longTermSleepingIndices = [];
-      for (let idx = 0; idx < errorStreak.length; idx++) {
-        if (errorStreak[idx] >= errorStreakAlertLevel) {
-          longTermSleepingIndices.push(idx);
-        }
-      }
-      if (longTermSleepingIndices.length > 0) {
-        prevHasProblem = true;
-        sendNotice(
-          new chainErrors.NodeIsSleeping(
-            bestBlockNumber,
-            longTermSleepingIndices,
-            errorStreakAlertLevel
-          ),
-          targetEmail
-        );
-        longTermSleepingIndices.forEach(idx => {
-          errorStreak[idx] = 0;
-        });
-      }
-
-      const allNodesNowAwake =
-        sleepingNodeIndices.length === 0 && prevHasProblem;
-      if (allNodesNowAwake) {
-        prevHasProblem = false;
-        sendNotice(new chainErrors.AllNodesAwake(bestBlockNumber), targetEmail);
-      }
+      alertWhenViewTooHigh(bestBlockNumber, targetEmail, state, currentView);
+      alertWhenMultipleNodesSleeping(
+        bestBlockNumber,
+        targetEmail,
+        state,
+        sleepingNodeIndices
+      );
+      notifyWhenNodesSleepingLong(
+        bestBlockNumber,
+        targetEmail,
+        state,
+        sleepingNodeIndices
+      );
+      notifyWhenAllNodesWakeUp(
+        bestBlockNumber,
+        targetEmail,
+        state,
+        sleepingNodeIndices
+      );
     } else {
       sendNotice(new chainErrors.GetBlockFailed(bestBlockNumber), targetEmail);
     }
