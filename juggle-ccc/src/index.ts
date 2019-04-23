@@ -231,7 +231,7 @@ async function main() {
                         sendgridTo,
                         "warn",
                         networkId,
-                        "has a problem",
+                        `has a problem - ${new Date().toISOString()}`,
                         err.message
                     );
                 } catch (err) {
