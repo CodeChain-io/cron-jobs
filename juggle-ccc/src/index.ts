@@ -162,9 +162,9 @@ async function main() {
                             ? oppositeBalance
                             : currentBalance;
                         throw Error(
-                            `Too less balance on both address. left: ${
+                            `Too small balance on both address.\r\n ${leftAddress}: ${
                                 left.value
-                            } right: ${right.value}`
+                            }\r\n ${rightAddress}: ${right.value}`
                         );
                     }
                     isLeftTurn = !isLeftTurn;
