@@ -1,15 +1,17 @@
 {
-  "extends": [
-    "tslint:recommended",
-    "tslint-config-prettier"
-  ],
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
   "rules": {
     "interface-name": false,
     "no-console": false,
     "object-literal-sort-keys": false,
     "no-var-requires": false,
     "array-type": false,
-    "variable-name": [true, "allow-leading-underscore"],
+    "variable-name": [
+      true,
+      "check-format",
+      "allow-leading-underscore",
+      "allow-pascal-case"
+    ],
     "max-classes-per-file": true,
     "no-bitwise": false
   },
@@ -18,8 +20,6 @@
     "object-literal-sort-keys": false
   },
   "linterOptions": {
-    "exclude": [
-      "node_modules/**/*.ts"
-    ]
+    "exclude": ["node_modules/**/*.ts", "/lib/*"]
   }
 }

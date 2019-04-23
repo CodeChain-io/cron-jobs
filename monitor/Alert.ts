@@ -3,7 +3,7 @@ import { getConfig } from "./util";
 
 const networkId = getConfig<string>("network_id");
 const prefix = `[${networkId} network]`;
-const suffix = `${(new Date()).toISOString()}`;
+const suffix = `${new Date().toISOString()}`;
 
 export interface CodeChainAlert {
   title: string;
