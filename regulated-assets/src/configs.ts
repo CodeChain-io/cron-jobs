@@ -17,12 +17,12 @@ export const sdk = (() => {
     switch (SERVER) {
         case "local":
             return new SDK({
-                server: "http://127.0.0.1:8080",
+                server: process.env.RPC_URL || "http://127.0.0.1:8080",
                 networkId: "tc",
             });
         case "corgi":
             return new SDK({
-                server: "http://13.124.96.177:8080",
+                server: process.env.RPC_URL || "https://corgi-rpc.codechain.io/",
                 networkId: "wc",
             });
         default:
