@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "types": [
-      "mocha", "node"
-    ],
+    "types": ["mocha", "node"],
     "module": "commonjs",
     "declaration": true,
     "outDir": "build",
@@ -12,7 +10,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["**/*.ts"]
 }
