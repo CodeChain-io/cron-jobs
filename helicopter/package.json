@@ -10,7 +10,7 @@
     "lint": "tslint -p . && prettier './src/**.ts' -l",
     "fmt": "tslint -p . --fix && prettier './src/**.ts' --write"
   },
-  "author": "CodeChain Team <codechain@kodebox.io>",
+  "author": "CodeChain Team <hi@codechain.io>",
   "license": "ISC",
   "dependencies": {
     "bignumber.js": "^7.2.1",

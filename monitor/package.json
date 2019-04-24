@@ -10,7 +10,7 @@
     "lint": "tslint -p . && prettier '**/*.ts' -l",
     "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
   },
-  "author": "CodeChain Team <codechain@kodebox.io>",
+  "author": "CodeChain Team <hi@codechain.io>",
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^6.3.1",
