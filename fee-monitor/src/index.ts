@@ -5,6 +5,7 @@ import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
 import { getStakeholders, getWeights, Weight } from "./Stake";
 import { U64 } from "codechain-primitives/lib";
 import { getCCCBalances, CCCTracer } from "./CCC";
+import { Watchdog } from "watchdog";
 
 function distribute(tracer: CCCTracer, author: PlatformAddress, weights: Weight[]) {
     const totalWeights = weights
@@ -169,13 +170,28 @@ async function startFrom() {
     return bestBlockNumber - 100;
 }
 
+interface Progress {
+    blockNumber: number;
+    retry: number;
+}
+
 async function main() {
     let blockNumber = await startFrom();
+    const dog = new Watchdog<Progress>(30 * 1000); // 30 seconds
+    dog.on("reset", ({ data }, _) => {
+        const message =
+            "fee-monitor has been stalled for 30 seconds:" + JSON.stringify(data, null, "    ");
+        console.warn(message);
+        slack.sendError(message);
+    });
     for (;;) {
         console.log();
         console.log(`BlockNumber: ${blockNumber}`);
         for (let retry = 1; ; retry++) {
             try {
+                dog.feed({
+                    data: { blockNumber, retry },
+                });
                 await checkBlock(blockNumber);
                 break;
             } catch (e) {

@@ -20,6 +20,7 @@ import { scenarios, Skip } from "./scenario";
 import { State } from "./State";
 import { TxSender } from "./TxSender";
 import { assert, makeRandomString, pickWeightedRandom, sleep, time } from "./util";
+import { Watchdog } from "watchdog";
 
 async function ensureCCC(
     state: State,
@@ -155,6 +156,10 @@ async function initUsingIndexer(state: State): Promise<EnsureCCC> {
     return ensurer;
 }
 
+interface Progress {
+    description: string;
+}
+
 async function main() {
     const state = new State();
     let ensureAmountOfCCC: EnsureCCC;
@@ -165,11 +170,23 @@ async function main() {
     }
     console.log();
     console.log("=== BEGIN SCENARIO ===");
+    const dog = new Watchdog<Progress>(30 * 1000); // 30 seconds
+    dog.on("reset", ({ data }, _) => {
+        const message =
+            "regulated-assets has been stalled for 30 seconds:" +
+            JSON.stringify(data, null, "    ");
+        console.warn(message);
+        slack.sendError(message);
+    });
     for (;;) {
         console.log();
         const picked = pickWeightedRandom(Object.values(scenarios))!;
         console.log(`scenario ${picked.description}`);
-
+        dog.feed({
+            data: {
+                description: picked.description,
+            },
+        });
         const scenario = await time("create scenario", () => picked.scenario(state));
         if (scenario instanceof Skip) {
             console.warn(`skip: ${scenario.reason}`);
