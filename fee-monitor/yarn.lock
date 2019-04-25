@@ -344,6 +344,11 @@ brace-expansion@^1.1.7:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
 
+brolog@^1.3.3:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/brolog/-/brolog-1.8.3.tgz#8123420b46912333ed4dc3d25fe98af30f5b0fad"
+  integrity sha512-ye50Dh2AIz6r4UdrKq9KuZHq3P0osZI42bXUTh9Grp3qLjTN7HqnC1b7czD6ySoSj42piFAq4eHuBrYBRSGxDg==
+
 brorand@^1.0.1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/brorand/-/brorand-1.1.0.tgz#12c25efe40a45e3c323eb8675a0a0ce57b22371f"
@@ -1820,6 +1825,13 @@ verror@1.10.0:
     assert-plus "^1.0.0"
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
+
+watchdog@^0.8.17:
+  version "0.8.17"
+  resolved "https://registry.yarnpkg.com/watchdog/-/watchdog-0.8.17.tgz#515596a0d413b8a2a2a3ebcfeb142a0dda28b438"
+  integrity sha512-RHxxLKqtggCGapGIng8OBOzebF9rx2ucl4bT36mj7GkipcIzj4Rhg0nlcP0RpMHtC8Gys4a5F9/DXz/qYIa0WQ==
+  dependencies:
+    brolog "^1.3.3"
 
 which@^1.2.9:
   version "1.3.1"
