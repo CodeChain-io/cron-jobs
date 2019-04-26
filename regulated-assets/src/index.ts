@@ -160,6 +160,30 @@ interface Progress {
     description: string;
 }
 
+function createWatchdog(timeout: number): Watchdog<Progress> {
+    let stalled = false;
+    const dog = new Watchdog<Progress>(timeout * 1000);
+    dog.on("reset", ({ data }, _) => {
+        stalled = true;
+        const message =
+            `regulated-assets has been stalled for ${timeout} seconds:` +
+            JSON.stringify(data, null, "    ");
+        console.warn(message);
+        slack.sendError(message);
+    });
+    dog.on("feed", ({ data }, _) => {
+        if (stalled) {
+            stalled = false;
+            const message =
+                "regulated-assets has been recovered to normal:" +
+                JSON.stringify(data, null, "    ");
+            console.warn(message);
+            slack.sendMessage(message);
+        }
+    });
+    return dog;
+}
+
 async function main() {
     const state = new State();
     let ensureAmountOfCCC: EnsureCCC;
@@ -170,14 +194,7 @@ async function main() {
     }
     console.log();
     console.log("=== BEGIN SCENARIO ===");
-    const dog = new Watchdog<Progress>(30 * 1000); // 30 seconds
-    dog.on("reset", ({ data }, _) => {
-        const message =
-            "regulated-assets has been stalled for 30 seconds:" +
-            JSON.stringify(data, null, "    ");
-        console.warn(message);
-        slack.sendError(message);
-    });
+    const dog = createWatchdog(120);
     for (;;) {
         console.log();
         const picked = pickWeightedRandom(Object.values(scenarios))!;
