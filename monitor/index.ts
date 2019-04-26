@@ -81,7 +81,7 @@ function notifyWhenAllNodesWakeUp(
   }
 }
 
-function notifyWhenNodesSleepingLong(
+function notifyWhenNodesSleepingLongOrRecovered(
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
@@ -92,11 +92,18 @@ function notifyWhenNodesSleepingLong(
     if (sleepingNodeIndices.includes(idx)) {
       state.sleepStreak[idx] += 1;
     } else {
+      const sleepStreak = state.sleepStreak[idx];
+      const prevProblematic = sleepStreak >= state.sleepStreakAlertLevel;
+      if (prevProblematic) {
+        sendNotice(
+          new chainErrors.NodeRecovered(bestBlockNumber, idx, sleepStreak),
+          targetEmail
+        );
+      }
       state.sleepStreak[idx] = 0;
     }
-    if (state.sleepStreak[idx] >= state.sleepStreakAlertLevel) {
+    if (state.sleepStreak[idx] === state.sleepStreakAlertLevel) {
       longTermSleepingIndices.push(idx);
-      state.sleepStreak[idx] = 0;
     }
   }
 
@@ -151,7 +158,7 @@ const checkSealField = (() => {
         state,
         sleepingNodeIndices
       );
-      notifyWhenNodesSleepingLong(
+      notifyWhenNodesSleepingLongOrRecovered(
         bestBlockNumber,
         targetEmail,
         state,
