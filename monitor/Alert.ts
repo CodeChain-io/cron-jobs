@@ -49,6 +49,18 @@ export class NodeIsSleeping implements CodeChainAlert {
   }
 }
 
+export class NodeRecovered implements CodeChainAlert {
+  public title: string;
+  public content: string;
+
+  constructor(blockNumber: number, nodeIndex: number, sleepStreak: number) {
+    const suffix = `${new Date().toISOString()}`;
+    this.title = `${prefix} CodeChain Node has recovered from the problem ${suffix}`;
+    this.content = `The node ${nodeIndex} did not precommit from the block ${blockNumber -
+      sleepStreak} consecutively. Now the node ${nodeIndex} has been recovered from the problem.`;
+  }
+}
+
 export class AllNodesAwake implements CodeChainAlert {
   public title: string;
   public content: string;
