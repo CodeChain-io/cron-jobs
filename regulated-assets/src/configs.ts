@@ -134,7 +134,7 @@ export const TIMEOUT: number = (() => {
         case "local":
             return 1.0;
         case "corgi":
-            return 120.0;
+            return 30.0;
         default:
             throw Error("Invalid server configuration");
     }
