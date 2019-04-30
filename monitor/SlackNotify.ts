@@ -1,7 +1,6 @@
+import { IncomingWebhook } from "@slack/client";
 import * as _ from "lodash";
 import { getConfig } from "./util";
-
-const { IncomingWebhook } = require("@slack/client");
 
 const slackWebhookUrl = getConfig<string>("slack_webhook_url");
 
@@ -13,7 +12,7 @@ interface Attachment {
 export class SlackNotification {
   // tslint:disable-next-line:variable-name
   private static _instance: SlackNotification;
-  private webhook: any;
+  private webhook?: IncomingWebhook;
   private unsentMessage: string[] = [];
   private unsentAttachments: Attachment[] = [];
 
@@ -45,7 +44,7 @@ export class SlackNotification {
   }
 
   private send() {
-    this.webhook.send(
+    this.webhook!.send(
       {
         text: _.join(this.unsentMessage, "\n"),
         attachments: this.unsentAttachments
