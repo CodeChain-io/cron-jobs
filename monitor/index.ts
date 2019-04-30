@@ -21,8 +21,28 @@ interface CheckSealFieldState {
   sleepStreakAlertLevel: number;
 }
 
+function colorFromLevel(
+  level: "error" | "warn" | "info"
+): "danger" | "warning" | undefined {
+  switch (level) {
+    case "error":
+      return "danger";
+    case "warn":
+      return "warning";
+    default:
+      return undefined;
+  }
+}
+
 function sendNotice(error: CodeChainAlert, targetEmail: string) {
-  SlackNotification.instance.send({ title: error.title, text: error.content });
+  const color = colorFromLevel(error.level);
+  if (color != null) {
+    SlackNotification.instance.send({
+      title: error.title,
+      text: error.content,
+      color
+    });
+  }
   emailClient
     .sendAnnouncement(targetEmail, error.title, error.content)
     .catch(console.error);
