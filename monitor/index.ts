@@ -22,7 +22,7 @@ interface CheckSealFieldState {
 }
 
 function sendNotice(error: CodeChainAlert, targetEmail: string) {
-  SlackNotification.instance.sendError(error.title + "\n" + error.content);
+  SlackNotification.instance.send({ title: error.title, text: error.content });
   emailClient
     .sendAnnouncement(targetEmail, error.title, error.content)
     .catch(console.error);

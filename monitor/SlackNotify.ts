@@ -1,20 +1,14 @@
-import { IncomingWebhook } from "@slack/client";
+import { IncomingWebhook, MessageAttachment } from "@slack/client";
 import * as _ from "lodash";
 import { getConfig } from "./util";
 
 const slackWebhookUrl = getConfig<string>("slack_webhook_url");
 
-interface Attachment {
-  title: string;
-  text: string;
-}
-
 export class SlackNotification {
   // tslint:disable-next-line:variable-name
   private static _instance: SlackNotification;
   private webhook?: IncomingWebhook;
-  private unsentMessage: string[] = [];
-  private unsentAttachments: Attachment[] = [];
+  private unsentMessage: MessageAttachment[] = [];
 
   private readonly sendDebounced: any;
 
@@ -25,7 +19,7 @@ export class SlackNotification {
 
     this.webhook = new IncomingWebhook(slackWebhookUrl, {});
     this.sendDebounced = _.debounce(() => {
-      this.send();
+      this.sendInternal();
     }, 1500);
   }
 
@@ -33,21 +27,19 @@ export class SlackNotification {
     return this._instance || (this._instance = new this());
   }
 
-  public sendError(msg: string) {
+  public send(msg: MessageAttachment) {
     if (slackWebhookUrl === "") {
       return;
     }
 
-    msg = `${msg}`;
     this.unsentMessage.push(msg);
     this.sendDebounced();
   }
 
-  private send() {
+  private sendInternal() {
     this.webhook!.send(
       {
-        text: _.join(this.unsentMessage, "\n"),
-        attachments: this.unsentAttachments
+        attachments: this.unsentMessage
       },
       (err: Error) => {
         if (err) {
@@ -57,6 +49,5 @@ export class SlackNotification {
       }
     );
     this.unsentMessage = [];
-    this.unsentAttachments = [];
   }
 }
