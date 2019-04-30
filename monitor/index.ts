@@ -1,8 +1,7 @@
 import { U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
-import * as chainErrors from "./Alert";
-import { CodeChainAlert } from "./Alert";
 import { EmailClient } from "./EmailNotify";
+import * as Notifications from "./Notification";
 import { SlackNotification } from "./SlackNotify";
 import {
   decodeBitsetField,
@@ -12,6 +11,7 @@ import {
 } from "./util";
 
 const emailClient = new EmailClient();
+type Notification = Notifications.Notification;
 
 interface CheckSealFieldState {
   prevHasProblem: boolean;
@@ -34,7 +34,7 @@ function colorFromLevel(
   }
 }
 
-function sendNotice(error: CodeChainAlert, targetEmail: string) {
+function sendNotice(error: Notification, targetEmail: string) {
   const color = colorFromLevel(error.level);
   if (color != null) {
     SlackNotification.instance.send({
@@ -57,7 +57,7 @@ const checkDeath = (() => {
   return async (sdk: SDK, targetEmail: string) => {
     const currentBestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
     if (prevBestBlockNumber === currentBestBlockNumber) {
-      sendNotice(new chainErrors.CodeChainDeath(), targetEmail);
+      sendNotice(new Notifications.CodeChainDeath(), targetEmail);
     }
     prevBestBlockNumber = currentBestBlockNumber;
   };
@@ -71,7 +71,7 @@ function alertWhenViewTooHigh(
 ) {
   if (currentView.gte(state.viewAlertLevel)) {
     sendNotice(
-      new chainErrors.ViewTooHigh(bestBlockNumber, currentView),
+      new Notifications.ViewTooHigh(bestBlockNumber, currentView),
       targetEmail
     );
   }
@@ -87,7 +87,7 @@ function alertWhenMultipleNodesSleeping(
   if (multipleNodesSleeping) {
     state.prevHasProblem = true;
     sendNotice(
-      new chainErrors.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
+      new Notifications.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
       targetEmail
     );
   }
@@ -103,7 +103,7 @@ function notifyWhenAllNodesWakeUp(
     sleepingNodeIndices.length === 0 && state.prevHasProblem;
   if (allNodesNowAwake) {
     state.prevHasProblem = false;
-    sendNotice(new chainErrors.AllNodesAwake(bestBlockNumber), targetEmail);
+    sendNotice(new Notifications.AllNodesAwake(bestBlockNumber), targetEmail);
   }
 }
 
@@ -122,7 +122,7 @@ function notifyWhenNodesSleepingLongOrRecovered(
       const prevProblematic = sleepStreak >= state.sleepStreakAlertLevel;
       if (prevProblematic) {
         sendNotice(
-          new chainErrors.NodeRecovered(bestBlockNumber, idx, sleepStreak),
+          new Notifications.NodeRecovered(bestBlockNumber, idx, sleepStreak),
           targetEmail
         );
       }
@@ -136,7 +136,7 @@ function notifyWhenNodesSleepingLongOrRecovered(
   if (longTermSleepingIndices.length > 0) {
     state.prevHasProblem = true;
     sendNotice(
-      new chainErrors.NodeIsSleeping(
+      new Notifications.NodeIsSleeping(
         bestBlockNumber,
         longTermSleepingIndices,
         state.sleepStreakAlertLevel
@@ -197,7 +197,10 @@ const checkSealField = (() => {
         sleepingNodeIndices
       );
     } else {
-      sendNotice(new chainErrors.GetBlockFailed(bestBlockNumber), targetEmail);
+      sendNotice(
+        new Notifications.GetBlockFailed(bestBlockNumber),
+        targetEmail
+      );
     }
   };
 })();
