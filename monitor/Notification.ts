@@ -95,3 +95,16 @@ export class GetBlockFailed implements Notification {
     this.content = `RPC chain_getBlockByNumber failed with the best block number ${blockNumber}`;
   }
 }
+
+export class DailyReport implements Notification {
+  public readonly title: string;
+  public readonly content: string;
+  public readonly level = "info";
+  public readonly date = new Date();
+
+  constructor() {
+    const prefix = `[${this.level}][${networkId}][monitor]`;
+    this.title = `${prefix} is working`;
+    this.content = "The monitor is working without problem.";
+  }
+}
