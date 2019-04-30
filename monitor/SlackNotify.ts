@@ -17,7 +17,7 @@ export class SlackNotification {
   private unsentMessage: string[] = [];
   private unsentAttachments: Attachment[] = [];
 
-  private sendDebounced: any;
+  private readonly sendDebounced: any;
 
   private constructor() {
     if (slackWebhookUrl === "") {
