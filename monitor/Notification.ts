@@ -3,14 +3,14 @@ import { getConfig } from "./util";
 
 const networkId = getConfig<string>("network_id");
 
-export interface CodeChainAlert {
+export interface Notification {
   readonly title: string;
   readonly content: string;
   readonly level: "error" | "warn" | "info";
   readonly date: Date;
 }
 
-export class CodeChainDeath implements CodeChainAlert {
+export class CodeChainDeath implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "error";
@@ -23,7 +23,7 @@ export class CodeChainDeath implements CodeChainAlert {
   }
 }
 
-export class ViewTooHigh implements CodeChainAlert {
+export class ViewTooHigh implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "warn";
@@ -38,7 +38,7 @@ export class ViewTooHigh implements CodeChainAlert {
   }
 }
 
-export class NodeIsSleeping implements CodeChainAlert {
+export class NodeIsSleeping implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "warn";
@@ -56,7 +56,7 @@ export class NodeIsSleeping implements CodeChainAlert {
   }
 }
 
-export class NodeRecovered implements CodeChainAlert {
+export class NodeRecovered implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "info";
@@ -70,7 +70,7 @@ export class NodeRecovered implements CodeChainAlert {
   }
 }
 
-export class AllNodesAwake implements CodeChainAlert {
+export class AllNodesAwake implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "info";
@@ -83,7 +83,7 @@ export class AllNodesAwake implements CodeChainAlert {
   }
 }
 
-export class GetBlockFailed implements CodeChainAlert {
+export class GetBlockFailed implements Notification {
   public readonly title: string;
   public readonly content: string;
   public readonly level = "error";
