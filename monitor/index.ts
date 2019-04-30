@@ -44,7 +44,11 @@ function sendNotice(error: CodeChainAlert, targetEmail: string) {
     });
   }
   emailClient
-    .sendAnnouncement(targetEmail, error.title, error.content)
+    .sendAnnouncement(
+      targetEmail,
+      `${error.title} - ${error.date.toISOString()}`,
+      error.content
+    )
     .catch(console.error);
 }
 
