@@ -63,6 +63,17 @@ const checkDeath = (() => {
   };
 })();
 
+let lastDate: number;
+function checkDayChange(targetEmail: string) {
+  const now = new Date();
+  const nowDate = now.getUTCDate();
+  if (lastDate === nowDate) {
+    return;
+  }
+  lastDate = nowDate;
+  sendNotice(new Notifications.DailyReport(), targetEmail);
+}
+
 function alertWhenViewTooHigh(
   bestBlockNumber: number,
   targetEmail: string,
@@ -210,6 +221,11 @@ async function main() {
   const networkId = getConfig<string>("network_id");
   const sdk = new SDK({ server: rpcUrl, networkId });
   const targetEmail = getConfig<string>("notification_target_email");
+
+  lastDate = new Date().getUTCDate();
+
+  // 10 minutes interval
+  setInterval(checkDayChange, 10 * 60 * 1000, targetEmail);
 
   // 1 hour interval
   setInterval(checkDeath, 60 * 60 * 1000, sdk, targetEmail);
