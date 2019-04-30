@@ -5,13 +5,13 @@ const networkId = getConfig<string>("network_id");
 const prefix = `[${networkId} network]`;
 
 export interface CodeChainAlert {
-  title: string;
-  content: string;
+  readonly title: string;
+  readonly content: string;
 }
 
 export class CodeChainDeath implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor() {
     const suffix = `${new Date().toISOString()}`;
@@ -21,8 +21,8 @@ export class CodeChainDeath implements CodeChainAlert {
 }
 
 export class ViewTooHigh implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor(blockNumber: number, view: U64) {
     const suffix = `${new Date().toISOString()}`;
@@ -34,8 +34,8 @@ export class ViewTooHigh implements CodeChainAlert {
 }
 
 export class NodeIsSleeping implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor(blockNumber: number, nodeIndices: number[], streak?: number) {
     const suffix = `${new Date().toISOString()}`;
@@ -50,8 +50,8 @@ export class NodeIsSleeping implements CodeChainAlert {
 }
 
 export class NodeRecovered implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor(blockNumber: number, nodeIndex: number, sleepStreak: number) {
     const suffix = `${new Date().toISOString()}`;
@@ -62,8 +62,8 @@ export class NodeRecovered implements CodeChainAlert {
 }
 
 export class AllNodesAwake implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor(blockNumber: number) {
     const suffix = `${new Date().toISOString()}`;
@@ -73,8 +73,8 @@ export class AllNodesAwake implements CodeChainAlert {
 }
 
 export class GetBlockFailed implements CodeChainAlert {
-  public title: string;
-  public content: string;
+  public readonly title: string;
+  public readonly content: string;
 
   constructor(blockNumber: number) {
     const suffix = `${new Date().toISOString()}`;
