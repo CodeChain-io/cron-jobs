@@ -21,9 +21,11 @@ interface CheckSealFieldState {
   sleepStreakAlertLevel: number;
 }
 
-async function sendNotice(error: CodeChainAlert, targetEmail: string) {
+function sendNotice(error: CodeChainAlert, targetEmail: string) {
   SlackNotification.instance.sendError(error.title + "\n" + error.content);
-  await emailClient.sendAnnouncement(targetEmail, error.title, error.content);
+  emailClient
+    .sendAnnouncement(targetEmail, error.title, error.content)
+    .catch(console.error);
 }
 
 const checkDeath = (() => {
