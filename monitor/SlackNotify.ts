@@ -34,16 +34,6 @@ export class SlackNotification {
     return this._instance || (this._instance = new this());
   }
 
-  public sendMessage(msg: string) {
-    if (slackWebhookUrl === "") {
-      return;
-    }
-
-    msg = `"codechain-santa" ${msg}`;
-    this.unsentMessage.push(msg);
-    this.sendDebounced();
-  }
-
   public sendError(msg: string) {
     if (slackWebhookUrl === "") {
       return;
@@ -51,16 +41,6 @@ export class SlackNotification {
 
     msg = `${msg}`;
     this.unsentMessage.push(msg);
-    this.sendDebounced();
-  }
-
-  public sendAttachments(title: string, text: string) {
-    if (slackWebhookUrl === "") {
-      return;
-    }
-
-    console.log(`Attachment: ${title}`);
-    this.unsentAttachments.push({ title, text });
     this.sendDebounced();
   }
 

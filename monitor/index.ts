@@ -11,7 +11,7 @@ import {
   unsetBitIndices
 } from "./util";
 
-const emailClient = new EmailClient("");
+const emailClient = new EmailClient();
 
 interface CheckSealFieldState {
   prevHasProblem: boolean;
