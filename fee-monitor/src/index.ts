@@ -208,6 +208,23 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
 
 async function main() {
     let blockNumber = await startFrom();
+
+    let lastReportedBlockNumber = blockNumber;
+    let lastReportedDate = new Date().getUTCDate();
+    setInterval(() => {
+        const now = new Date();
+        if (now.getUTCDate() === lastReportedDate) {
+            return;
+        }
+        const currentBlockNumber = blockNumber;
+        email.sendInfo(
+            "is working.",
+            `Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked`,
+        );
+        lastReportedDate = now.getUTCDate();
+        lastReportedBlockNumber = currentBlockNumber;
+    }, 60_000); // 1 minute interval
+
     const dog = createWatchdog(30);
     for (;;) {
         console.log();
