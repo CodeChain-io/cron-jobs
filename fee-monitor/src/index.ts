@@ -1,9 +1,8 @@
 import * as fs from "fs";
 import { sdk, slack, MINIMUM_FEES, SERVER } from "./config";
-import { Pay, PlatformAddress, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
+import { Pay, PlatformAddress, U64, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
 import { getStakeholders, getWeights, Weight } from "./Stake";
-import { U64 } from "codechain-primitives/lib";
 import { getCCCBalances, CCCTracer } from "./CCC";
 import { Watchdog } from "watchdog";
 

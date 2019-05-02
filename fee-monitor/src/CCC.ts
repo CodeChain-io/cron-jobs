@@ -1,4 +1,4 @@
-import { PlatformAddress, U64 } from "codechain-primitives/lib";
+import { PlatformAddress, U64 } from "codechain-sdk/lib/core/classes";
 import { sdk } from "./config";
 
 export async function getCCCBalances(
