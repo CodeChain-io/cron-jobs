@@ -20,12 +20,12 @@ class NullSlack implements Slack {
 }
 
 class SlackWebhook implements Slack {
-    private tag: string;
-    private webhook: any;
+    private readonly tag: string;
+    private readonly webhook: any;
     private unsentMessage: string[] = [];
     private unsentAttachments: Attachment[] = [];
 
-    private sendDebounced: any;
+    private readonly sendDebounced: any;
 
     public constructor(tag: string, slackWebhookUrl: string) {
         this.tag = tag;
