@@ -1,11 +1,5 @@
 import * as _ from "lodash";
-
-const { IncomingWebhook } = require("@slack/client");
-
-interface Attachment {
-    title: string;
-    text: string;
-}
+import { IncomingWebhook, MessageAttachment } from "@slack/client";
 
 export interface Slack {
     sendMessage(msg: string): void;
@@ -21,9 +15,9 @@ class NullSlack implements Slack {
 
 class SlackWebhook implements Slack {
     private readonly tag: string;
-    private readonly webhook: any;
+    private readonly webhook: IncomingWebhook;
     private unsentMessage: string[] = [];
-    private unsentAttachments: Attachment[] = [];
+    private unsentAttachments: MessageAttachment[] = [];
 
     private readonly sendDebounced: any;
 
