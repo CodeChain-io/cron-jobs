@@ -13,7 +13,7 @@ export class EmailClient {
       }
     }
     sgMail.setApiKey(getConfig("sendgrid_api_key"));
-    this.from = "no-reply@kodebox.io";
+    this.from = "no-reply+monitor@devop.codechain.io";
   }
 
   public async sendAnnouncement(
