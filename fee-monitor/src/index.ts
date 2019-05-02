@@ -118,7 +118,7 @@ async function checkBlock(blockNumber: number) {
         }
     }
     if (aggregated.errors.length > 0) {
-        slack.sendAttachments("fee-monitor", JSON.stringify(aggregated, null, "    "));
+        slack.sendWarning(JSON.stringify(aggregated, null, "    "));
     } else {
         console.log("Block is Okay");
     }
@@ -188,10 +188,9 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
     dog.on("feed", ({ data }, _) => {
         if (stalled) {
             stalled = false;
-            const message =
-                "fee-monitor has been recovered to normal:" + JSON.stringify(data, null, "    ");
+            const message = JSON.stringify(data, null, "    ");
             console.warn(message);
-            slack.sendMessage(message);
+            slack.sendInfo("has been recovered to normal", message);
         }
     });
     return dog;
