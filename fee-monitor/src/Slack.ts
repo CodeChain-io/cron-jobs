@@ -2,21 +2,20 @@ import * as _ from "lodash";
 import { IncomingWebhook, MessageAttachment } from "@slack/client";
 
 export interface Slack {
-    sendMessage(msg: string): void;
     sendError(msg: string): void;
-    sendAttachments(title: string, text: string): void;
+    sendWarning(text: string): void;
+    sendInfo(title: string, text: string): void;
 }
 
 class NullSlack implements Slack {
-    public sendMessage(_msg: string) {}
     public sendError(_msg: string) {}
-    public sendAttachments(_title: string, _text: string) {}
+    public sendWarning(_text: string) {}
+    public sendInfo(_title: string, _text: string) {}
 }
 
 class SlackWebhook implements Slack {
     private readonly tag: string;
     private readonly webhook: IncomingWebhook;
-    private unsentMessage: string[] = [];
     private unsentAttachments: MessageAttachment[] = [];
 
     private readonly sendDebounced: any;
@@ -29,28 +28,35 @@ class SlackWebhook implements Slack {
         }, 1500);
     }
 
-    public sendMessage(msg: string) {
-        msg = `"${this.tag}" ${msg}`;
-        this.unsentMessage.push(msg);
+    public sendError(text: string) {
+        const title = `[error]${this.tag} has a problem`;
+        this.unsentAttachments.push({ title, text, color: "danger" });
         this.sendDebounced();
     }
 
-    public sendError(msg: string) {
-        msg = `"${this.tag}" ${msg}`;
-        this.unsentMessage.push(msg);
+    public sendWarning(text: string) {
+        console.log(`Warning: ${text}`);
+        this.unsentAttachments.push({
+            title: `[warn]${this.tag} finds a problem`,
+            text,
+            color: "warning",
+        });
         this.sendDebounced();
     }
 
-    public sendAttachments(title: string, text: string) {
-        console.log(`Attachment: ${title}`);
-        this.unsentAttachments.push({ title, text });
+    public sendInfo(title: string, text: string) {
+        console.log(`Info: ${text}`);
+        this.unsentAttachments.push({
+            title: `[info]${this.tag} ${title}`,
+            text,
+            color: "good",
+        });
         this.sendDebounced();
     }
 
     private send() {
         this.webhook.send(
             {
-                text: _.join(this.unsentMessage, "\n"),
                 attachments: this.unsentAttachments,
             },
             (err: Error) => {
@@ -60,7 +66,6 @@ class SlackWebhook implements Slack {
                 }
             },
         );
-        this.unsentMessage = [];
         this.unsentAttachments = [];
     }
 }

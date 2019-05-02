@@ -10,25 +10,36 @@ export const SERVER: string = (() => {
     }
 })();
 
-export const sdk = (() => {
-    console.log(`sdk ${SERVER} ${process.env.RPC_URL}`);
-    switch (SERVER) {
+function networkId(server: string): string {
+    switch (server) {
         case "corgi":
-            return new SDK({
-                server: process.env.RPC_URL || "https://corgi-rpc.codechain.io/",
-                networkId: "wc",
-            });
+            return "wc";
         case "mainnet":
-            return new SDK({
-                server: process.env.RPC_URL || "https://rpc.codechain.io/",
-                networkId: "cc",
-            });
+            return "cc";
         default:
             throw Error("Invalid server configuration");
     }
+}
+function rpcUrl(server: string): string {
+    switch (server) {
+        case "corgi":
+            return "https://corgi-rpc.codechain.io/";
+        case "mainnet":
+            return "https://rpc.codechain.io/";
+        default:
+            throw Error("Invalid server configuration");
+    }
+}
+
+export const sdk = (() => {
+    console.log(`sdk ${SERVER} ${process.env.RPC_URL}`);
+    return new SDK({
+        server: process.env.RPC_URL || rpcUrl(SERVER),
+        networkId: networkId(SERVER),
+    });
 })();
 
-export const slack = createSlack(`fee-monitor (${SERVER})`, process.env.SLACK);
+export const slack = createSlack(`[${networkId(SERVER)}][fee-monitor]`, process.env.SLACK);
 
 export const MINIMUM_FEES: { [param: string]: number } = {
     pay: 100,
