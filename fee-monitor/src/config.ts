@@ -1,4 +1,5 @@
 import { SDK } from "codechain-sdk";
+import { createEmail } from "./Email";
 import { createSlack } from "./Slack";
 
 export const SERVER: string = (() => {
@@ -40,6 +41,11 @@ export const sdk = (() => {
 })();
 
 export const slack = createSlack(`[${networkId(SERVER)}][fee-monitor]`, process.env.SLACK);
+export const email = createEmail({
+    tag: `[${networkId(SERVER)}][fee-monitor]`,
+    sendgridApiKey: process.env.SENDGRID_API_KEY,
+    to: process.env.SENDGRID_TO,
+});
 
 export const MINIMUM_FEES: { [param: string]: number } = {
     pay: 100,

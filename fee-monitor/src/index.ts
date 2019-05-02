@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { sdk, slack, MINIMUM_FEES, SERVER } from "./config";
+import { email, sdk, slack, MINIMUM_FEES, SERVER } from "./config";
 import { Pay, PlatformAddress, U64, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
 import { getStakeholders, getWeights, Weight } from "./Stake";
@@ -119,6 +119,13 @@ async function checkBlock(blockNumber: number) {
     }
     if (aggregated.errors.length > 0) {
         slack.sendWarning(JSON.stringify(aggregated, null, "    "));
+        const errors = aggregated.errors
+            .map(error => `<li>${JSON.stringify(error)}</li>`)
+            .join("<br />\r\n");
+        email.sendWarning(`
+        <p>block number: ${aggregated.blockNumber}</p>
+        <ul>${errors}</ul>
+        `);
     } else {
         console.log("Block is Okay");
     }
@@ -184,13 +191,16 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
             JSON.stringify(data, null, "    ");
         console.warn(message);
         slack.sendError(message);
+        email.sendError(message);
     });
     dog.on("feed", ({ data }, _) => {
         if (stalled) {
             stalled = false;
             const message = JSON.stringify(data, null, "    ");
             console.warn(message);
-            slack.sendInfo("has been recovered to normal", message);
+            const title = "has been recovered to normal.";
+            slack.sendInfo(title, message);
+            email.sendInfo(title, message);
         }
     });
     return dog;
@@ -226,5 +236,6 @@ async function main() {
 main().catch(error => {
     console.log({ error });
     slack.sendError(error);
+    email.sendError(error.message);
     throw error;
 });
