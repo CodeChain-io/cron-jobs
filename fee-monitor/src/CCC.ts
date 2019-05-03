@@ -4,13 +4,13 @@ import { sdk } from "./config";
 export async function getCCCBalances(
     addresses: PlatformAddress[],
     blockNumber: number,
-): Promise<{ [address: string]: U64 }> {
+): Promise<Map<string, U64>> {
     const balances = await Promise.all(
         addresses.map(address => sdk.rpc.chain.getBalance(address, blockNumber)),
     );
-    const result: { [address: string]: U64 } = {};
+    const result = new Map();
     for (let i = 0; i < addresses.length; i++) {
-        result[addresses[i].value] = balances[i];
+        result.set(addresses[i].value, balances[i]);
     }
     return result;
 }
@@ -18,12 +18,8 @@ export async function getCCCBalances(
 export class CCCTracer {
     public totalFee = new U64(0);
     public totalMinFee = new U64(0);
-    public deposits: {
-        [address: string]: U64;
-    } = {};
-    public withdraws: {
-        [address: string]: U64;
-    } = {};
+    public deposits: Map<string, U64> = new Map();
+    public withdraws: Map<string, U64> = new Map();
 
     public collect(fee: U64, minFee: U64) {
         this.totalFee = this.totalFee.plus(fee);
@@ -31,27 +27,31 @@ export class CCCTracer {
     }
 
     public deposit(address: PlatformAddress, amount: U64) {
-        if (address.value in this.deposits) {
-            this.deposits[address.value] = this.deposits[address.value].plus(amount);
+        const deposit = this.deposits.get(address.value);
+        if (deposit != null) {
+            this.deposits.set(address.value, deposit.plus(amount));
         } else {
-            this.deposits[address.value] = amount;
+            this.deposits.set(address.value, amount);
         }
     }
 
     public withdraw(address: PlatformAddress, amount: U64) {
-        if (address.value in this.withdraws) {
-            this.withdraws[address.value] = this.withdraws[address.value].plus(amount);
+        const withdraw = this.withdraws.get(address.value);
+        if (withdraw != null) {
+            this.withdraws.set(address.value, withdraw.plus(amount));
         } else {
-            this.withdraws[address.value] = amount;
+            this.withdraws.set(address.value, amount);
         }
     }
 
     public adjust(address: PlatformAddress, amount: U64): U64 {
-        if (address.value in this.deposits) {
-            amount = amount.plus(this.deposits[address.value]);
+        const deposit = this.deposits.get(address.value)!;
+        if (deposit != null) {
+            amount = amount.plus(deposit);
         }
-        if (address.value in this.withdraws) {
-            amount = amount.minus(this.withdraws[address.value]);
+        const withdraw = this.withdraws.get(address.value);
+        if (withdraw != null) {
+            amount = amount.minus(withdraw);
         }
         return amount;
     }

@@ -104,8 +104,8 @@ async function checkBlock(blockNumber: number) {
     const stakeholderAfters = await getCCCBalances(stakeholders, blockNumber);
 
     for (const stakeholder of stakeholders) {
-        const expected = tracer.adjust(stakeholder, stakeholderBefores[stakeholder.value]);
-        const actual = stakeholderAfters[stakeholder.value];
+        const expected = tracer.adjust(stakeholder, stakeholderBefores.get(stakeholder.value)!);
+        const actual = stakeholderAfters.get(stakeholder.value)!;
         if (!expected.eq(actual)) {
             const error = {
                 type: "stakeholder",
