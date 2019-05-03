@@ -212,17 +212,30 @@ async function main() {
     let lastReportedBlockNumber = blockNumber;
     let lastReportedDate = new Date().getUTCDate();
     setInterval(() => {
-        const now = new Date();
-        if (now.getUTCDate() === lastReportedDate) {
-            return;
-        }
-        const currentBlockNumber = blockNumber;
-        email.sendInfo(
-            "is working.",
-            `Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked`,
-        );
-        lastReportedDate = now.getUTCDate();
-        lastReportedBlockNumber = currentBlockNumber;
+        (async () => {
+            const now = new Date();
+            if (now.getUTCDate() === lastReportedDate) {
+                return;
+            }
+            const currentBlockNumber = blockNumber;
+            const stakeholders = [];
+            for (const [address, balance] of await getCCCBalances(
+                await getStakeholders(blockNumber),
+                blockNumber,
+            )) {
+                stakeholders.push(`<li>${address}: ${balance.toString(10)}</li>`);
+            }
+            const reports = [];
+            reports.push(
+                `<p>Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked</p>`,
+            );
+            reports.push(`<h3>Stakeholders</h3>`);
+            reports.push(`<ul>${stakeholders.join("<br />\r\n")}</ul>`);
+
+            email.sendInfo("is working.", `${reports.join("\r\n")}`);
+            lastReportedDate = now.getUTCDate();
+            lastReportedBlockNumber = currentBlockNumber;
+        })().catch(console.error);
     }, 60_000); // 1 minute interval
 
     const dog = createWatchdog(30);
