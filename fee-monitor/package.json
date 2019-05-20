@@ -1,5 +1,5 @@
 {
-    "name": "codechain-scenario",
+    "name": "codechain-fee-monitor",
     "version": "1.0.0",
     "main": "src/index.ts",
     "license": "ISC",
