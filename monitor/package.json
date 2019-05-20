@@ -1,7 +1,7 @@
 {
-  "name": "codechain-santa",
+  "name": "codechain-monitor",
   "version": "1.0.0",
-  "description": "The santa gives transaction presents including order for CodeChain",
+  "description": "The CodeChain Monitor checks whether a network is healthy or not.",
   "main": "build/index.js",
   "scripts": {
     "start": "ts-node ./index.ts",
