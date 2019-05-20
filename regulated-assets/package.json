@@ -2,7 +2,7 @@
   "name": "codechain-scenario",
   "version": "1.0.0",
   "main": "src/index.ts",
-  "license": "MIT",
+  "license": "ISC",
   "scripts": {
     "local": "tsc -p . && SERVER=local node lib/index.js",
     "corgi": "tsc -p . && SERVER=corgi node lib/index.js",
