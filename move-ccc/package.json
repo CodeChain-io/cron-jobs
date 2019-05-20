@@ -2,7 +2,7 @@
   "name": "move-ccc",
   "version": "1.0.0",
   "main": "move-ccc.js",
-  "license": "MIT",
+  "license": "ISC",
   "scripts": {
     "lint": "prettier 'move-ccc.js' -l",
     "fmt": "prettier 'move-ccc.js' --write"

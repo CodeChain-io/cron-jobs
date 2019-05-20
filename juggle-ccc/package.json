@@ -4,7 +4,7 @@
   "description": "Juggle with CCC",
   "main": "index.js",
   "author": "Seulgi Kim <seulgi.kim@kodebox.io>",
-  "license": "MIT",
+  "license": "ISC",
   "scripts": {
     "start": "ts-node ./src/index.ts",
     "build": "tsc -p .",
