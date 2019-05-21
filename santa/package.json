@@ -1,5 +1,5 @@
 {
-  "name": "codechain-santa",
+  "name": "santa",
   "version": "1.0.0",
   "description": "The santa gives transaction presents including order for CodeChain",
   "main": "build/index.js",

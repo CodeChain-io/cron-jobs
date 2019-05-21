@@ -1,5 +1,5 @@
 {
-  "name": "codechain-time-lock-scenario-test",
+  "name": "time-lock-scenario-test",
   "version": "1.0.0",
   "description": "A time lock scenario test tool for CodeChain",
   "main": "build/index.js",
