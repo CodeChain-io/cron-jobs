@@ -1,5 +1,5 @@
 {
-  "name": "codechain-monitor",
+  "name": "monitor",
   "version": "1.0.0",
   "description": "The CodeChain Monitor checks whether a network is healthy or not.",
   "main": "build/index.js",
