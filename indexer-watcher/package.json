@@ -1,0 +1,31 @@
+{
+  "name": "indexer-watcher",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "ISC",
+  "scripts": {
+    "dev": "ts-node ./src/index.ts",
+    "build": "tsc -p .",
+    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
+    "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
+    "@slack/client": "^4.12.0",
+    "request-promise-native": "^1.0.7",
+    "request-json": "^0.6.3",
+    "config": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/config": "^0.0.34",
+    "@types/lodash": "^4.14.123",
+    "@types/request": "^2.48.1",
+    "@types/request-promise-native": "^1.0.15",
+    "@typescript-eslint/eslint-plugin": "^1.5.0",
+    "@typescript-eslint/parser": "^1.5.0",
+    "eslint": "^5.16.0",
+    "prettier": "^1.16.4",
+    "ts-node": "^8.0.3",
+    "typescript": "^3.4"
+  }
+}
