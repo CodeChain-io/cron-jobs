@@ -7,16 +7,20 @@
     "dev": "ts-node ./src/index.ts",
     "build": "tsc -p .",
     "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
-    "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different"
+    "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different",
+    "test": "NODE_ENV=test ts-node ./src/index.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^6.3.1",
     "@slack/client": "^4.12.0",
-    "request-promise-native": "^1.0.7",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "config": "^2.0.1",
     "request-json": "^0.6.3",
-    "config": "^2.0.1"
+    "request-promise-native": "^1.0.7"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.7",
     "@types/config": "^0.0.34",
     "@types/lodash": "^4.14.123",
     "@types/request": "^2.48.1",

@@ -2,10 +2,11 @@ import { getConfig } from "./util";
 import * as Notifications from "./Notification";
 import { SlackNotification } from "./SlackNotify";
 import { EmailClient } from "./EmailNotify";
-import { IndexerAPI } from "./IndexerAPI";
+import { IndexerAPI, IndexerAPIImpl, TestIndexerAPI } from "./IndexerAPI";
 
 const emailClient = new EmailClient();
 type Notification = Notifications.Notification;
+let lastNotiForTest: Notification | null = null;
 
 function colorFromLevel(level: "error" | "warn" | "info"): "danger" | "warning" | undefined {
     switch (level) {
@@ -20,6 +21,12 @@ function colorFromLevel(level: "error" | "warn" | "info"): "danger" | "warning" 
 
 function sendNotice(error: Notification, targetEmail: string) {
     const color = colorFromLevel(error.level);
+
+    if (process.env.NODE_ENV === "test") {
+        lastNotiForTest = error;
+        return;
+    }
+
     if (color != null) {
         SlackNotification.instance.send({
             title: error.title,
@@ -200,9 +207,150 @@ const checkBlockSync = (() => {
     };
 })();
 
+async function pingTests(assert: any, indexerAPI: TestIndexerAPI, dummyEmail: string) {
+    indexerAPI.pingError = null;
+    await assert.isFulfilled(checkPing(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti when the first ping succeed");
+    lastNotiForTest = null;
+
+    indexerAPI.pingError = new Error("Test error");
+    await assert.isFulfilled(checkPing(indexerAPI, dummyEmail));
+    assert.isNotNull(lastNotiForTest);
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerPingFailed,
+        "Send noti when the ping failed",
+    );
+    lastNotiForTest = null;
+
+    indexerAPI.pingError = null;
+    await assert.isFulfilled(checkPing(indexerAPI, dummyEmail));
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerPingSuccess,
+        "Send noti when the indexer became normal",
+    );
+    lastNotiForTest = null;
+
+    indexerAPI.pingError = null;
+    await assert.isFulfilled(checkPing(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti if indexer is normal and was normal.");
+    lastNotiForTest = null;
+}
+
+async function followupTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail: string) {
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 100;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+
+    lastNotiForTest = null;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti if the indexer is following");
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 150;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti if the difference is 50");
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 151;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerSyncTooSlow,
+        "Send noti when the difference >= 51",
+    );
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 110;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti when the indexer was slow and is slow");
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 190;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerSyncNormalized,
+        "Send noti when the indexer became normal",
+    );
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
+    indexerAPI.syncStatusResult.indexerBestBlockNumber = 199;
+    await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti when the indexer is normal and was normal");
+}
+
+async function blockSyncTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail: string) {
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 100;
+
+    lastNotiForTest = null;
+    await assert.isFulfilled(checkBlockSync(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti in the first check");
+
+    lastNotiForTest = null;
+    await assert.isFulfilled(checkBlockSync(indexerAPI, dummyEmail));
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerCodeChainNotSyncing,
+        "Send noti when the best block number is not changed",
+    );
+
+    lastNotiForTest = null;
+    await assert.isFulfilled(checkBlockSync(indexerAPI, dummyEmail));
+    assert.isNull(lastNotiForTest, "Do not send noti when the error state is not changed");
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 101;
+    await assert.isFulfilled(checkBlockSync(indexerAPI, dummyEmail));
+    assert.instanceOf(
+        lastNotiForTest,
+        Notifications.IndexerCodeChainSyncing,
+        "Send noti when the indexer's CodeChain became normal",
+    );
+
+    lastNotiForTest = null;
+    indexerAPI.syncStatusResult.codechainBestBlockNumber = 102;
+    await assert.isFulfilled(checkBlockSync(indexerAPI, dummyEmail));
+    assert.isNull(
+        lastNotiForTest,
+        "Do not send noti when the indexer's CodeChain is normal and was normal",
+    );
+}
+
+async function runTests() {
+    try {
+        const indexerAPI = new TestIndexerAPI();
+        const dummyEmail = "dummy mail";
+        const chai = require("chai");
+        const chaiAsPromised = require("chai-as-promised");
+        chai.use(chaiAsPromised);
+        const assert = chai.assert;
+
+        await pingTests(assert, indexerAPI, dummyEmail);
+        await followupTest(assert, indexerAPI, dummyEmail);
+        await blockSyncTest(assert, indexerAPI, dummyEmail);
+
+        console.log("TEST SUCCESS");
+    } catch (err) {
+        console.error(err);
+        console.log("TEST FAILED");
+        process.exit(1);
+    }
+}
+
 async function main() {
+    if (process.env.NODE_ENV === "test") {
+        runTests();
+        return;
+    }
+
     const indexerUrl = getConfig<string>("indexer_url");
-    const indexerAPI = new IndexerAPI(indexerUrl);
+    const indexerAPI = new IndexerAPIImpl(indexerUrl);
     const targetEmail = getConfig<string>("notification_target_email");
 
     try {
@@ -223,5 +371,4 @@ async function main() {
 
 main().catch(error => {
     console.error(error);
-    throw error;
 });
