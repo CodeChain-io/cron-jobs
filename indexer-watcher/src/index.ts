@@ -362,7 +362,7 @@ async function main() {
     }
 
     // 10 minutes interval
-    setInterval(checkDayChange, 10 * 60 * 1000, targetEmail);
+    setInterval(checkDayChange, 10 * 60 * 1000, indexerAPI, targetEmail);
 
     setInterval(checkPing, 5 * 1000, indexerAPI, targetEmail);
     setInterval(checkFollowUp, 10 * 1000, indexerAPI, targetEmail);
