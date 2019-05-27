@@ -45,7 +45,7 @@ function sendNotice(error: Notification, targetEmail: string) {
 
 const checkDayChange = (() => {
     let lastDate = new Date().getUTCDate();
-    let firstBlockNumberOfLastData = 0;
+    let firstBlockNumberOfLastData: "unknown" | number = "unknown";
     let lastBlockNumberOfLastDate = 0;
 
     return async (api: IndexerAPI, targetEmail: string) => {

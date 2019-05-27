@@ -93,7 +93,7 @@ export class DailyReport implements Notification {
     public readonly level = "info";
     public readonly date = new Date();
 
-    public constructor(firstBlockNumber: number, lastBlockNumber: number) {
+    public constructor(firstBlockNumber: number | "unknown", lastBlockNumber: number) {
         const prefix = `[${this.level}][${networkId}][indexer-watcher]`;
         this.title = `${prefix} is working`;
         this.content = `The Indexer Watcher is working without problem. Yesterday's first block number was ${firstBlockNumber} and last block number was ${lastBlockNumber}.`;
