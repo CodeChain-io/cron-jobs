@@ -2,7 +2,7 @@ import * as rp from "request-promise-native";
 
 interface SyncStatusResult {
     codechainBestBlockNumber: number;
-    indexerBestBlockNumber: number;
+    indexedBlockNumber: number;
 }
 
 export interface IndexerAPI {
@@ -42,7 +42,7 @@ export class TestIndexerAPI {
 
     public syncStatusResult: SyncStatusResult = {
         codechainBestBlockNumber: 0,
-        indexerBestBlockNumber: 0,
+        indexedBlockNumber: 0,
     };
     public syncStatus = async () => {
         return Promise.resolve(this.syncStatusResult);

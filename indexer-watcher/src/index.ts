@@ -53,8 +53,8 @@ const checkDayChange = (() => {
         const nowDate = now.getUTCDate();
         let currentBlockNumber = lastBlockNumberOfLastDate;
         try {
-            const { indexerBestBlockNumber } = await api.syncStatus();
-            currentBlockNumber = indexerBestBlockNumber;
+            const { indexedBlockNumber } = await api.syncStatus();
+            currentBlockNumber = indexedBlockNumber;
         } catch (err) {
             console.error(err);
         }
@@ -102,14 +102,13 @@ const checkFollowUp = (() => {
         try {
             const status = await api.syncStatus();
 
-            const indexerIsSlow =
-                status.codechainBestBlockNumber > status.indexerBestBlockNumber + 50;
+            const indexerIsSlow = status.codechainBestBlockNumber > status.indexedBlockNumber + 50;
 
             if (indexerWasSlow === null && indexerIsSlow) {
                 indexerWasSlow = "slow";
                 sendNotice(
                     new Notifications.IndexerSyncTooSlow(
-                        status.indexerBestBlockNumber,
+                        status.indexedBlockNumber,
                         status.codechainBestBlockNumber,
                     ),
                     targetEmail,
@@ -120,8 +119,8 @@ const checkFollowUp = (() => {
             if (indexerWasSlow === null && !indexerIsSlow) {
                 indexerWasSlow = "following";
                 console.log(
-                    `Indexer is syncing well. Currnet indexed block number: ${
-                        status.indexerBestBlockNumber
+                    `Indexer is syncing well. Current indexed block number: ${
+                        status.indexedBlockNumber
                     }, best block number: ${status.codechainBestBlockNumber}`,
                 );
                 return;
@@ -131,7 +130,7 @@ const checkFollowUp = (() => {
                 indexerWasSlow = "slow";
                 sendNotice(
                     new Notifications.IndexerSyncTooSlow(
-                        status.indexerBestBlockNumber,
+                        status.indexedBlockNumber,
                         status.codechainBestBlockNumber,
                     ),
                     targetEmail,
@@ -143,7 +142,7 @@ const checkFollowUp = (() => {
                 indexerWasSlow = "following";
                 sendNotice(
                     new Notifications.IndexerSyncNormalized(
-                        status.indexerBestBlockNumber,
+                        status.indexedBlockNumber,
                         status.codechainBestBlockNumber,
                     ),
                     targetEmail,
@@ -240,7 +239,7 @@ async function pingTests(assert: any, indexerAPI: TestIndexerAPI, dummyEmail: st
 
 async function followupTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail: string) {
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 100;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 100;
 
     lastNotiForTest = null;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
@@ -248,13 +247,13 @@ async function followupTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail:
 
     lastNotiForTest = null;
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 150;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 100;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
     assert.isNull(lastNotiForTest, "Do not send noti if the difference is 50");
 
     lastNotiForTest = null;
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 151;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 100;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 100;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
     assert.instanceOf(
         lastNotiForTest,
@@ -264,13 +263,13 @@ async function followupTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail:
 
     lastNotiForTest = null;
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 110;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 110;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
     assert.isNull(lastNotiForTest, "Do not send noti when the indexer was slow and is slow");
 
     lastNotiForTest = null;
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 190;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 190;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
     assert.instanceOf(
         lastNotiForTest,
@@ -280,7 +279,7 @@ async function followupTest(assert: any, indexerAPI: TestIndexerAPI, dummyEmail:
 
     lastNotiForTest = null;
     indexerAPI.syncStatusResult.codechainBestBlockNumber = 200;
-    indexerAPI.syncStatusResult.indexerBestBlockNumber = 199;
+    indexerAPI.syncStatusResult.indexedBlockNumber = 199;
     await assert.isFulfilled(checkFollowUp(indexerAPI, dummyEmail));
     assert.isNull(lastNotiForTest, "Do not send noti when the indexer is normal and was normal");
 }
