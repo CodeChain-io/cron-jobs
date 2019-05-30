@@ -1,7 +1,7 @@
 import { SDK } from "codechain-sdk";
 import { Asset } from "codechain-sdk/lib/core/Asset";
 import {
-    AssetTransferAddress,
+    AssetAddress,
     H256,
     PlatformAddress,
     Transaction,
@@ -55,7 +55,7 @@ export default class Helper {
             })
         );
 
-        while (!(await this.sdk.rpc.chain.containTransaction(hash))) {
+        while (!(await this.sdk.rpc.chain.containsTransaction(hash))) {
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
     }
@@ -108,7 +108,7 @@ export default class Helper {
         if (awaitResult) {
             let cnt = 0;
             while (
-                !(await this.sdk.rpc.chain.containTransaction(signed.hash())) &&
+                !(await this.sdk.rpc.chain.containsTransaction(signed.hash())) &&
                 cnt < 300
             ) {
                 cnt++;
@@ -122,7 +122,7 @@ export default class Helper {
 
     public async mintAsset(params: {
         supply: U64 | number;
-        recipient?: string | AssetTransferAddress;
+        recipient?: string | AssetAddress;
         secret?: string;
         seq?: number;
         metadata?: string;
