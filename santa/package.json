@@ -18,6 +18,7 @@
     "bignumber.js": "^7.2.1",
     "codechain-sdk": "^1.2.0",
     "config": "^2.0.1",
+    "mocha": "^6.1.4",
     "request-json": "^0.6.3",
     "request-promise-native": "^1.0.5",
     "sleep": "^5.2.3"
@@ -32,7 +33,7 @@
     "prettier": "1.14.2",
     "ts-node": "^7.0.1",
     "tsc": "^1.20150623.0",
-    "tslint": "^5.11.0",
+    "tslint": "^5.17.0",
     "tslint-config-prettier": "^1.10.0",
     "typescript": "^3.1.6"
   }
