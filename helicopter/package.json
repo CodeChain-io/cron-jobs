@@ -32,11 +32,11 @@
     "@types/request-promise-native": "^1.0.15",
     "@types/sleep": "^0.0.7",
     "chai": "^4.2.0",
-    "mocha": "^6.0.2",
+    "mocha": "^6.1.4",
     "prettier": "^1.16.4",
     "randomstring": "^1.1.5",
     "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
+    "tslint": "^5.17.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.3.4000"
   }
