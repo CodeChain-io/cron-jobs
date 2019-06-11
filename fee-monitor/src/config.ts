@@ -4,7 +4,7 @@ import { createSlack } from "./Slack";
 
 export const SERVER: string = (() => {
     const server = process.env.SERVER || "corgi";
-    if (["corgi", "mainnet"].indexOf(server) >= 0) {
+    if (["beagle", "corgi", "mainnet"].indexOf(server) >= 0) {
         return server;
     } else {
         throw Error("Invalid server configuration");
@@ -13,6 +13,8 @@ export const SERVER: string = (() => {
 
 function networkId(server: string): string {
     switch (server) {
+        case "beagle":
+            return "bc";
         case "corgi":
             return "wc";
         case "mainnet":
