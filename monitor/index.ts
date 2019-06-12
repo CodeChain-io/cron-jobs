@@ -1,4 +1,4 @@
-import { U64 } from "codechain-primitives";
+import { PlatformAddress, U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { EmailClient } from "./EmailNotify";
 import * as Notifications from "./Notification";
@@ -16,7 +16,7 @@ type Notification = Notifications.Notification;
 interface CheckSealFieldState {
   prevHasProblem: boolean;
   prevBestBlockNumber: number;
-  sleepStreak: number[];
+  sleepStreak: { [index: string]: number };
   viewAlertLevel: U64;
   sleepStreakAlertLevel: number;
 }
@@ -92,13 +92,19 @@ function alertWhenMultipleNodesSleeping(
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
-  sleepingNodeIndices: number[]
+  sleepingValidators: PlatformAddress[]
 ) {
-  const multipleNodesSleeping = sleepingNodeIndices.length > 1;
+  const multipleNodesSleeping = sleepingValidators.length > 1;
   if (multipleNodesSleeping) {
     state.prevHasProblem = true;
+    const validatorAddressesInString = sleepingValidators.map(address =>
+      address.toString()
+    );
     sendNotice(
-      new Notifications.NodeIsSleeping(bestBlockNumber, sleepingNodeIndices),
+      new Notifications.NodeIsSleeping(
+        bestBlockNumber,
+        validatorAddressesInString
+      ),
       targetEmail
     );
   }
@@ -108,10 +114,10 @@ function notifyWhenAllNodesWakeUp(
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
-  sleepingNodeIndices: number[]
+  sleepingValidators: PlatformAddress[]
 ) {
   const allNodesNowAwake =
-    sleepingNodeIndices.length === 0 && state.prevHasProblem;
+    sleepingValidators.length === 0 && state.prevHasProblem;
   if (allNodesNowAwake) {
     state.prevHasProblem = false;
     sendNotice(new Notifications.AllNodesAwake(bestBlockNumber), targetEmail);
@@ -122,34 +128,48 @@ function notifyWhenNodesSleepingLongOrRecovered(
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
-  sleepingNodeIndices: number[]
+  sleepingValidators: PlatformAddress[]
 ) {
-  const longTermSleepingIndices = [];
-  for (let idx = 0; idx < state.sleepStreak.length; idx++) {
-    if (sleepingNodeIndices.includes(idx)) {
-      state.sleepStreak[idx] += 1;
-    } else {
-      const sleepStreak = state.sleepStreak[idx];
-      const prevProblematic = sleepStreak >= state.sleepStreakAlertLevel;
-      if (prevProblematic) {
-        sendNotice(
-          new Notifications.NodeRecovered(bestBlockNumber, idx, sleepStreak),
-          targetEmail
-        );
+  const longTermSleepingAddresses: string[] = [];
+
+  const newSleepStreakState: { [index: string]: number } = {};
+
+  for (const sleepingValidator of sleepingValidators) {
+    newSleepStreakState[sleepingValidator.toString()] = 1;
+  }
+
+  for (const address in state.sleepStreak) {
+    if (state.sleepStreak.hasOwnProperty(address)) {
+      const prevSleepStreak = state.sleepStreak[address];
+      if (newSleepStreakState[address] === 1) {
+        newSleepStreakState[address] += prevSleepStreak;
+        if (newSleepStreakState[address] === state.sleepStreakAlertLevel) {
+          longTermSleepingAddresses.push(address);
+        }
+      } else {
+        const prevProblematic = prevSleepStreak >= state.sleepStreakAlertLevel;
+        if (prevProblematic) {
+          sendNotice(
+            new Notifications.NodeRecovered(
+              bestBlockNumber,
+              address,
+              prevSleepStreak
+            ),
+            targetEmail
+          );
+        }
       }
-      state.sleepStreak[idx] = 0;
-    }
-    if (state.sleepStreak[idx] === state.sleepStreakAlertLevel) {
-      longTermSleepingIndices.push(idx);
     }
   }
 
-  if (longTermSleepingIndices.length > 0) {
+  state.sleepStreak = newSleepStreakState;
+
+  if (longTermSleepingAddresses.length > 0) {
     state.prevHasProblem = true;
     sendNotice(
       new Notifications.NodeIsSleeping(
         bestBlockNumber,
-        longTermSleepingIndices,
+        longTermSleepingAddresses,
         state.sleepStreakAlertLevel
       ),
       targetEmail
@@ -157,12 +177,33 @@ function notifyWhenNodesSleepingLongOrRecovered(
   }
 }
 
+async function queryValidators(
+  sdk: SDK,
+  blockNumber: number
+): Promise<PlatformAddress[]> {
+  const addresses = await sdk.rpc.sendRpcRequest("chain_getPossibleAuthors", [
+    blockNumber
+  ]);
+  return addresses.map((address: string) => PlatformAddress.ensure(address));
+}
+
+function calculateSleepingValidators(
+  validatorAddresses: PlatformAddress[],
+  precommitBitset: number[]
+): PlatformAddress[] {
+  const sleepingValidatorIndexes: number[] = unsetBitIndices(
+    precommitBitset,
+    validatorAddresses.length
+  );
+
+  return sleepingValidatorIndexes.map(index => validatorAddresses[index]);
+}
+
 const checkSealField = (() => {
-  const validatorCount = 30;
   const state = {
     prevHasProblem: false,
     prevBestBlockNumber: 0,
-    sleepStreak: Array(validatorCount).fill(0),
+    sleepStreak: {},
     viewAlertLevel: new U64(getConfig<number>("view_alert_level")),
     sleepStreakAlertLevel: getConfig<number>("sleep_streak_alert_level")
   };
@@ -174,7 +215,6 @@ const checkSealField = (() => {
     state.prevBestBlockNumber = bestBlockNumber;
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
-      // FIXME: When dynatmic validator is deployed, get validator count dynamically.
       const CURRENT_VIEW_IDX = 1;
       const PRECOMMIT_BITSET_IDX = 3;
       const bestBlockSealField = bestBlock.seal;
@@ -183,9 +223,10 @@ const checkSealField = (() => {
       const precommitBitset = decodeBitsetField(
         bestBlockSealField[PRECOMMIT_BITSET_IDX]
       );
-      const sleepingNodeIndices = unsetBitIndices(
-        precommitBitset,
-        validatorCount
+      const validatorsAtTheBlock = await queryValidators(sdk, bestBlockNumber);
+      const sleepingValidators: PlatformAddress[] = calculateSleepingValidators(
+        validatorsAtTheBlock,
+        precommitBitset
       );
 
       alertWhenViewTooHigh(bestBlockNumber, targetEmail, state, currentView);
@@ -193,19 +234,19 @@ const checkSealField = (() => {
         bestBlockNumber,
         targetEmail,
         state,
-        sleepingNodeIndices
+        sleepingValidators
       );
       notifyWhenNodesSleepingLongOrRecovered(
         bestBlockNumber,
         targetEmail,
         state,
-        sleepingNodeIndices
+        sleepingValidators
       );
       notifyWhenAllNodesWakeUp(
         bestBlockNumber,
         targetEmail,
         state,
-        sleepingNodeIndices
+        sleepingValidators
       );
     } else {
       sendNotice(

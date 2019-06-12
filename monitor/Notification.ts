@@ -44,14 +44,18 @@ export class NodeIsSleeping implements Notification {
   public readonly level = "warn";
   public readonly date = new Date();
 
-  constructor(blockNumber: number, nodeIndices: number[], streak?: number) {
+  constructor(
+    blockNumber: number,
+    validatorAddresses: string[],
+    streak?: number
+  ) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} CodeChain Node is Sleeping`;
     if (streak !== undefined) {
       this.content = `Consecutive ${streak} blocks from the block(${blockNumber -
-        streak}), validating nodes ${nodeIndices} did not precommit.`;
+        streak}), validators ${validatorAddresses} did not precommit.`;
     } else {
-      this.content = `For the block(${blockNumber}), validating nodes ${nodeIndices} did not precommit.`;
+      this.content = `For the block(${blockNumber}), validators ${validatorAddresses} did not precommit.`;
     }
   }
 }
@@ -62,11 +66,15 @@ export class NodeRecovered implements Notification {
   public readonly level = "info";
   public readonly date = new Date();
 
-  constructor(blockNumber: number, nodeIndex: number, sleepStreak: number) {
+  constructor(
+    blockNumber: number,
+    validatorAddress: string,
+    sleepStreak: number
+  ) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} CodeChain Node has recovered from the problem`;
-    this.content = `The node ${nodeIndex} did not precommit from the block ${blockNumber -
-      sleepStreak} consecutively. Now the node ${nodeIndex} has been recovered from the problem.`;
+    this.content = `The validator ${validatorAddress} did not precommit from the block ${blockNumber -
+      sleepStreak} consecutively. Now the validator ${validatorAddress} has been recovered from the problem.`;
   }
 }
 
