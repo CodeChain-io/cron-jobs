@@ -336,9 +336,8 @@ async function runTests() {
 
         console.log("TEST SUCCESS");
     } catch (err) {
-        console.error(err);
         console.log("TEST FAILED");
-        process.exit(1);
+        throw err;
     }
 }
 
@@ -356,8 +355,7 @@ async function main() {
         await indexerAPI.ping();
     } catch (err) {
         console.error("Indexer should be accessible when starting the watcher");
-        console.error(err);
-        process.exit(1);
+        throw err;
     }
 
     // 10 minutes interval
@@ -370,4 +368,5 @@ async function main() {
 
 main().catch(error => {
     console.error(error);
+    process.exit(1);
 });
