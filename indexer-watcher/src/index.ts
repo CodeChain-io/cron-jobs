@@ -344,7 +344,7 @@ async function runTests() {
 
 async function main() {
     if (process.env.NODE_ENV === "test") {
-        runTests();
+        await runTests();
         return;
     }
 
