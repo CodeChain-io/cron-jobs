@@ -175,13 +175,13 @@ const checkSealField = (() => {
     const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
     if (bestBlock) {
       // FIXME: When dynatmic validator is deployed, get validator count dynamically.
-      const currentViewIdx = 1;
-      const precommitBitsetIdx = 3;
+      const CURRENT_VIEW_IDX = 1;
+      const PRECOMMIT_BITSET_IDX = 3;
       const bestBlockSealField = bestBlock.seal;
 
-      const currentView = decodeViewField(bestBlockSealField[currentViewIdx]);
+      const currentView = decodeViewField(bestBlockSealField[CURRENT_VIEW_IDX]);
       const precommitBitset = decodeBitsetField(
-        bestBlockSealField[precommitBitsetIdx]
+        bestBlockSealField[PRECOMMIT_BITSET_IDX]
       );
       const sleepingNodeIndices = unsetBitIndices(
         precommitBitset,
