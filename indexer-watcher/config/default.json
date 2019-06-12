@@ -1,7 +1,0 @@
-{
-  "indexer_url": "http://localhost:9001",
-  "network_id": "tc",
-  "slack_webhook_url": "",
-  "sendgrid_api_key": "",
-  "notification_target_email": ""
-}

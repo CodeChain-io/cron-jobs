@@ -1,6 +1,6 @@
 import { getConfig } from "./util";
 
-const networkId = getConfig<string>("network_id");
+const networkId = getConfig("NETWORK_ID");
 
 export interface Notification {
     readonly title: string;
