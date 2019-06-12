@@ -99,16 +99,3 @@ export class DailyReport implements Notification {
         this.content = `The Indexer Watcher is working without problem. Yesterday's first block number was ${firstBlockNumber} and last block number was ${lastBlockNumber}.`;
     }
 }
-
-export class InternalError implements Notification {
-    public readonly title: string;
-    public readonly content: string;
-    public readonly level = "warn";
-    public readonly date = new Date();
-
-    public constructor(error: string) {
-        const prefix = `[${this.level}][${networkId}][indexer-watcher]`;
-        this.title = `${prefix} Indexer Watcher failed`;
-        this.content = `Indexer Watcher failed with this error: ${error}`;
-    }
-}
