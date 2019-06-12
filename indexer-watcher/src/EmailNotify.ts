@@ -5,14 +5,17 @@ export class EmailClient {
     private from: string;
 
     public constructor() {
-        if (!haveConfig("sendgrid_api_key")) {
+        let sendgridApiKey = "";
+        if (!haveConfig("SENDGRID_API_KEY")) {
             if (process.env.NODE_ENV === "production") {
                 throw Error(`SENDGRID_API_KEY not found`);
             } else {
                 console.log("SENDGRID_API_KEY is null");
             }
+        } else {
+            sendgridApiKey = getConfig("SENDGRID_API_KEY");
         }
-        sgMail.setApiKey(getConfig("sendgrid_api_key"));
+        sgMail.setApiKey(sendgridApiKey);
         this.from = "no-reply+indexer-watcher@devop.codechain.io";
     }
 

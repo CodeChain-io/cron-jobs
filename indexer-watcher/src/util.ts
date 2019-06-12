@@ -1,7 +1,5 @@
-import * as config from "config";
-
-export function getConfig<T>(field: string): T {
-    const c = config.get<T>(field);
+export function getConfig(field: string): string {
+    const c = process.env[field];
     if (c == null) {
         throw new Error(`${field} is not specified`);
     }
@@ -9,5 +7,5 @@ export function getConfig<T>(field: string): T {
 }
 
 export function haveConfig(field: string): boolean {
-    return !!config.has(field) && config.get(field) != null;
+    return process.env[field] != null;
 }

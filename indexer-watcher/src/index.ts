@@ -347,9 +347,9 @@ async function main() {
         return;
     }
 
-    const indexerUrl = getConfig<string>("indexer_url");
+    const indexerUrl = getConfig("INDEXER_URL");
     const indexerAPI = new IndexerAPIImpl(indexerUrl);
-    const targetEmail = getConfig<string>("notification_target_email");
+    const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
 
     try {
         await indexerAPI.ping();
