@@ -3,7 +3,6 @@
 import * as mail from "@sendgrid/mail";
 import { U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
-import { get } from "config";
 
 // FIXME: Cannot import with the below error message
 //     node_modules/@slack/rtm-api/dist/RTMClient.d.ts:3:8 - error TS1192: Module '".../cron-jobs/juggle-ccc/node_modules/eventemitter3/index"' has no default export.
@@ -16,8 +15,12 @@ function wait(timeout: number): Promise<void> {
     });
 }
 
+function get(field: string): string | null {
+    return process.env[field] || null;
+}
+
 function getConfig(field: string): string {
-    const value = get<string>(field);
+    const value = get(field);
     if (value == null) {
         throw Error(`No ${field}`);
     }
@@ -28,21 +31,21 @@ const defaultFee = 100;
 const defaultQuantity = 100;
 
 async function main() {
-    const leftAddress = getConfig("left.address");
-    const leftPassphrase = getConfig("left.passphrase");
-    const rightAddress = getConfig("right.address");
-    const rightPassphrase = getConfig("right.passphrase");
-    const slackWebHook = get<string | null>("slack_webhook_url");
-    const sendgridApiKey = get<string | null>("sendgrid.api_key");
-    const sendgridTo = get<string | null>("sendgrid.to");
+    const leftAddress = getConfig("LEFT_ADDRESS");
+    const leftPassphrase = getConfig("LEFT_PASSPHRASE");
+    const rightAddress = getConfig("RIGHT_ADDRESS");
+    const rightPassphrase = getConfig("RIGHT_PASSPHRASE");
+    const slackWebHook = get("SLACK_WEBHOOK_URL");
+    const sendgridApiKey = get("SENDGRID_API_KEY");
+    const sendgridTo = get("SENDGRID_TO");
     if (sendgridApiKey != null) {
         if (sendgridTo == null) {
             throw Error("You must set sendgrid.to");
         }
     }
 
-    const networkId = getConfig("network");
-    const server = getConfig("server");
+    const networkId = getConfig("NETWORK_ID");
+    const server = getConfig("RPC_SERVER");
 
     const sdk = new SDK({ server, networkId });
 

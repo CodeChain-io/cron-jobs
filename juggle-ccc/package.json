@@ -15,11 +15,9 @@
   "dependencies": {
     "@sendgrid/mail": "^6.3.1",
     "@slack/client": "^5.0.0",
-    "codechain-sdk": "^1.0.1",
-    "config": "^3.0.1"
+    "codechain-sdk": "^1.0.1"
   },
   "devDependencies": {
-    "@types/config": "^0.0.34",
     "@types/mocha": "^5.2.6",
     "@types/node": "^11.13.0",
     "mocha": "^6.1.4",
