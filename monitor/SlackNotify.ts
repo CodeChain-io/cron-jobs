@@ -2,7 +2,7 @@ import { IncomingWebhook, MessageAttachment } from "@slack/client";
 import * as _ from "lodash";
 import { getConfig } from "./util";
 
-const slackWebhookUrl = getConfig<string>("slack_webhook_url");
+const slackWebhookUrl = getConfig("SLACK_WEBHOOK_URL");
 
 export class SlackNotification {
   // tslint:disable-next-line:variable-name

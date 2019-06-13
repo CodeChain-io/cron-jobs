@@ -1,9 +1,0 @@
-{
-  "rpc_url": "http://localhost:8080",
-  "network_id": "tc",
-  "slack_webhook_url": "",
-  "sendgrid_api_key": "",
-  "view_alert_level": 3,
-  "sleep_streak_alert_level": 5,
-  "notification_target_email": "" 
-}
