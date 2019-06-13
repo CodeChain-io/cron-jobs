@@ -204,8 +204,8 @@ const checkSealField = (() => {
     prevHasProblem: false,
     prevBestBlockNumber: 0,
     sleepStreak: {},
-    viewAlertLevel: new U64(getConfig<number>("view_alert_level")),
-    sleepStreakAlertLevel: getConfig<number>("sleep_streak_alert_level")
+    viewAlertLevel: new U64(getConfig("VIEW_ALERT_LEVEL")),
+    sleepStreakAlertLevel: parseInt(getConfig("SLEEP_STREAK_ALERT_LEVEL"), 10)
   };
   return async (sdk: SDK, targetEmail: string) => {
     const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
@@ -258,10 +258,10 @@ const checkSealField = (() => {
 })();
 
 async function main() {
-  const rpcUrl = getConfig<string>("rpc_url");
-  const networkId = getConfig<string>("network_id");
+  const rpcUrl = getConfig("RPC_URL");
+  const networkId = getConfig("NETWORK_ID");
   const sdk = new SDK({ server: rpcUrl, networkId });
-  const targetEmail = getConfig<string>("notification_target_email");
+  const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
 
   lastDate = new Date().getUTCDate();
 
