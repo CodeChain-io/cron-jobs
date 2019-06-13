@@ -18,7 +18,8 @@ class Sendgrid implements Email {
     private readonly tag: string;
     private readonly to: string;
 
-    public constructor(tag: string, sendgridApiKey: string, to: string) {
+    public constructor(params: { tag: string; sendgridApiKey: string; to: string }) {
+        const { tag, sendgridApiKey, to } = params;
         this.tag = tag;
         sendgrid.setApiKey(sendgridApiKey);
         this.to = to;
@@ -53,7 +54,7 @@ export function createEmail(params: { tag: string; to?: string; sendgridApiKey?:
             throw Error("The email destination is not set");
         }
         console.log("Sendgrid key is set");
-        return new Sendgrid(tag, to, sendgridApiKey);
+        return new Sendgrid({ tag, sendgridApiKey, to });
     } else {
         console.log("Donot use sendgrid");
         return new NullEmail();
