@@ -33,13 +33,47 @@ async function getNextBlockNumber(current: number) {
     }
 }
 
+async function getCurrentTermStartBlockNumber(blockNumber: number): Promise<number | null> {
+    return new Promise((resolve, reject) => {
+        sdk.rpc
+            .sendRpcRequest("chain_getTermMetadata", [blockNumber])
+            .then(result => {
+                if (result === null) {
+                    resolve(null);
+                }
+                if (
+                    Array.isArray(result) &&
+                    result.length === 2 &&
+                    result.every(x => typeof x === "number")
+                ) {
+                    const [prevTermLastBlockNumber, _] = result;
+                    resolve(prevTermLastBlockNumber + 1);
+                } else {
+                    reject(
+                        Error(
+                            `Expected getTermMetadata to return [number, number] | null but it returned ${result}`,
+                        ),
+                    );
+                }
+            })
+            .catch(reject);
+    });
+}
+
 async function startFrom() {
     if (process.env.BLOCK_NUMBER) {
         let blockNumber = parseInt(process.env.BLOCK_NUMBER, 10);
         if (isNaN(blockNumber) || blockNumber === 0) {
             throw new Error("BLOCK_NUMBER must be a non-zero positive integer");
         }
-        return blockNumber;
+        const currentTermStart = await getCurrentTermStartBlockNumber(blockNumber);
+        if (currentTermStart === null) {
+            throw new Error("BLOCK_NUMBER is bigger than current best block number");
+        } else if (currentTermStart === 1) {
+            return blockNumber;
+        } else {
+            return currentTermStart;
+        }
     }
 
     let bestBlockNumber = await await sdk.rpc.chain.getBestBlockNumber()!;
@@ -48,7 +82,13 @@ async function startFrom() {
         if (isNaN(lookBehind) || lookBehind < 0) {
             throw new Error("LOOK_BEHIND must be an integer");
         }
-        return bestBlockNumber - lookBehind;
+        const want = bestBlockNumber - lookBehind;
+        const wantingTermStart = (await getCurrentTermStartBlockNumber(want))!;
+        if (wantingTermStart === 1) {
+            return want;
+        } else {
+            return wantingTermStart;
+        }
     }
 
     if (fs.existsSync(`lastBlockNumber.${SERVER}`)) {
@@ -60,10 +100,21 @@ async function startFrom() {
         if (isNaN(blockNumber)) {
             throw new Error("lastBlockNumber file contains invalid number");
         }
-        return blockNumber;
+        const currentTermStart = (await getCurrentTermStartBlockNumber(blockNumber))!;
+        if (currentTermStart === 1) {
+            return blockNumber;
+        } else {
+            return currentTermStart;
+        }
     }
 
-    return bestBlockNumber - 100;
+    const defaultBlockNumber = bestBlockNumber - 100;
+    const defaultTermStart = (await getCurrentTermStartBlockNumber(defaultBlockNumber))!;
+    if (defaultTermStart === 1) {
+        return defaultBlockNumber;
+    } else {
+        return defaultTermStart;
+    }
 }
 
 interface Progress {
