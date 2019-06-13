@@ -1,13 +1,17 @@
 import * as fs from "fs";
-import { email, sdk, slack, MINIMUM_FEES, SERVER } from "./config";
-import { Pay, PlatformAddress, U64, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
-import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
-import { getStakeholders, getWeights, Weight } from "./Stake";
-import { getCCCBalances, CCCTracer } from "./CCC";
+import { email, sdk, slack, SERVER } from "./config";
+import { getStakeholders } from "./Stake";
+import { getCCCBalances } from "./CCC";
 import { Watchdog } from "watchdog";
 import { checkBlockStatic } from "./StaticChecker";
-    } else {
-        console.log("Block is Okay");
+import { getCommonParams, getMinimumFees } from "./CommonParams";
+
+async function checkBlock(blockNumber: number) {
+    const commonParams = await getCommonParams(blockNumber - 1);
+    const termSeconds = commonParams.termSeconds;
+    const minimumFees = getMinimumFees(commonParams);
+    if (termSeconds == null) {
+        await checkBlockStatic(blockNumber, minimumFees);
     }
 }
 

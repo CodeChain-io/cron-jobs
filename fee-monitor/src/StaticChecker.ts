@@ -1,7 +1,8 @@
 import { CCCTracer, getCCCBalances } from "./CCC";
 import { PlatformAddress, U64, Pay, UnwrapCCC, WrapCCC } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
-import { slack, email, sdk, MINIMUM_FEES, SERVER } from "./config";
+import { slack, email, sdk, SERVER } from "./config";
+import { MinimumFees } from "./CommonParams";
 import { getWeights, Weight, getStakeholders } from "./Stake";
 
 function distribute(tracer: CCCTracer, author: PlatformAddress, weights: Weight[]) {
@@ -19,7 +20,7 @@ function distribute(tracer: CCCTracer, author: PlatformAddress, weights: Weight[
     tracer.deposit(author, tracer.totalFee.minus(distributed));
 }
 
-export async function checkBlockStatic(blockNumber: number) {
+export async function checkBlockStatic(blockNumber: number, minimumFees: MinimumFees) {
     const block = (await sdk.rpc.chain.getBlock(blockNumber))!;
     let tracer = new CCCTracer();
     let txTypes = block.transactions.map(tx => tx.unsigned.type()).join(", ");
@@ -31,7 +32,7 @@ export async function checkBlockStatic(blockNumber: number) {
             networkId: sdk.networkId,
         });
         const fee = tx.fee()!;
-        const minFee = new U64(MINIMUM_FEES[tx.type()]);
+        const minFee = new U64(minimumFees[tx.type()]);
         tracer.withdraw(signer, fee);
         tracer.collect(fee, minFee);
 
