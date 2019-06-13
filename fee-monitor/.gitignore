@@ -172,3 +172,4 @@ fabric.properties
 lib
 
 /build/
+lastBlockNumber.*
