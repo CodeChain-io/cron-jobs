@@ -45,7 +45,7 @@ export class CCCTracer {
     }
 
     public adjust(address: PlatformAddress, amount: U64): U64 {
-        const deposit = this.deposits.get(address.value)!;
+        const deposit = this.deposits.get(address.value);
         if (deposit != null) {
             amount = amount.plus(deposit);
         }
