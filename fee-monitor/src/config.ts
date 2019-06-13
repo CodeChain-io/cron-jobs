@@ -48,22 +48,3 @@ export const email = createEmail({
     sendgridApiKey: process.env.SENDGRID_API_KEY,
     to: process.env.SENDGRID_TO,
 });
-
-export const MINIMUM_FEES: { [param: string]: number } = {
-    pay: 100,
-    setRegularKey: 10000,
-    createShard: 1000000,
-    setShardOwners: 100000,
-    setShardUsers: 10000,
-    wrapCCC: 100000,
-    custom: 0,
-    store: 5000,
-    remove: 5000,
-    mintAsset: 100000,
-    transferAsset: 100,
-    changeAssetScheme: 100000,
-    increaseAssetSupply: 100000,
-    composeAsset: 100000,
-    decomposeAsset: 100000,
-    unwrapCCC: 100,
-};
