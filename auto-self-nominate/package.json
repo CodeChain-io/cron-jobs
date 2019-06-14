@@ -1,0 +1,21 @@
+{
+  "name": "auto-self-nominator",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "license": "ISC",
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "tslint -p . && prettier '**/*.ts' -l",
+    "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
+  },
+  "dependencies": {
+    "codechain-sdk": "^1.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "ts-node": "^8.2.0",
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.2"
+  }
+}
