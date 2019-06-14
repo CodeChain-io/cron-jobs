@@ -26,17 +26,17 @@ class Sendgrid implements Email {
     }
 
     public sendError(text: string): void {
-        const subject = `[error][${this.tag}] has a problem. - ${new Date().toISOString()}`;
+        const subject = `[error]${this.tag} has a problem. - ${new Date().toISOString()}`;
         this.send(subject, text);
     }
 
     public sendWarning(text: string): void {
-        const subject = `[error][${this.tag}] finds a problem. - ${new Date().toISOString()}`;
+        const subject = `[error]${this.tag} finds a problem. - ${new Date().toISOString()}`;
         this.send(subject, text);
     }
 
     public sendInfo(title: string, text: string): void {
-        const subject = `[error][${this.tag}] ${title} - ${new Date().toISOString()}`;
+        const subject = `[error]${this.tag} ${title} - ${new Date().toISOString()}`;
         this.send(subject, text);
     }
 
