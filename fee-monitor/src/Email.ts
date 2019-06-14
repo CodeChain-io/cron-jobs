@@ -14,6 +14,11 @@ class NullEmail implements Email {
 
 const from = "no-reply+fee-monitor@devop.codechain.io";
 
+function createTitle(params: { title: string; tag: string; level: string }): string {
+    const { title, tag, level } = params;
+    return `[${level}]${tag} ${title} - ${new Date().toISOString()}`;
+}
+
 class Sendgrid implements Email {
     private readonly tag: string;
     private readonly to: string;
@@ -26,17 +31,17 @@ class Sendgrid implements Email {
     }
 
     public sendError(text: string): void {
-        const subject = `[error][${this.tag}] has a problem. - ${new Date().toISOString()}`;
+        const subject = createTitle({ tag: this.tag, title: "has a problem.", level: "error" });
         this.send(subject, text);
     }
 
     public sendWarning(text: string): void {
-        const subject = `[error][${this.tag}] finds a problem. - ${new Date().toISOString()}`;
+        const subject = createTitle({ tag: this.tag, title: "finds a problem.", level: "warn" });
         this.send(subject, text);
     }
 
     public sendInfo(title: string, text: string): void {
-        const subject = `[error][${this.tag}] ${title} - ${new Date().toISOString()}`;
+        const subject = createTitle({ tag: this.tag, title, level: "info" });
         this.send(subject, text);
     }
 
