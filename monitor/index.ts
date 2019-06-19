@@ -1,4 +1,4 @@
-import { U64 } from "codechain-primitives";
+import { PlatformAddress, U64 } from "codechain-primitives";
 import { SDK } from "codechain-sdk";
 import { EmailClient } from "./EmailNotify";
 import * as Notifications from "./Notification";
@@ -157,6 +157,23 @@ function notifyWhenNodesSleepingLongOrRecovered(
   }
 }
 
+const PLATFORM_ADDRESS_TO_REGION_NAME: { [index: string]: string } = {};
+const INDEX_TO_REGION_NAME: string[] = [];
+
+function printSleepingNodes(
+  author: PlatformAddress,
+  selepingIndices: number[]
+) {
+  const authorRegionName = PLATFORM_ADDRESS_TO_REGION_NAME[author.toString()];
+  const nodeIndicesToRegionName = selepingIndices.map(
+    index => INDEX_TO_REGION_NAME[index]
+  );
+
+  console.log(
+    `Author: ${authorRegionName} Sleepings: ${nodeIndicesToRegionName}`
+  );
+}
+
 const checkSealField = (() => {
   const validatorCount = 30;
   const state = {
@@ -187,6 +204,8 @@ const checkSealField = (() => {
         precommitBitset,
         validatorCount
       );
+
+      printSleepingNodes(bestBlock.author, sleepingNodeIndices);
 
       alertWhenViewTooHigh(bestBlockNumber, targetEmail, state, currentView);
       alertWhenMultipleNodesSleeping(
