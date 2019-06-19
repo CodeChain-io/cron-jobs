@@ -115,3 +115,16 @@ export class DailyReport implements Notification {
     this.content = "The monitor is working without problem.";
   }
 }
+
+export class UnhandledRejection implements Notification {
+  public readonly title: string;
+  public readonly content: string;
+  public readonly level = "error";
+  public readonly date = new Date();
+
+  constructor(networkId: string, error: string) {
+    const prefix = `[${this.level}][${networkId}][monitor]`;
+    this.title = `${prefix} has an unexpected error`;
+    this.content = error;
+  }
+}
