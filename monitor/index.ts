@@ -1,5 +1,5 @@
 import { PlatformAddress, U64 } from "codechain-primitives";
-import { SDK } from "codechain-sdk";
+import Rpc from "codechain-rpc";
 import { EmailClient } from "./EmailNotify";
 import * as Notifications from "./Notification";
 import { SlackNotification } from "./SlackNotify";
@@ -54,8 +54,8 @@ function sendNotice(error: Notification, targetEmail: string) {
 
 const checkDeath = (() => {
   let prevBestBlockNumber = 0;
-  return async (sdk: SDK, targetEmail: string) => {
-    const currentBestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+  return async (rpc: Rpc, targetEmail: string) => {
+    const currentBestBlockNumber = await rpc.chain.getBestBlockNumber();
     if (prevBestBlockNumber === currentBestBlockNumber) {
       sendNotice(new Notifications.CodeChainDeath(), targetEmail);
     }
@@ -178,12 +178,13 @@ function notifyWhenNodesSleepingLongOrRecovered(
 }
 
 async function queryValidators(
-  sdk: SDK,
+  rpc: Rpc,
   blockNumber: number
 ): Promise<PlatformAddress[]> {
-  const addresses = await sdk.rpc.sendRpcRequest("chain_getPossibleAuthors", [
+  const addresses: ReadonlyArray<string> = (await rpc.call(
+    { method: "chain_getPossibleAuthors" },
     blockNumber
-  ]);
+  )).result;
   return addresses.map((address: string) => PlatformAddress.ensure(address));
 }
 
@@ -207,23 +208,25 @@ const checkSealField = (() => {
     viewAlertLevel: new U64(getConfig("VIEW_ALERT_LEVEL")),
     sleepStreakAlertLevel: parseInt(getConfig("SLEEP_STREAK_ALERT_LEVEL"), 10)
   };
-  return async (sdk: SDK, targetEmail: string) => {
-    const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
+  return async (rpc: Rpc, targetEmail: string) => {
+    const bestBlockNumber = await rpc.chain.getBestBlockNumber();
     if (state.prevBestBlockNumber === bestBlockNumber) {
       return;
     }
     state.prevBestBlockNumber = bestBlockNumber;
-    const bestBlock = await sdk.rpc.chain.getBlock(bestBlockNumber);
+    const bestBlock = await rpc.chain.getBlockByNumber({
+      blockNumber: bestBlockNumber
+    });
     if (bestBlock) {
       const CURRENT_VIEW_IDX = 1;
       const PRECOMMIT_BITSET_IDX = 3;
-      const bestBlockSealField = bestBlock.seal;
+      const bestBlockSealField = (bestBlock as any).seal;
 
       const currentView = decodeViewField(bestBlockSealField[CURRENT_VIEW_IDX]);
       const precommitBitset = decodeBitsetField(
         bestBlockSealField[PRECOMMIT_BITSET_IDX]
       );
-      const validatorsAtTheBlock = await queryValidators(sdk, bestBlockNumber);
+      const validatorsAtTheBlock = await queryValidators(rpc, bestBlockNumber);
       const sleepingValidators: PlatformAddress[] = calculateSleepingValidators(
         validatorsAtTheBlock,
         precommitBitset
@@ -259,8 +262,8 @@ const checkSealField = (() => {
 
 async function main() {
   const rpcUrl = getConfig("RPC_URL");
-  const networkId = getConfig("NETWORK_ID");
-  const sdk = new SDK({ server: rpcUrl, networkId });
+  // const networkId = getConfig("NETWORK_ID");
+  const rpc = new Rpc(rpcUrl);
   const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
 
   lastDate = new Date().getUTCDate();
@@ -269,8 +272,8 @@ async function main() {
   setInterval(checkDayChange, 10 * 60 * 1000, targetEmail);
 
   // 1 hour interval
-  setInterval(checkDeath, 60 * 60 * 1000, sdk, targetEmail);
-  setInterval(checkSealField, 3 * 1000, sdk, targetEmail);
+  setInterval(checkDeath, 60 * 60 * 1000, rpc, targetEmail);
+  setInterval(checkSealField, 3 * 1000, rpc, targetEmail);
 }
 
 main().catch(err => console.log(err));
