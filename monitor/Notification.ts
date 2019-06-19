@@ -1,7 +1,4 @@
 import { U64 } from "codechain-primitives";
-import { getConfig } from "./util";
-
-const networkId = getConfig("NETWORK_ID");
 
 export interface Notification {
   readonly title: string;
@@ -16,7 +13,7 @@ export class CodeChainDeath implements Notification {
   public readonly level = "error";
   public readonly date = new Date();
 
-  constructor() {
+  constructor(networkId: string) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} CodeChain Death Confirmation`;
     this.content = "CodeChain didn't renew the best block number for 1 hour.";
@@ -29,7 +26,7 @@ export class ViewTooHigh implements Notification {
   public readonly level = "warn";
   public readonly date = new Date();
 
-  constructor(blockNumber: number, view: U64) {
+  constructor(networkId: string, blockNumber: number, view: U64) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} CodeChain View Too High`;
     this.content = `View of the block(${blockNumber}) in CodeChain is ${view.toString(
@@ -45,6 +42,7 @@ export class NodeIsSleeping implements Notification {
   public readonly date = new Date();
 
   constructor(
+    networkId: string,
     blockNumber: number,
     validatorAddresses: string[],
     streak?: number
@@ -67,6 +65,7 @@ export class NodeRecovered implements Notification {
   public readonly date = new Date();
 
   constructor(
+    networkId: string,
     blockNumber: number,
     validatorAddress: string,
     sleepStreak: number
@@ -84,7 +83,7 @@ export class AllNodesAwake implements Notification {
   public readonly level = "info";
   public readonly date = new Date();
 
-  constructor(blockNumber: number) {
+  constructor(networkId: string, blockNumber: number) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} All CodeChain nodes are awake`;
     this.content = `Before the block(${blockNumber}) some nodes did not precommit, but now all nodes are recovered.`;
@@ -97,7 +96,7 @@ export class GetBlockFailed implements Notification {
   public readonly level = "error";
   public readonly date = new Date();
 
-  constructor(blockNumber: number) {
+  constructor(networkId: string, blockNumber: number) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} CodeChain failed to get a block`;
     this.content = `RPC chain_getBlockByNumber failed with the best block number ${blockNumber}`;
@@ -110,7 +109,7 @@ export class DailyReport implements Notification {
   public readonly level = "info";
   public readonly date = new Date();
 
-  constructor() {
+  constructor(networkId: string) {
     const prefix = `[${this.level}][${networkId}][monitor]`;
     this.title = `${prefix} is working`;
     this.content = "The monitor is working without problem.";

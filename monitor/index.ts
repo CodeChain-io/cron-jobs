@@ -54,27 +54,28 @@ function sendNotice(error: Notification, targetEmail: string) {
 
 const checkDeath = (() => {
   let prevBestBlockNumber = 0;
-  return async (rpc: Rpc, targetEmail: string) => {
+  return async (rpc: Rpc, targetEmail: string, networkId: string) => {
     const currentBestBlockNumber = await rpc.chain.getBestBlockNumber();
     if (prevBestBlockNumber === currentBestBlockNumber) {
-      sendNotice(new Notifications.CodeChainDeath(), targetEmail);
+      sendNotice(new Notifications.CodeChainDeath(networkId), targetEmail);
     }
     prevBestBlockNumber = currentBestBlockNumber;
   };
 })();
 
 let lastDate: number;
-function checkDayChange(targetEmail: string) {
+function checkDayChange(targetEmail: string, networkId: string) {
   const now = new Date();
   const nowDate = now.getUTCDate();
   if (lastDate === nowDate) {
     return;
   }
   lastDate = nowDate;
-  sendNotice(new Notifications.DailyReport(), targetEmail);
+  sendNotice(new Notifications.DailyReport(networkId), targetEmail);
 }
 
 function alertWhenViewTooHigh(
+  networkId: string,
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
@@ -82,13 +83,14 @@ function alertWhenViewTooHigh(
 ) {
   if (currentView.gte(state.viewAlertLevel)) {
     sendNotice(
-      new Notifications.ViewTooHigh(bestBlockNumber, currentView),
+      new Notifications.ViewTooHigh(networkId, bestBlockNumber, currentView),
       targetEmail
     );
   }
 }
 
 function alertWhenMultipleNodesSleeping(
+  networkId: string,
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
@@ -102,6 +104,7 @@ function alertWhenMultipleNodesSleeping(
     );
     sendNotice(
       new Notifications.NodeIsSleeping(
+        networkId,
         bestBlockNumber,
         validatorAddressesInString
       ),
@@ -111,6 +114,7 @@ function alertWhenMultipleNodesSleeping(
 }
 
 function notifyWhenAllNodesWakeUp(
+  networkId: string,
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
@@ -120,11 +124,15 @@ function notifyWhenAllNodesWakeUp(
     sleepingValidators.length === 0 && state.prevHasProblem;
   if (allNodesNowAwake) {
     state.prevHasProblem = false;
-    sendNotice(new Notifications.AllNodesAwake(bestBlockNumber), targetEmail);
+    sendNotice(
+      new Notifications.AllNodesAwake(networkId, bestBlockNumber),
+      targetEmail
+    );
   }
 }
 
 function notifyWhenNodesSleepingLongOrRecovered(
+  networkId: string,
   bestBlockNumber: number,
   targetEmail: string,
   state: CheckSealFieldState,
@@ -151,6 +159,7 @@ function notifyWhenNodesSleepingLongOrRecovered(
         if (prevProblematic) {
           sendNotice(
             new Notifications.NodeRecovered(
+              networkId,
               bestBlockNumber,
               address,
               prevSleepStreak
@@ -168,6 +177,7 @@ function notifyWhenNodesSleepingLongOrRecovered(
     state.prevHasProblem = true;
     sendNotice(
       new Notifications.NodeIsSleeping(
+        networkId,
         bestBlockNumber,
         longTermSleepingAddresses,
         state.sleepStreakAlertLevel
@@ -208,7 +218,7 @@ const checkSealField = (() => {
     viewAlertLevel: new U64(getConfig("VIEW_ALERT_LEVEL")),
     sleepStreakAlertLevel: parseInt(getConfig("SLEEP_STREAK_ALERT_LEVEL"), 10)
   };
-  return async (rpc: Rpc, targetEmail: string) => {
+  return async (rpc: Rpc, targetEmail: string, networkId: string) => {
     const bestBlockNumber = await rpc.chain.getBestBlockNumber();
     if (state.prevBestBlockNumber === bestBlockNumber) {
       return;
@@ -232,20 +242,29 @@ const checkSealField = (() => {
         precommitBitset
       );
 
-      alertWhenViewTooHigh(bestBlockNumber, targetEmail, state, currentView);
+      alertWhenViewTooHigh(
+        networkId,
+        bestBlockNumber,
+        targetEmail,
+        state,
+        currentView
+      );
       alertWhenMultipleNodesSleeping(
+        networkId,
         bestBlockNumber,
         targetEmail,
         state,
         sleepingValidators
       );
       notifyWhenNodesSleepingLongOrRecovered(
+        networkId,
         bestBlockNumber,
         targetEmail,
         state,
         sleepingValidators
       );
       notifyWhenAllNodesWakeUp(
+        networkId,
         bestBlockNumber,
         targetEmail,
         state,
@@ -253,7 +272,7 @@ const checkSealField = (() => {
       );
     } else {
       sendNotice(
-        new Notifications.GetBlockFailed(bestBlockNumber),
+        new Notifications.GetBlockFailed(networkId, bestBlockNumber),
         targetEmail
       );
     }
@@ -262,18 +281,19 @@ const checkSealField = (() => {
 
 async function main() {
   const rpcUrl = getConfig("RPC_URL");
-  // const networkId = getConfig("NETWORK_ID");
   const rpc = new Rpc(rpcUrl);
   const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
+
+  const networkId = await rpc.chain.getNetworkId();
 
   lastDate = new Date().getUTCDate();
 
   // 10 minutes interval
-  setInterval(checkDayChange, 10 * 60 * 1000, targetEmail);
+  setInterval(checkDayChange, 10 * 60 * 1000, targetEmail, networkId);
 
   // 1 hour interval
-  setInterval(checkDeath, 60 * 60 * 1000, rpc, targetEmail);
-  setInterval(checkSealField, 3 * 1000, rpc, targetEmail);
+  setInterval(checkDeath, 60 * 60 * 1000, rpc, targetEmail, networkId);
+  setInterval(checkSealField, 3 * 1000, rpc, targetEmail, networkId);
 }
 
 main().catch(err => console.log(err));
