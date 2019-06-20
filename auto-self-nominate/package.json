@@ -9,7 +9,11 @@
     "fmt": "tslint -p . --fix && prettier 'src/**/*.ts' --write"
   },
   "dependencies": {
-    "codechain-sdk": "^1.2.1"
+    "@sendgrid/mail": "^6.4.0",
+    "@slack/client": "^5.0.1",
+    "@types/lodash": "^4.14.134",
+    "codechain-sdk": "^1.2.1",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "prettier": "^1.18.2",
