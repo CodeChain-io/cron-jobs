@@ -30,8 +30,8 @@ const needNominationUnderTermLeft = parseInt(getConfig("NEED_NOMINATION_UNDER_TE
 const sdk = (() => {
     console.log(`sdk ${networkId} ${rpcUrl}`);
     return new SDK({
-        server: networkId,
-        networkId: rpcUrl,
+        server: rpcUrl,
+        networkId,
     });
 })();
 
