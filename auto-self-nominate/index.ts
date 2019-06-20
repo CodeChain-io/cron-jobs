@@ -146,6 +146,10 @@ async function main() {
     const passphrase = getConfig("PASSPHRASE");
     const metadata = getConfig("METADATA");
     const targetDeposit = parseInt(getConfig("TARGET_DEPOSIT"), 10);
+    const interval =
+        process.env.INTERVAL_SECONDS != null
+            ? parseInt(process.env.INTERVAL_SECONDS, 10)
+            : 10 * 60 * 1_000; // Default interval is 10 minutes
 
     async function send() {
         const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber()!;
@@ -167,7 +171,7 @@ async function main() {
     send().catch(console.error);
     setInterval(() => {
         send().catch(console.error);
-    }, 600_000); // 10 minutes interval
+    }, interval * 1_000);
 }
 
 main().catch(error => {
