@@ -101,6 +101,10 @@ function createSelfNomination(params: { deposit: U64; metadata: string }): Custo
 async function getCandidatesInfo(bestBlockNumber: number): Promise<CandidatesInfo> {
     const retval: CandidatesInfo = {};
     const data = (await sdk.rpc.engine.getCustomActionData(2, ["Candidates"], bestBlockNumber))!;
+    if (data == null) {
+        console.error("There is no candidates");
+        return {};
+    }
     const list: Buffer[][] = RLP.decode(Buffer.from(data, "hex"));
     list.forEach(
         ([encodedPubkey, encodedDeposit, encodedNominationEnd]) =>
