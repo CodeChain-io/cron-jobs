@@ -9,7 +9,7 @@
     "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
   },
   "dependencies": {
-    "codechain-sdk": "^1.2.0"
+    "codechain-sdk": "^1.2.1"
   },
   "devDependencies": {
     "prettier": "^1.18.2",
