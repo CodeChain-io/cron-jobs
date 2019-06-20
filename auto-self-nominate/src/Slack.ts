@@ -55,11 +55,9 @@ class SlackWebhook implements Slack {
     }
 
     private send() {
-        this.webhook.send(
-            {
-                attachments: this.unsentAttachments,
-            }
-        );
+        this.webhook.send({
+            attachments: this.unsentAttachments,
+        });
         this.unsentAttachments = [];
     }
 }

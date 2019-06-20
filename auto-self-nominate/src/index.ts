@@ -1,16 +1,20 @@
 import { U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
-import { PlatformAddress } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
+import {
+    BannedAccountsInfo,
+    CandidatesInfo,
+    getStatesInfos,
+    JailedAccountInfo,
+    JailedAccountsInfo,
+} from "./AccountState";
+import { createEmail } from "./Email";
+import { createSlack } from "./Slack";
 
 const RLP = require("rlp");
 
 const ACTION_TAG_SELF_NOMINATE = 4;
 const STAKE_ACTION_HANDLER_ID = 2;
-
-interface CandidatesInfo {
-    [key: string]: [number, number];
-}
 
 function getConfig(field: string, defaultVal?: string): string {
     const c = process.env[field];
@@ -23,9 +27,26 @@ function getConfig(field: string, defaultVal?: string): string {
     return c;
 }
 
+function getConfigOption(field: string): string | undefined {
+    try {
+        return getConfig(field);
+    } catch (e) {
+        return undefined;
+    }
+}
+
 const networkId = getConfig("NETWORK_ID");
 const rpcUrl = getConfig("RPC_URL");
 const needNominationUnderTermLeft = parseInt(getConfig("NEED_NOMINATION_UNDER_TERM_LEFT", "2"), 10);
+const email = createEmail({
+    tag: `[${networkId}][auto-self-nominate]`,
+    to: getConfigOption("SENDGRID_TO"),
+    sendgridApiKey: getConfigOption("SENDGRID_API_KEY"),
+});
+const slack = createSlack(
+    `[${networkId}][auto-self-nominate]`,
+    getConfigOption("SLACK_WEBHOOK_URL"),
+);
 
 const sdk = (() => {
     console.log(`sdk ${networkId} ${rpcUrl}`);
@@ -34,17 +55,6 @@ const sdk = (() => {
         networkId,
     });
 })();
-
-function decodePlatformAddressFromPubkey(buffer: Buffer): PlatformAddress {
-    const pubkey = buffer.toString("hex");
-    return PlatformAddress.fromPublic(pubkey, {
-        networkId: sdk.networkId,
-    });
-}
-
-function decodeNumber(buffer: Buffer): number {
-    return parseInt(buffer.toString("hex"), 16);
-}
 
 async function getCurrentTermId(bestBlockNumber: number): Promise<number | null> {
     return new Promise((resolve, reject) => {
@@ -98,24 +108,6 @@ function createSelfNomination(params: { deposit: U64; metadata: string }): Custo
     );
 }
 
-async function getCandidatesInfo(bestBlockNumber: number): Promise<CandidatesInfo> {
-    const retval: CandidatesInfo = {};
-    const data = (await sdk.rpc.engine.getCustomActionData(2, ["Candidates"], bestBlockNumber))!;
-    if (data == null) {
-        console.error("There is no candidates");
-        return {};
-    }
-    const list: Buffer[][] = RLP.decode(Buffer.from(data, "hex"));
-    list.forEach(
-        ([encodedPubkey, encodedDeposit, encodedNominationEnd]) =>
-            (retval[decodePlatformAddressFromPubkey(encodedPubkey).value] = [
-                decodeNumber(encodedNominationEnd),
-                decodeNumber(encodedDeposit),
-            ]),
-    );
-    return retval;
-}
-
 async function needsNomination(
     info: CandidatesInfo,
     bestBlockNumber: number,
@@ -124,9 +116,9 @@ async function needsNomination(
     if (!info.hasOwnProperty(address)) {
         return true;
     }
-    const [, nominationEndAt] = info[address];
+    const { nominateEndAt } = info[address];
     const currentTermId = (await getCurrentTermId(bestBlockNumber))!;
-    return nominationEndAt - currentTermId < needNominationUnderTermLeft;
+    return nominateEndAt - currentTermId < needNominationUnderTermLeft;
 }
 
 function supplementaryDeposit(
@@ -137,12 +129,24 @@ function supplementaryDeposit(
     if (!info.hasOwnProperty(address)) {
         return targetDeposit;
     }
-    const [deposit] = info[address];
-    if (deposit < targetDeposit) {
-        return targetDeposit - deposit;
+    const { deposits } = info[address];
+    if (deposits < targetDeposit) {
+        return targetDeposit - deposits;
     } else {
         return 0;
     }
+}
+
+function sendAlarmForBanned(address: string) {
+    const content = `Your account ${address} is permanently banned`;
+    email.sendError(content);
+    slack.sendError(content);
+}
+
+function sendAlarmForJailed(address: string, info: JailedAccountInfo) {
+    const content = `Your account ${address} was jailed. The account will be in custody until the term ${info.custodyUntil} and will be released at the term ${info.releasedAt}`;
+    email.sendWarning(content);
+    slack.sendWarning(content);
 }
 
 async function main() {
@@ -154,9 +158,33 @@ async function main() {
 
     async function send() {
         const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber()!;
-        const info = await getCandidatesInfo(bestBlockNumber);
-        if (await needsNomination(info, bestBlockNumber, accountAddress)) {
-            const supplement = await supplementaryDeposit(info, accountAddress, targetDeposit);
+        const bannedAccounts = (await getStatesInfos(
+            sdk,
+            "Banned",
+            bestBlockNumber,
+        )) as BannedAccountsInfo;
+        const isBanned = bannedAccounts.accounts.includes(accountAddress);
+        if (isBanned) {
+            sendAlarmForBanned(accountAddress);
+            return;
+        }
+        const jailedAccounts = (await getStatesInfos(
+            sdk,
+            "Jailed",
+            bestBlockNumber,
+        )) as JailedAccountsInfo;
+        const isJailed = jailedAccounts.hasOwnProperty(accountAddress);
+        if (isJailed) {
+            sendAlarmForJailed(accountAddress, jailedAccounts[accountAddress]);
+            return;
+        }
+        const info = await getStatesInfos(sdk, "Candidates", bestBlockNumber);
+        if (await needsNomination(info as CandidatesInfo, bestBlockNumber, accountAddress)) {
+            const supplement = await supplementaryDeposit(
+                info as CandidatesInfo,
+                accountAddress,
+                targetDeposit,
+            );
             await sendSelfNominateTransaction(
                 {
                     account: accountAddress,
