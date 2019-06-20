@@ -147,7 +147,7 @@ async function main() {
     const metadata = getConfig("METADATA");
     const targetDeposit = parseInt(getConfig("TARGET_DEPOSIT"), 10);
 
-    setInterval(async () => {
+    async function send() {
         const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber()!;
         const info = await getCandidatesInfo(bestBlockNumber);
         if (await needsNomination(info, bestBlockNumber, accountAddress)) {
@@ -163,6 +163,10 @@ async function main() {
                 },
             );
         }
+    }
+    send().catch(console.error);
+    setInterval(() => {
+        send().catch(console.error);
     }, 600_000); // 10 minutes interval
 }
 
