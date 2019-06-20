@@ -118,7 +118,7 @@ async function needsNomination(
     address: string,
 ): Promise<boolean> {
     if (!info.hasOwnProperty(address)) {
-        throw new Error(`SelfNominate first with specific deposit vakue before repeating`);
+        throw new Error(`SelfNominate first with specific deposit value before repeating`);
     }
     const [, nominationEndAt] = info[address];
     const currentTermId = (await getCurrentTermId(bestBlockNumber))!;
@@ -131,7 +131,7 @@ function supplementaryDeposit(
     targetDeposit: number,
 ): number {
     if (!info.hasOwnProperty(address)) {
-        throw new Error(`SelfNominate first with specific deposit vakue before repeating`);
+        throw new Error(`SelfNominate first with specific deposit value before repeating`);
     }
     const [deposit] = info[address];
     if (deposit < targetDeposit) {
