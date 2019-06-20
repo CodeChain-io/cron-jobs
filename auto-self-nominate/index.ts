@@ -88,7 +88,7 @@ function createSelfNomination(params: { deposit: U64; metadata: string }): Custo
     const { deposit, metadata } = params;
     const handlerId = new U64(STAKE_ACTION_HANDLER_ID);
     const actionTag = ACTION_TAG_SELF_NOMINATE;
-    const bytes = RLP.encode([actionTag, deposit, metadata]);
+    const bytes = RLP.encode([actionTag, deposit.toEncodeObject(), metadata]);
     return new Custom(
         {
             handlerId,
