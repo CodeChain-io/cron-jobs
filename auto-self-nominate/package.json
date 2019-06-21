@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "license": "ISC",
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc --incremental -p .",
     "lint": "tslint -p . && prettier '**/*.ts' -l",
     "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
   },

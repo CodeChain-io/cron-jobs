@@ -4,8 +4,8 @@
   "main": "src/index.ts",
   "license": "ISC",
   "scripts": {
-    "local": "tsc -p . && SERVER=local node lib/index.js",
-    "corgi": "tsc -p . && SERVER=corgi node lib/index.js",
+    "local": "tsc --incremental -p . && SERVER=local node lib/index.js",
+    "corgi": "tsc --incremental -p . && SERVER=corgi node lib/index.js",
     "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write"
   },
   "dependencies": {
