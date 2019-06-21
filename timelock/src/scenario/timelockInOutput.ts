@@ -65,9 +65,7 @@ export async function run(
             `leastBlockHeight: ${leastBlock.number} ${leastBlock.timestamp}`
         );
         console.log(
-            `InsertedBlockHeight: ${insertedBlock.number} ${
-                insertedBlock.timestamp
-            }`
+            `InsertedBlockHeight: ${insertedBlock.number} ${insertedBlock.timestamp}`
         );
         chai.assert(insertedBlock.number >= leastBlock.number);
 

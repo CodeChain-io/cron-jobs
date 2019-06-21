@@ -97,9 +97,7 @@ export class State {
                 const utxoResponse: UtxoAttribute[] = [];
                 for (let page = 1; ; page++) {
                     const result: UtxoAttribute[] = await request({
-                        url: `${INDEXER_URL}/api/utxo?address=${
-                            assetAddress.value
-                        }&assetType=${assetType}&page=${page}`,
+                        url: `${INDEXER_URL}/api/utxo?address=${assetAddress.value}&assetType=${assetType}&page=${page}`,
                         json: true,
                     });
                     if (result.length === 0) break;

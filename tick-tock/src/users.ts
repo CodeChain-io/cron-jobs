@@ -17,9 +17,7 @@ export function loadUsers(filename: string): Promise<string[]> {
             if (users.length !== 60) {
                 reject(
                     Error(
-                        `There are ${
-                            users.length
-                        } users. The file may be corrupted.`
+                        `There are ${users.length} users. The file may be corrupted.`
                     )
                 );
                 return;

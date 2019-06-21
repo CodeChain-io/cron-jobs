@@ -1,8 +1,5 @@
 import { Asset } from "codechain-sdk/lib/core/Asset";
-import {
-    AssetAddress,
-    TransferAsset
-} from "codechain-sdk/lib/core/classes";
+import { AssetAddress, TransferAsset } from "codechain-sdk/lib/core/classes";
 import * as _ from "lodash";
 import Helper, { randRange } from "./util";
 

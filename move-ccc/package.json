@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "codechain-sdk": "^1.1.0",
-    "prettier": "1.14.2"
+    "prettier": "^1.18.2",
+    "typescript": "^3.5.2"
   }
 }
