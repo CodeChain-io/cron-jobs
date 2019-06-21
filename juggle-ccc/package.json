@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "start": "ts-node ./src/index.ts",
-    "build": "tsc -p .",
+    "build": "tsc --incremental -p .",
     "test": "mocha -r ts-node/register --timeout 5000 src/**/*.test.ts",
     "lint": "tslint -p . && prettier './src/**.ts' -l",
     "fmt": "tslint -p . --fix && prettier './src/**.ts' --write"

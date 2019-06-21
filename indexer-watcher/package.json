@@ -5,7 +5,7 @@
   "license": "ISC",
   "scripts": {
     "dev": "ts-node ./src/index.ts",
-    "build": "tsc -p .",
+    "build": "tsc --incremental -p .",
     "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
     "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different",
     "test": "SENDGRID_API_KEY='' INDEXER_URL=http://localhost:9001 NETWORK_ID=tc NODE_ENV=test ts-node ./src/index.ts"

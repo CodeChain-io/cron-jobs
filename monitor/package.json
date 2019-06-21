@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "start": "ts-node ./index.ts",
-    "build": "tsc -p .",
+    "build": "tsc --incremental -p .",
     "test": "RPC_URL=http://localhost:8080 VIEW_ALERT_LEVEL=3 SLEEP_STREAK_ALERT_LEVEL=5 mocha -r ts-node/register ./test/*.test.ts",
     "lint": "tslint -p . && prettier '**/*.ts' -l",
     "fmt": "tslint -p . --fix && prettier '**/*ts' --write"

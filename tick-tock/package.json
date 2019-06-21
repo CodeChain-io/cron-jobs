@@ -8,7 +8,7 @@
   "scripts": {
     "clean": "rm -f .approvers .test-gen/* .users",
     "start": "ts-node ./index.ts",
-    "build": "tsc -p .",
+    "build": "tsc --incremental -p .",
     "test": "mocha -r ts-node/register --timeout 5000 src/**/*.test.ts",
     "lint": "tslint -p . && prettier './src/**.ts' './index.ts' -l",
     "fmt": "tslint -p . --fix && prettier './src/**.ts' './index.ts' --write"
