@@ -119,9 +119,7 @@ const checkFollowUp = (() => {
             if (indexerWasSlow === null && !indexerIsSlow) {
                 indexerWasSlow = "following";
                 console.log(
-                    `Indexer is syncing well. Current indexed block number: ${
-                        status.indexedBlockNumber
-                    }, best block number: ${status.codechainBestBlockNumber}`,
+                    `Indexer is syncing well. Current indexed block number: ${status.indexedBlockNumber}, best block number: ${status.codechainBestBlockNumber}`,
                 );
                 return;
             }

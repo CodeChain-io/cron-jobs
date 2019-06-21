@@ -65,9 +65,7 @@ async function main() {
     if (leftBalance.isLessThan(500)) {
         if (rightBalance.isLessThan(500)) {
             throw Error(
-                `Not enough balance to juggle. left: ${
-                    leftBalance.value
-                } right: ${rightBalance.value}`
+                `Not enough balance to juggle. left: ${leftBalance.value} right: ${rightBalance.value}`
             );
         }
         isLeftTurn = false;
@@ -165,9 +163,7 @@ async function main() {
                             ? oppositeBalance
                             : currentBalance;
                         throw Error(
-                            `Too small balance on both address.\r\n ${leftAddress}: ${
-                                left.value
-                            }\r\n ${rightAddress}: ${right.value}`
+                            `Too small balance on both address.\r\n ${leftAddress}: ${left.value}\r\n ${rightAddress}: ${right.value}`
                         );
                     }
                     isLeftTurn = !isLeftTurn;

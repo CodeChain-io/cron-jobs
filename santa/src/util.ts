@@ -108,7 +108,9 @@ export default class Helper {
         if (awaitResult) {
             let cnt = 0;
             while (
-                !(await this.sdk.rpc.chain.containsTransaction(signed.hash())) &&
+                !(await this.sdk.rpc.chain.containsTransaction(
+                    signed.hash()
+                )) &&
                 cnt < 300
             ) {
                 cnt++;

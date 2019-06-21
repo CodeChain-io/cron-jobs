@@ -30,11 +30,10 @@
     "@types/request": "^2.47.1",
     "@types/request-promise-native": "^1.0.15",
     "@types/sleep": "^0.0.7",
-    "prettier": "1.14.2",
-    "ts-node": "^7.0.1",
-    "tsc": "^1.20150623.0",
+    "prettier": "^1.18.2",
+    "ts-node": "^8.3.0",
     "tslint": "^5.17.0",
-    "tslint-config-prettier": "^1.10.0",
-    "typescript": "^3.1.6"
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.2"
   }
 }

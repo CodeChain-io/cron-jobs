@@ -19,9 +19,7 @@ export function loadApprovers(
             if (approvers.length !== 3) {
                 reject(
                     Error(
-                        `There are ${
-                            approvers.length
-                        } users. The file may be corrupted.`
+                        `There are ${approvers.length} users. The file may be corrupted.`
                     )
                 );
                 return;
