@@ -1,0 +1,22 @@
+{
+    "name": "val-val",
+    "version": "1.0.0",
+    "description": "Validate validators",
+    "main": "build/index.js",
+    "author": "CodeChain Team",
+    "license": "MIT",
+    "scripts": {
+        "start": "ts-node ./src/index.ts",
+        "build": "tsc --incremental -p .",
+        "lint": "tslint -p . && prettier './src/**.ts' -l",
+        "fmt": "tslint -p . --fix && prettier './src/**.ts' --write"
+    },
+    "devDependencies": {
+        "@types/node": "^12.0.8",
+        "prettier": "^1.18.2",
+        "ts-node": "^8.3.0",
+        "tslint": "^5.17.0",
+        "tslint-config-prettier": "^1.18.0",
+        "typescript": "^3.5.2"
+    }
+}
