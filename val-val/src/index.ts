@@ -55,6 +55,12 @@ async function main() {
             //   - amount
             // 2. delegate
             // 3. revoke
+
+            if (blockNumber % 1000 === 0) {
+                lastCheckedBlock = blockNumber;
+                console.log(`Block #${lastCheckedBlock} is validated`);
+                await writeLastCheckedBlock(lastCheckedBlock);
+            }
         }
 
         lastCheckedBlock = currentBestBlock;
