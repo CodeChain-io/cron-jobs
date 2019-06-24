@@ -1,0 +1,27 @@
+{
+  "name": "check-the-same-timestamp",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "ISC",
+  "scripts": {
+    "dev": "ts-node ./src/index.ts",
+    "build": "tsc --incremental -p .",
+    "fmt": "eslint --ext .ts ./src --fix && prettier 'src/**/*.{ts, json}' --write",
+    "lint": "eslint --ext .ts ./src && prettier 'src/**/*.{ts, json}' --list-different",
+    "test": "SENDGRID_API_KEY='' INDEXER_URL=http://localhost:9001 NETWORK_ID=tc NODE_ENV=test ts-node ./src/index.ts"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
+    "@slack/client": "^4.12.0",
+    "codechain-sdk": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.123",
+    "@typescript-eslint/eslint-plugin": "^1.5.0",
+    "@typescript-eslint/parser": "^1.5.0",
+    "eslint": "^5.16.0",
+    "prettier": "^1.18.2",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.2"
+  }
+}
