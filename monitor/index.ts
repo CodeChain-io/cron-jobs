@@ -236,9 +236,12 @@ const checkSealField = (() => {
       const precommitBitset = decodeBitsetField(
         bestBlockSealField[PRECOMMIT_BITSET_IDX]
       );
-      const validatorsAtTheBlock = await queryValidators(rpc, bestBlockNumber);
+      const validatorsOfPrevBlock = await queryValidators(
+        rpc,
+        bestBlockNumber - 1
+      );
       const sleepingValidators: PlatformAddress[] = calculateSleepingValidators(
-        validatorsAtTheBlock,
+        validatorsOfPrevBlock,
         precommitBitset
       );
 
