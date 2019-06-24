@@ -5,6 +5,7 @@ import {
     readLastCheckedBlock,
     writeLastCheckedBlock
 } from "./file";
+import checkJailed from "./jailed";
 
 async function termMetadata(
     rpc: Rpc,
@@ -43,10 +44,9 @@ async function main() {
         ) {
             const [, termId] = await termMetadata(rpc, blockNumber);
             if (termId !== lastTermId) {
-                // TODO: do term change event
-                // 1. release jailed
                 lastTermId = termId;
                 await checkElection(networkId, rpc, blockNumber);
+                await checkJailed(networkId, rpc, blockNumber, termId);
             }
             // TODO: read block
             // 0. double vote report
