@@ -1,4 +1,5 @@
 import Rpc from "codechain-rpc";
+import checkElection from "./election";
 import {
     createLastCheckedBlockIfNotExist,
     readLastCheckedBlock,
@@ -25,6 +26,8 @@ async function main() {
     let lastCheckedBlock = await readLastCheckedBlock();
     let [, lastTermId] = await termMetadata(rpc, lastCheckedBlock);
 
+    const networkId = await rpc.chain.getNetworkId();
+
     while (true) {
         const currentBestBlock = await rpc.chain.getBestBlockNumber();
         if (lastCheckedBlock === currentBestBlock) {
@@ -42,8 +45,8 @@ async function main() {
             if (termId !== lastTermId) {
                 // TODO: do term change event
                 // 1. release jailed
-                // 2. check election
                 lastTermId = termId;
+                await checkElection(networkId, rpc, blockNumber);
             }
             // TODO: read block
             // 0. double vote report
