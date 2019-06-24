@@ -28,6 +28,8 @@
         "typescript": "^3.5.2"
     },
     "dependencies": {
-        "codechain-rpc": "^0.1.6"
+        "codechain-primitives": "^1.0.1",
+        "codechain-rpc": "^0.1.6",
+        "rlp": "^2.2.3"
     }
 }
