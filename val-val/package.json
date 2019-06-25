@@ -15,6 +15,7 @@
     "devDependencies": {
         "@types/chai": "^4.1.7",
         "@types/chai-as-promised": "^7.1.0",
+        "@types/lodash": "^4.14.134",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
         "chai": "^4.2.0",
@@ -28,8 +29,11 @@
         "typescript": "^3.5.2"
     },
     "dependencies": {
+        "@sendgrid/mail": "^6.4.0",
+        "@slack/client": "^5.0.1",
         "codechain-primitives": "^1.0.1",
         "codechain-rpc": "^0.1.6",
+        "lodash": "^4.17.11",
         "rlp": "^2.2.3"
     }
 }
