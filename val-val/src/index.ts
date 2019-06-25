@@ -24,22 +24,33 @@ async function main() {
 
     const rpc = new Rpc(process.env.RPC_SERVER!);
 
-    let lastCheckedBlock = await readLastCheckedBlock();
-    let [, lastTermId] = await termMetadata(rpc, lastCheckedBlock);
+    let previousCheckedBlock = await readLastCheckedBlock();
+    const term = await termMetadata(rpc, previousCheckedBlock);
+    const previousLastBlockOfTheTerm = term[0];
+    let previousTermId = term[1];
 
     const networkId = await rpc.chain.getNetworkId();
-    console.log(`Start from #${lastCheckedBlock + 1}`);
+    console.log(`Start from #${previousCheckedBlock + 1}`);
+    const blockAuthors: Set<string> = new Set();
+    for (
+        let blockNumber = previousLastBlockOfTheTerm + 1;
+        blockNumber < previousCheckedBlock;
+        blockNumber += 1
+    ) {
+        const block = (await rpc.chain.getBlockByNumber({ blockNumber }))!;
+        blockAuthors.add((block as any).author);
+    }
 
     while (true) {
         const currentBestBlock = await rpc.chain.getBestBlockNumber();
-        if (lastCheckedBlock === currentBestBlock) {
+        if (previousCheckedBlock === currentBestBlock) {
             console.log("There are no blocks to validate. Wait 10 seconds.");
             await wait(10_000); // wait 10 seconds
             continue;
         }
 
         for (
-            let blockNumber = lastCheckedBlock + 1;
+            let blockNumber = previousCheckedBlock + 1;
             blockNumber <= currentBestBlock;
             blockNumber += 1
         ) {
@@ -47,10 +58,14 @@ async function main() {
                 rpc,
                 blockNumber
             );
-            if (termId !== lastTermId) {
-                if (termId !== lastTermId + 1) {
+
+            const block = (await rpc.chain.getBlockByNumber({ blockNumber }))!;
+            blockAuthors.add((block as any).author);
+
+            if (termId !== previousTermId) {
+                if (termId !== previousTermId + 1) {
                     throw Error(
-                        `The term id must be increased by one. previous: ${lastTermId} current: ${termId} #${blockNumber}`
+                        `The term id must be increased by one. previous: ${previousTermId} current: ${termId} #${blockNumber}`
                     );
                 }
                 if (lastBlockOfTheTerm !== blockNumber) {
@@ -58,9 +73,16 @@ async function main() {
                         `The last block number in the metadata is ${lastBlockOfTheTerm} but it should be ${blockNumber}. #${blockNumber}`
                     );
                 }
-                lastTermId = termId;
+                previousTermId = termId;
+
                 await checkElection(networkId, rpc, blockNumber);
-                await checkJailed(networkId, rpc, blockNumber, termId);
+                await checkJailed(
+                    networkId,
+                    rpc,
+                    blockNumber,
+                    termId,
+                    blockAuthors
+                );
             }
             // TODO: read block
             // 0. double vote report
@@ -71,15 +93,15 @@ async function main() {
             // 3. revoke
 
             if (blockNumber % 1000 === 0) {
-                lastCheckedBlock = blockNumber;
-                console.log(`Block #${lastCheckedBlock} is validated`);
-                await writeLastCheckedBlock(lastCheckedBlock);
+                previousCheckedBlock = blockNumber;
+                console.log(`Block #${previousCheckedBlock} is validated`);
+                await writeLastCheckedBlock(previousCheckedBlock);
             }
         }
 
-        lastCheckedBlock = currentBestBlock;
-        console.log(`Block #${lastCheckedBlock} is validated`);
-        await writeLastCheckedBlock(lastCheckedBlock);
+        previousCheckedBlock = currentBestBlock;
+        console.log(`Block #${previousCheckedBlock} is validated`);
+        await writeLastCheckedBlock(previousCheckedBlock);
         await wait(1_000); // wait 1 second
     }
 }

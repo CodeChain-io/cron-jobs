@@ -1,4 +1,4 @@
-import { PlatformAddress, toHex } from "codechain-primitives";
+import { H512, PlatformAddress, toHex } from "codechain-primitives";
 import Rpc from "codechain-rpc";
 
 const rlp = require("rlp");
@@ -21,7 +21,7 @@ async function getJailed(
     const encodedJailed = await rpc.engine.getCustomActionData({
         handlerId: HANDLER_ID,
         bytes: createKey("Jailed"),
-        blockNumber,
+        blockNumber
     });
     if (encodedJailed == null) {
         return new Map();
@@ -48,11 +48,40 @@ async function getJailed(
     );
 }
 
+async function getValidators(
+    networkId: string,
+    rpc: Rpc,
+    blockNumber: number
+): Promise<Set<string>> {
+    const encoded = await rpc.engine.getCustomActionData({
+        handlerId: HANDLER_ID,
+        bytes: createKey("Validators"),
+        blockNumber
+    });
+    if (encoded == null) {
+        return new Set();
+    }
+    const validators: [Buffer, Buffer, Buffer][] = rlp.decode(
+        Buffer.from(encoded, "hex")
+    );
+    return new Set(
+        ((validators as any) as [Buffer, Buffer, Buffer, Buffer][]).map(
+            ([, , , pubkey]: [Buffer, Buffer, Buffer, Buffer]) => {
+                return PlatformAddress.fromPublic(
+                    new H512(pubkey.toString("hex")),
+                    { networkId }
+                ).toString();
+            }
+        )
+    );
+}
+
 export default async function check(
     networkId: string,
     rpc: Rpc,
     blockNumber: number,
-    termId: number
+    termId: number,
+    blockAuthors: Set<string>
 ): Promise<void> {
     // FIXME: Please remove the banned accounts.
     const previous = await getJailed(networkId, rpc, blockNumber - 1);
@@ -89,5 +118,26 @@ export default async function check(
         }
     }
 
-    // TODO: Check whether the jailed accounts were neglecting.
+    const newlyJailedAddresses = new Set(current.keys());
+    for (const address of previous.keys()) {
+        newlyJailedAddresses.delete(address);
+    }
+    const neglectingValidators = await getValidators(
+        networkId,
+        rpc,
+        blockNumber - 1
+    );
+    for (const address of blockAuthors) {
+        neglectingValidators.delete(address);
+    }
+    for (const address of neglectingValidators) {
+        if (!newlyJailedAddresses.has(address)) {
+            throw Error(`${address} must be jailed. #${blockNumber}`);
+        }
+    }
+    for (const address of newlyJailedAddresses) {
+        if (!neglectingValidators.has(address)) {
+            throw Error(`${address} should not be jailed. #${blockNumber}`);
+        }
+    }
 }
