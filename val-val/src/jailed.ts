@@ -8,7 +8,8 @@ export default async function check(
     blockNumber: number,
     termId: number,
     blockAuthors: Set<string>
-): Promise<void> {
+): Promise<[Map<string, number>, Set<string>]> {
+    const released = new Map<string, number>();
     // FIXME: Please remove the banned accounts.
     const previous = await getJailed(networkId, rpc, blockNumber - 1);
     const current = await getJailed(networkId, rpc, blockNumber);
@@ -25,6 +26,7 @@ export default async function check(
                     `${address} should be released at term #${releaseAt}. Current term id: ${termId}. #${blockNumber}`
                 );
             }
+            released.set(address, deposit);
             continue;
         }
         const jailedAddress = current.get(address);
@@ -64,4 +66,6 @@ export default async function check(
             throw Error(`${address} should not be jailed. #${blockNumber}`);
         }
     }
+
+    return [released, newlyJailedAddresses];
 }
