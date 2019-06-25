@@ -28,6 +28,7 @@ async function main() {
     let [, lastTermId] = await termMetadata(rpc, lastCheckedBlock);
 
     const networkId = await rpc.chain.getNetworkId();
+    console.log(`Start from #${lastCheckedBlock + 1}`);
 
     while (true) {
         const currentBestBlock = await rpc.chain.getBestBlockNumber();
