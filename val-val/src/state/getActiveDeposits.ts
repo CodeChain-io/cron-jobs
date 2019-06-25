@@ -1,0 +1,36 @@
+import { H512, PlatformAddress } from "codechain-primitives";
+import Rpc from "codechain-rpc";
+import createKey from "../util/createKey";
+import toInt from "../util/toInt";
+import HANDLER_ID from "./handlerId";
+
+const rlp = require("rlp");
+
+export default async function getActiveDeposits(
+    networkId: string,
+    rpc: Rpc,
+    blockNumber: number,
+    minDeposit: number
+): Promise<Map<string, number>> {
+    const encoded = await rpc.engine.getCustomActionData({
+        handlerId: HANDLER_ID,
+        bytes: createKey("Candidates"),
+        blockNumber
+    });
+    const candidates: [Buffer, Buffer, Buffer][] = rlp.decode(
+        Buffer.from(encoded, "hex")
+    );
+    return new Map(
+        ((candidates as any) as [Buffer, Buffer][])
+            .map(([pubkey, deposit]: [Buffer, Buffer]) => {
+                const address = PlatformAddress.fromPublic(
+                    new H512(pubkey.toString("hex")),
+                    { networkId }
+                ).toString();
+                const quantity = toInt(deposit);
+                return [address, quantity] as [string, number];
+            })
+            .filter(([, deposit]: [string, number]) => deposit >= minDeposit)
+    );
+}
+

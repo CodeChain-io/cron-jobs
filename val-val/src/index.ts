@@ -6,16 +6,8 @@ import {
     writeLastCheckedBlock
 } from "./file";
 import checkJailed from "./jailed";
+import getTermMetadata from "./state/getTermMetadata";
 
-async function termMetadata(
-    rpc: Rpc,
-    blockNumber: number
-): Promise<[number, number]> {
-    const [lastBlock, termId] = (await rpc.chain.getTermMetadata({
-        blockNumber
-    }))!;
-    return [lastBlock, termId];
-}
 
 async function main() {
     if (await createLastCheckedBlockIfNotExist()) {
@@ -25,7 +17,7 @@ async function main() {
     const rpc = new Rpc(process.env.RPC_SERVER!);
 
     let previousCheckedBlock = await readLastCheckedBlock();
-    const term = await termMetadata(rpc, previousCheckedBlock);
+    const term = await getTermMetadata(rpc, previousCheckedBlock);
     const previousLastBlockOfTheTerm = term[0];
     let previousTermId = term[1];
 
@@ -54,7 +46,7 @@ async function main() {
             blockNumber <= currentBestBlock;
             blockNumber += 1
         ) {
-            const [lastBlockOfTheTerm, termId] = await termMetadata(
+            const [lastBlockOfTheTerm, termId] = await getTermMetadata(
                 rpc,
                 blockNumber
             );
