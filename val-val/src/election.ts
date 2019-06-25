@@ -48,7 +48,7 @@ export default async function check(
     networkId: string,
     rpc: Rpc,
     blockNumber: number
-): Promise<void> {
+): Promise<Set<string>> {
     const params = (await rpc.chain.getCommonParams({
         blockNumber
     }))!;
@@ -124,4 +124,6 @@ export default async function check(
             );
         }
     }
+
+    return new Set(calculated.map(([, , , address]) => address));
 }

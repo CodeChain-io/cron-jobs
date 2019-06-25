@@ -1,13 +1,14 @@
 import Rpc from "codechain-rpc";
 import checkElection from "./election";
+import extractStakeActions from "./extractStakeActions";
 import {
     createLastCheckedBlockIfNotExist,
     readLastCheckedBlock,
     writeLastCheckedBlock
 } from "./file";
 import checkJailed from "./jailed";
+import getCandidates from "./state/getCandidates";
 import getTermMetadata from "./state/getTermMetadata";
-
 
 async function main() {
     if (await createLastCheckedBlockIfNotExist()) {
@@ -50,9 +51,25 @@ async function main() {
                 rpc,
                 blockNumber
             );
-
-            const block = (await rpc.chain.getBlockByNumber({ blockNumber }))!;
+            const block = (await rpc.chain.getBlockByNumber({
+                blockNumber
+            }))!;
             blockAuthors.add((block as any).author);
+
+            // FIXME: Validate the CCS changes.
+            // FIXME: Validate the deposit changes.
+            const [
+                ,
+                /*ccs*/
+                nominations /*ccs delegations*/
+            ] = await extractStakeActions(rpc, block);
+
+            await checkMetadataOfCandidates(
+                networkId,
+                rpc,
+                nominations,
+                blockNumber
+            );
 
             if (termId !== previousTermId) {
                 if (termId !== previousTermId + 1) {
@@ -67,22 +84,32 @@ async function main() {
                 }
                 previousTermId = termId;
 
-                await checkElection(networkId, rpc, blockNumber);
-                await checkJailed(
+                const validators = await checkElection(
+                    networkId,
+                    rpc,
+                    blockNumber
+                );
+                const [released, jailed] = await checkJailed(
                     networkId,
                     rpc,
                     blockNumber,
                     termId,
                     blockAuthors
                 );
+                console.group(
+                    `New validators are elected for tern #${termId}. #${blockNumber}`
+                );
+                console.log(
+                    `${JSON.stringify(Array.from(validators.values()))}`
+                );
+                if (released.size !== 0) {
+                    console.log(`${Array.from(released.keys())} are released.`);
+                }
+                if (jailed.size !== 0) {
+                    console.log(`${Array.from(jailed.values())} are jailed.`);
+                }
+                console.groupEnd();
             }
-            // TODO: read block
-            // 0. double vote report
-            // 1. deposit
-            //   - metadata
-            //   - amount
-            // 2. delegate
-            // 3. revoke
 
             if (blockNumber % 1000 === 0) {
                 previousCheckedBlock = blockNumber;
@@ -104,4 +131,24 @@ function wait(ms: number) {
     return new Promise(resolve => {
         setTimeout(resolve, ms);
     });
+}
+
+async function checkMetadataOfCandidates(
+    networkId: string,
+    rpc: Rpc,
+    nominations: Map<string, string>,
+    blockNumber: number
+) {
+    const candidates = await getCandidates(networkId, rpc, blockNumber);
+    for (const [address, metadata] of nominations.entries()) {
+        const candidate = candidates.get(address);
+        if (candidate == null) {
+            throw Error(`${address} is not nominated. #${blockNumber}`);
+        }
+        if (candidate[2] !== metadata) {
+            throw Error(
+                `${address}'s metadata should be ${metadata} but ${candidate[2]}. #${blockNumber}`
+            );
+        }
+    }
 }
