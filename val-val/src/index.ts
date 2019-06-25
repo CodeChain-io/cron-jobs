@@ -42,8 +42,21 @@ async function main() {
             blockNumber <= currentBestBlock;
             blockNumber += 1
         ) {
-            const [, termId] = await termMetadata(rpc, blockNumber);
+            const [lastBlockOfTheTerm, termId] = await termMetadata(
+                rpc,
+                blockNumber
+            );
             if (termId !== lastTermId) {
+                if (termId !== lastTermId + 1) {
+                    throw Error(
+                        `The term id must be increased by one. previous: ${lastTermId} current: ${termId} #${blockNumber}`
+                    );
+                }
+                if (lastBlockOfTheTerm !== blockNumber) {
+                    throw Error(
+                        `The last block number in the metadata is ${lastBlockOfTheTerm} but it should be ${blockNumber}. #${blockNumber}`
+                    );
+                }
                 lastTermId = termId;
                 await checkElection(networkId, rpc, blockNumber);
                 await checkJailed(networkId, rpc, blockNumber, termId);
