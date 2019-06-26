@@ -127,6 +127,18 @@ async function main() {
                         console.groupEnd();
                     }
 
+                    const logs = [];
+                    if (nominations.size !== 0) {
+                        logs.push(`${Array.from(nominations.entries())} are nominated.`);
+                    }
+                    if (logs.length !== 0) {
+                        console.group(`At block #${blockNumber}`);
+                        for (const log of logs) {
+                            console.log(log);
+                        }
+                        console.groupEnd();
+                    }
+
                     if (blockNumber % 1000 === 0) {
                         previousCheckedBlock = blockNumber;
                         console.log(
