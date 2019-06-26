@@ -14,12 +14,17 @@ export class Started implements Notification {
     public readonly level = "info";
     public readonly date = new Date();
 
-    public constructor(currentBestBlockNumber: number, networkId: string) {
+    public constructor(
+        currentBestBlockNumber: number,
+        networkId: string,
+        startBlockNumber: number,
+    ) {
         this.title = TITLE;
         const lines = [
             "Check started",
             `The current best block number: ${currentBestBlockNumber}`,
             `The network ID: ${networkId}`,
+            `From block number: ${startBlockNumber}`,
         ];
         // Sendgrid use the MKDoc-Text-Structured
         // https://metacpan.org/pod/release/BPOSTLE/MKDoc-Text-Structured-0.83/lib/MKDoc/Text/Structured.pm

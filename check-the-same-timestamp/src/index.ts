@@ -83,6 +83,7 @@ async function main() {
     checkExist("CODECHAIN_RPC_URL");
     checkExist("NOTIFICATION_TARGET_EMAIL");
     checkExist("SENDGRID_API_KEY");
+    checkExist("START_BLOCK_NUMBER");
 
     const codeChainRPCURL = getConfig("CODECHAIN_RPC_URL");
     const sdk = new SDK({
@@ -90,20 +91,26 @@ async function main() {
     });
     const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
     const statePrinter = new StatePrinter(targetEmail);
+    const startBlockNumber = parseInt(getConfig("START_BLOCK_NUMBER"), 10);
 
     try {
         const currentBestBlockNumber = await sdk.rpc.chain.getBestBlockNumber();
-        console.log(`Start with best block number ${currentBestBlockNumber}`);
+        console.log(
+            `Start with best block number ${currentBestBlockNumber} from ${startBlockNumber}`,
+        );
         const networkID = await sdk.rpc.chain.getNetworkId();
-        sendNotice(new Notifications.Started(currentBestBlockNumber, networkID), targetEmail);
+        sendNotice(
+            new Notifications.Started(currentBestBlockNumber, networkID, startBlockNumber),
+            targetEmail,
+        );
     } catch (err) {
         console.error(`Failed to connect ${codeChainRPCURL}`);
         throw err;
     }
 
-    let currentBlockNumber = 1;
+    let currentBlockNumber = startBlockNumber;
     let prevBlock = (await sdk.rpc.chain.getBlock(currentBlockNumber - 1))!;
-    while (true) {
+    for (;;) {
         const currentBlock = (await sdk.rpc.chain.getBlock(currentBlockNumber))!;
         if (currentBlock === null) {
             break;

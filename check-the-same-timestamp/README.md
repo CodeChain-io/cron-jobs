@@ -11,3 +11,4 @@ Environment variables
 | CODECHAIN_RPC_URL         | http://localhost:8080 |
 | NOTIFICATION_TARGET_EMAIL | alarm@example.com     |
 | SENDGRID_API_KEY          |                       |
+| START_BLOCK_NUMBER        | 1                     |
