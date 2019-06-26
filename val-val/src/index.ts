@@ -30,21 +30,26 @@ async function main() {
     const rpc = new Rpc(process.env.RPC_SERVER!);
 
     let previousCheckedBlock = await readLastCheckedBlock();
-    const term = await getTermMetadata(rpc, previousCheckedBlock);
+    const [term, networkId] = await Promise.all([
+        getTermMetadata(rpc, previousCheckedBlock),
+        rpc.chain.getNetworkId()
+    ]);
     const previousLastBlockOfTheTerm = term[0];
     let previousTermId = term[1];
 
-    const networkId = await rpc.chain.getNetworkId();
     console.log(`Start from #${previousCheckedBlock + 1}`);
-    const blockAuthors: Set<string> = new Set();
+    const precedingBlocks = [];
     for (
         let blockNumber = previousLastBlockOfTheTerm + 1;
         blockNumber < previousCheckedBlock;
         blockNumber += 1
     ) {
-        const block = (await rpc.chain.getBlockByNumber({ blockNumber }))!;
-        blockAuthors.add((block as any).author);
+        precedingBlocks.push(rpc.chain.getBlockByNumber({ blockNumber }));
     }
+
+    const blockAuthors = new Set<string>(
+        (await Promise.all(precedingBlocks)).map(b => b!.author)
+    );
 
     while (true) {
         try {
@@ -98,7 +103,7 @@ async function main() {
                             );
                         }
 
-                        const validators = await checkElection(
+                        const validatorsPromise = checkElection(
                             networkId,
                             rpc,
                             blockNumber
@@ -119,6 +124,7 @@ async function main() {
                             stakeChanges
                         );
 
+                        const validators = await validatorsPromise;
                         console.group(
                             `New validators are elected for term #${termId}. #${blockNumber}`
                         );
@@ -137,13 +143,16 @@ async function main() {
                         }
                         console.groupEnd();
                     }
-                    await checkStakeChanges(rpc, blockNumber, stakeChanges);
-                    await checkDelegationChanges(
-                        networkId,
-                        rpc,
-                        blockNumber,
-                        delegationChanges
-                    );
+
+                    await Promise.all([
+                        checkStakeChanges(rpc, blockNumber, stakeChanges),
+                        checkDelegationChanges(
+                            networkId,
+                            rpc,
+                            blockNumber,
+                            delegationChanges
+                        )
+                    ]);
 
                     const logs = [];
                     if (nominations.size !== 0) {
@@ -192,8 +201,10 @@ async function main() {
 
             previousCheckedBlock = currentBestBlock;
             console.log(`Block #${previousCheckedBlock} is validated`);
-            await writeLastCheckedBlock(previousCheckedBlock);
-            await wait(1_000); // wait 1 second
+            await Promise.all([
+                writeLastCheckedBlock(previousCheckedBlock),
+                wait(1_000)
+            ]); // wait 1 second
         } catch (err) {
             slack.sendError(`Fail to run: ${err}`);
             email.sendError(`Fail to run: ${err}`);

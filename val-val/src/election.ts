@@ -49,15 +49,22 @@ export default async function check(
     rpc: Rpc,
     blockNumber: number
 ): Promise<Set<string>> {
-    const params = (await rpc.chain.getCommonParams({
-        blockNumber
-    }))!;
+    const [params, validators] = await Promise.all([
+        rpc.chain
+            .getCommonParams({
+                blockNumber
+            })
+            .then(p => p!),
+        getValidators(networkId, rpc, blockNumber)
+    ]);
     const minDeposit =
         typeof params.minDeposit! === "number"
             ? params.minDeposit!
             : parseInt(params.minDeposit! as string, undefined);
-
-    const validators = await getValidators(networkId, rpc, blockNumber);
+    const delegationsAndDeposits = Promise.all([
+        getDelegations(networkId, rpc, blockNumber),
+        getActiveDeposits(networkId, rpc, blockNumber, minDeposit)
+    ]);
 
     const minNumOfValidators =
         typeof params.minNumOfValidators! === "number"
@@ -79,13 +86,7 @@ export default async function check(
         );
     }
 
-    const delegations = await getDelegations(networkId, rpc, blockNumber);
-    const deposits = await getActiveDeposits(
-        networkId,
-        rpc,
-        blockNumber,
-        minDeposit
-    );
+    const [delegations, deposits] = await delegationsAndDeposits;
 
     const calculated = elect(
         deposits,

@@ -10,18 +10,20 @@ export default async function returnDelegationsOfReleased(
     stakes: Map<string, number>
 ): Promise<void> {
     const stakeholders = await getStakeholders(networkId, rpc, blockNumber);
-    for (const stakeholder of stakeholders) {
-        const delegations = await getDelegationsOf(
-            networkId,
-            rpc,
-            blockNumber - 1,
-            stakeholder
-        );
-        for (const [delegatee, quantity] of delegations) {
-            if (released.has(delegatee)) {
-                const addr = stakeholder.toString();
-                stakes.set(addr, (stakes.get(addr) || 0) + quantity);
+    await Promise.all(
+        stakeholders.map(async stakeholder => {
+            const delegations = await getDelegationsOf(
+                networkId,
+                rpc,
+                blockNumber - 1,
+                stakeholder
+            );
+            for (const [delegatee, quantity] of delegations) {
+                if (released.has(delegatee)) {
+                    const addr = stakeholder.toString();
+                    stakes.set(addr, (stakes.get(addr) || 0) + quantity);
+                }
             }
-        }
-    }
+        })
+    );
 }

@@ -9,12 +9,10 @@ export default async function checkStakeChanges(
 ): Promise<void> {
     for (const [stakeholder, change] of stakeChanges) {
         const address = PlatformAddress.fromString(stakeholder);
-        const previous = await getUndelegatedStake(
-            rpc,
-            blockNumber - 1,
-            address
-        );
-        const current = await getUndelegatedStake(rpc, blockNumber, address);
+        const [previous, current] = await Promise.all([
+            getUndelegatedStake(rpc, blockNumber - 1, address),
+            getUndelegatedStake(rpc, blockNumber, address)
+        ]);
 
         if (previous + change !== current) {
             throw Error(

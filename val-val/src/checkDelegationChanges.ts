@@ -12,9 +12,11 @@ export default async function checkDelegationChanges(
         return;
     }
 
-    const previous = await getDelegations(networkId, rpc, blockNumber - 1);
-    const current = await getDelegations(networkId, rpc, blockNumber);
-    const jailed = await getJailed(networkId, rpc, blockNumber);
+    const [previous, current, jailed] = await Promise.all([
+        getDelegations(networkId, rpc, blockNumber - 1),
+        getDelegations(networkId, rpc, blockNumber),
+        getJailed(networkId, rpc, blockNumber)
+    ]);
     for (const address of jailed.keys()) {
         previous.delete(address);
     }

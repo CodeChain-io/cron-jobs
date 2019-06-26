@@ -1,3 +1,4 @@
+import {PlatformAddress} from "codechain-primitives";
 import Rpc from "codechain-rpc";
 import getDelegationsOf from "./getDelegationsOf";
 import getStakeholders from "./getStakeholders";
@@ -10,12 +11,16 @@ export default async function getDelegations(
     const stakeholders = await getStakeholders(networkId, rpc, blockNumber);
 
     const result = new Map();
+    const tasks: Promise<void>[] = [];
     for (const stakeholder of stakeholders) {
-        const delegations = await getDelegationsOf(networkId, rpc, blockNumber, stakeholder);
-        for (const [delegatee, quantity] of delegations.entries()) {
-            result.set(delegatee, (result.get(delegatee) || 0) + quantity);
-        }
+        tasks.push((async (address: PlatformAddress): Promise<void> => {
+            const delegations = await getDelegationsOf(networkId, rpc, blockNumber, address);
+            for (const [delegatee, quantity] of delegations.entries()) {
+                result.set(delegatee, (result.get(delegatee) || 0) + quantity);
+            }
+        })(stakeholder));
     }
+    await Promise.all(tasks);
     return result;
 }
 

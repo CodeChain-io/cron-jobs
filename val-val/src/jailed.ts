@@ -11,8 +11,11 @@ export default async function check(
 ): Promise<[Map<string, number>, Set<string>]> {
     const released = new Map<string, number>();
     // FIXME: Please remove the banned accounts.
-    const previous = await getJailed(networkId, rpc, blockNumber - 1);
-    const current = await getJailed(networkId, rpc, blockNumber);
+    const previousValidators = getValidators(networkId, rpc, blockNumber - 1);
+    const [previous, current] = await Promise.all([
+        getJailed(networkId, rpc, blockNumber - 1),
+        getJailed(networkId, rpc, blockNumber)
+    ]);
     for (const [
         address,
         [deposit, custodyUntil, releaseAt]
@@ -50,9 +53,7 @@ export default async function check(
     for (const address of previous.keys()) {
         newlyJailedAddresses.delete(address);
     }
-    const neglectingValidators = new Set(
-        (await getValidators(networkId, rpc, blockNumber - 1)).keys()
-    );
+    const neglectingValidators = new Set((await previousValidators).keys());
     for (const address of blockAuthors) {
         neglectingValidators.delete(address);
     }
