@@ -1,4 +1,5 @@
 import Rpc from "codechain-rpc";
+import checkDelegationChanges from "./checkDelegationChanges";
 import checkStakeChanges from "./checkStakeChanges";
 import checkElection from "./election";
 import extractStakeActions from "./extractStakeActions";
@@ -74,8 +75,8 @@ async function main() {
                     // FIXME: Validate the deposit changes.
                     const [
                         stakeChanges,
-                        nominations
-                        /*delegations*/
+                        nominations,
+                        delegationChanges
                     ] = await extractStakeActions(rpc, block);
 
                     await checkMetadataOfCandidates(
@@ -137,6 +138,12 @@ async function main() {
                         console.groupEnd();
                     }
                     await checkStakeChanges(rpc, blockNumber, stakeChanges);
+                    await checkDelegationChanges(
+                        networkId,
+                        rpc,
+                        blockNumber,
+                        delegationChanges
+                    );
 
                     const logs = [];
                     if (nominations.size !== 0) {
@@ -153,6 +160,14 @@ async function main() {
                             )}`
                         );
                     }
+                    if (delegationChanges.size !== 0) {
+                        logs.push(
+                            `Delegations: ${Array.from(
+                                delegationChanges.entries()
+                            )}`
+                        );
+                    }
+
                     if (logs.length !== 0) {
                         console.group(`At block #${blockNumber}`);
                         for (const log of logs) {
