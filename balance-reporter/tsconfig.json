@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"target": "es2018",
+		"types": ["node"],
+		"module": "commonjs",
+		"declaration": true,
+		"outDir": "build",
+		"strict": true,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
+	},
+	"include": ["**/*.ts"]
+}
