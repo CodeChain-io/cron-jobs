@@ -1,11 +1,6 @@
-import { PlatformAddress } from "codechain-primitives";
 import Rpc from "codechain-rpc";
-import createKey from "../util/createKey";
-import toInt from "../util/toInt";
+import getDelegationsOf from "./getDelegationsOf";
 import getStakeholders from "./getStakeholders";
-import HANDLER_ID from "./handlerId"
-
-const rlp = require("rlp");
 
 export default async function getDelegations(
     networkId: string,
@@ -16,31 +11,8 @@ export default async function getDelegations(
 
     const result = new Map();
     for (const stakeholder of stakeholders) {
-        const encoded = await rpc.engine.getCustomActionData({
-            handlerId: HANDLER_ID,
-            bytes: createKey(
-                "Delegation",
-                stakeholder.getAccountId().toEncodeObject()
-            ),
-            blockNumber
-        });
-        if (encoded == null) {
-            continue;
-        }
-        for (const [delegatee, quantity] of (rlp.decode(
-            Buffer.from(encoded, "hex")
-        ) as [Buffer, Buffer][]).map(
-            ([encodedDelegatee, encodedQuantity]: [Buffer, Buffer]): [
-                string,
-                number
-                ] => [
-                PlatformAddress.fromAccountId(
-                    encodedDelegatee.toString("hex"),
-                    { networkId }
-                ).toString(),
-                toInt(encodedQuantity)
-            ]
-        )) {
+        const delegations = await getDelegationsOf(networkId, rpc, blockNumber, stakeholder);
+        for (const [delegatee, quantity] of delegations.entries()) {
             result.set(delegatee, (result.get(delegatee) || 0) + quantity);
         }
     }

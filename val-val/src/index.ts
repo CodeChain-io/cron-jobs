@@ -1,4 +1,5 @@
 import Rpc from "codechain-rpc";
+import checkStakeChanges from "./checkStakeChanges";
 import checkElection from "./election";
 import extractStakeActions from "./extractStakeActions";
 import {
@@ -9,6 +10,7 @@ import {
 import checkJailed from "./jailed";
 import createEmail from "./noti/email";
 import createSlack from "./noti/slack";
+import returnDelegationsOfReleased from "./returnDelegationsOfReleased";
 import getCandidates from "./state/getCandidates";
 import getTermMetadata from "./state/getTermMetadata";
 
@@ -69,12 +71,11 @@ async function main() {
                     }))!;
                     blockAuthors.add((block as any).author);
 
-                    // FIXME: Validate the CCS changes.
                     // FIXME: Validate the deposit changes.
                     const [
-                        ,
-                        /*ccs*/
-                        nominations /*ccs delegations*/
+                        stakeChanges,
+                        nominations
+                        /*delegations*/
                     ] = await extractStakeActions(rpc, block);
 
                     await checkMetadataOfCandidates(
@@ -108,6 +109,15 @@ async function main() {
                             termId,
                             blockAuthors
                         );
+
+                        await returnDelegationsOfReleased(
+                            networkId,
+                            rpc,
+                            blockNumber,
+                            new Set(released.keys()),
+                            stakeChanges
+                        );
+
                         console.group(
                             `New validators are elected for term #${termId}. #${blockNumber}`
                         );
@@ -126,10 +136,22 @@ async function main() {
                         }
                         console.groupEnd();
                     }
+                    await checkStakeChanges(rpc, blockNumber, stakeChanges);
 
                     const logs = [];
                     if (nominations.size !== 0) {
-                        logs.push(`${Array.from(nominations.entries())} are nominated.`);
+                        logs.push(
+                            `${Array.from(
+                                nominations.entries()
+                            )} are nominated.`
+                        );
+                    }
+                    if (stakeChanges.size !== 0) {
+                        logs.push(
+                            `Stake changes: ${Array.from(
+                                stakeChanges.entries()
+                            )}`
+                        );
                     }
                     if (logs.length !== 0) {
                         console.group(`At block #${blockNumber}`);
