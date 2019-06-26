@@ -1,0 +1,23 @@
+{
+  "name": "balance-reporter",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "license": "ISC",
+  "scripts": {
+    "build": "tsc --incremental -p .",
+    "lint": "tslint -p && prettier '**/*.ts' -l",
+    "fmt": "tslint -p . --fix && prettier '**/*ts' --write"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^6.4.0",
+    "codechain-primitives": "^1.0.1",
+    "codechain-rpc": "^0.1.6"
+  },
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.2"
+  }
+}
