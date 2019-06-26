@@ -43,50 +43,52 @@ export default async function extractStakeActions(
     const ccs = new Map<string, number>();
     const nominations = new Map<string, string>();
     const delegations = new Map<string, number>();
-    for (const tx of block.transactions) {
-        const action = await extractStakeActionFromTransaction(rpc, tx);
-        if (action == null) {
-            continue;
-        }
-        const { sender } = action;
-        switch (action.type) {
-            case "transferal": {
-                const { receiver, quantity } = action;
-                const senderQuantity = ccs.get(sender) || 0;
-                ccs.set(sender, senderQuantity - quantity);
-                const receiverQuantity = ccs.get(receiver) || 0;
-                ccs.set(receiver, receiverQuantity + quantity);
-                break;
+    await Promise.all<void>(
+        block.transactions.map(async tx => {
+            const action = await extractStakeActionFromTransaction(rpc, tx);
+            if (action == null) {
+                return;
             }
-            case "delegation": {
-                const { delegatee, quantity } = action;
-                const delegation = delegations.get(delegatee) || 0;
-                delegations.set(delegatee, delegation + quantity);
+            const { sender } = action;
+            switch (action.type) {
+                case "transferal": {
+                    const { receiver, quantity } = action;
+                    const senderQuantity = ccs.get(sender) || 0;
+                    ccs.set(sender, senderQuantity - quantity);
+                    const receiverQuantity = ccs.get(receiver) || 0;
+                    ccs.set(receiver, receiverQuantity + quantity);
+                    break;
+                }
+                case "delegation": {
+                    const { delegatee, quantity } = action;
+                    const delegation = delegations.get(delegatee) || 0;
+                    delegations.set(delegatee, delegation + quantity);
 
-                const senderQuantity = ccs.get(sender) || 0;
-                ccs.set(sender, senderQuantity - quantity);
-                break;
-            }
-            case "revocation": {
-                const { delegatee, quantity } = action;
-                const delegation = delegations.get(delegatee) || 0;
-                delegations.set(delegatee, delegation - quantity);
+                    const senderQuantity = ccs.get(sender) || 0;
+                    ccs.set(sender, senderQuantity - quantity);
+                    break;
+                }
+                case "revocation": {
+                    const { delegatee, quantity } = action;
+                    const delegation = delegations.get(delegatee) || 0;
+                    delegations.set(delegatee, delegation - quantity);
 
-                const senderQuantity = ccs.get(sender) || 0;
-                ccs.set(sender, senderQuantity + quantity);
-                break;
+                    const senderQuantity = ccs.get(sender) || 0;
+                    ccs.set(sender, senderQuantity + quantity);
+                    break;
+                }
+                case "nomination": {
+                    nominations.set(sender, action.metadata);
+                    break;
+                }
+                default: {
+                    throw Error(`Unexpected transaction #${block.number}`);
+                }
             }
-            case "nomination": {
-                nominations.set(sender, action.metadata);
-                break;
-            }
-            default: {
-                throw Error(`Unexpected transaction #${block.number}`);
-            }
-        }
 
-        // TODO: double vote report
-    }
+            // TODO: double vote report
+        })
+    );
 
     return [ccs, nominations, delegations];
 }
