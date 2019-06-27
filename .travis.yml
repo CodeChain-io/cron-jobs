@@ -4,7 +4,7 @@ node_js:
 jobs:
     include:
         - stage: test
-          name: tick-tock
+          name: fee-monitor
           os: linux
           before_install:
               - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
@@ -13,22 +13,9 @@ jobs:
           install:
               - cd $TRAVIS_JOB_NAME
               - yarn install
-          before_script:
-              - docker pull kodebox/codechain:v1.1.1
-              - docker run -d -p 8080:8080 kodebox/codechain:v1.1.1 --jsonrpc-interface 0.0.0.0 -c solo --reseal-min-period 0 --enable-devel-api
-              - psql -c 'CREATE DATABASE "codechain-indexer-dev";' -U postgres
-              - psql -c "CREATE USER \"user\" WITH ENCRYPTED PASSWORD 'password';" -U postgres
-              - docker ps -a
           script:
               - yarn lint
               - yarn build
-              - git clone --depth 1 https://github.com/CodeChain-io/codechain-indexer.git
-              - pushd codechain-indexer
-              - yarn install
-              - NODE_ENV=dev yarn run migrate
-              - yarn start &
-              - popd
-              - NODE_ENV=test yarn test
         - name: helicopter
           os: linux
           before_install:
@@ -54,8 +41,7 @@ jobs:
               - yarn start &
               - popd
               - NODE_ENV=test yarn test
-        - stage: test
-          name: juggle-ccc
+        - name: indexer-watcher
           os: linux
           before_install:
               - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
@@ -67,8 +53,8 @@ jobs:
           script:
               - yarn lint
               - yarn build
-        - stage: test
-          name: timelock
+              - yarn test
+        - name: juggle-ccc
           os: linux
           before_install:
               - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
@@ -93,7 +79,32 @@ jobs:
               - yarn lint
               - yarn test
               - yarn build
-        - name: fee-monitor
+        - name: tick-tock
+          os: linux
+          before_install:
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
+              - export PATH="$HOME/.yarn/bin:$PATH"
+          install:
+              - cd $TRAVIS_JOB_NAME
+              - yarn install
+          before_script:
+              - docker pull kodebox/codechain:v1.1.1
+              - docker run -d -p 8080:8080 kodebox/codechain:v1.1.1 --jsonrpc-interface 0.0.0.0 -c solo --reseal-min-period 0 --enable-devel-api
+              - psql -c 'CREATE DATABASE "codechain-indexer-dev";' -U postgres
+              - psql -c "CREATE USER \"user\" WITH ENCRYPTED PASSWORD 'password';" -U postgres
+              - docker ps -a
+          script:
+              - yarn lint
+              - yarn build
+              - git clone --depth 1 https://github.com/CodeChain-io/codechain-indexer.git
+              - pushd codechain-indexer
+              - yarn install
+              - NODE_ENV=dev yarn run migrate
+              - yarn start &
+              - popd
+              - NODE_ENV=test yarn test
+        - name: timelock
           os: linux
           before_install:
               - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
@@ -105,19 +116,6 @@ jobs:
           script:
               - yarn lint
               - yarn build
-        - name: indexer-watcher
-          os: linux
-          before_install:
-              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
-              - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
-              - export PATH="$HOME/.yarn/bin:$PATH"
-          install:
-              - cd $TRAVIS_JOB_NAME
-              - yarn install
-          script:
-              - yarn lint
-              - yarn build
-              - yarn test
 services:
   - docker
   - postgresql
