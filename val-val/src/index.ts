@@ -205,7 +205,10 @@ async function main() {
                     slack.sendError(err.message);
                     email.sendError(err.message);
                 }
-                previousTermId = termId;
+                if (previousTermId !== termId) {
+                    previousTermId = termId;
+                    blockAuthors.clear();
+                }
             }
 
             previousCheckedBlock = currentBestBlock;
