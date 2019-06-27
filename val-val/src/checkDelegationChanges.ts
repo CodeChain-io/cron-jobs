@@ -1,6 +1,5 @@
 import Rpc from "codechain-rpc";
 import getDelegations from "./state/getDelegations";
-import getJailed from "./state/getJailed";
 
 export default async function checkDelegationChanges(
     networkId: string,
@@ -12,18 +11,15 @@ export default async function checkDelegationChanges(
         return;
     }
 
-    const [previous, current, jailed] = await Promise.all([
+    const [previous, current] = await Promise.all([
         getDelegations(networkId, rpc, blockNumber - 1),
-        getDelegations(networkId, rpc, blockNumber),
-        getJailed(networkId, rpc, blockNumber)
+        getDelegations(networkId, rpc, blockNumber)
     ]);
-    for (const address of jailed.keys()) {
-        previous.delete(address);
-    }
     for (const [address, quantity] of delegationChanges.entries()) {
         previous.set(address, (previous.get(address) || 0) + quantity);
     }
 
+    // TODO: Remove the banned accounts
     for (const [address, expected] of previous.entries()) {
         const actual = current.get(address) || 0;
         if (actual !== expected) {
