@@ -7,7 +7,7 @@ jobs:
           name: tick-tock
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^tick-tock/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -32,7 +32,7 @@ jobs:
         - name: helicopter
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^helicopter/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -58,7 +58,7 @@ jobs:
           name: juggle-ccc
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^juggle-ccc/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -71,7 +71,7 @@ jobs:
           name: timelock
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^timelock/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -83,7 +83,7 @@ jobs:
         - name: monitor
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^monitor/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -96,7 +96,7 @@ jobs:
         - name: fee-monitor
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^fee-monitor/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
@@ -108,7 +108,7 @@ jobs:
         - name: indexer-watcher
           os: linux
           before_install:
-              - CHANGED=$(.travis/check-change '^indexer-watcher/|^\.travis.yml$|\.editorconfig$') && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
+              - CHANGED=$(.travis/check-change "^$TRAVIS_JOB_NAME/|^\.travis.yml$|\.editorconfig$") && if [[ "$CHANGED" = "unchanged" ]]; then exit 0; fi
               - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version "1.15.2"
               - export PATH="$HOME/.yarn/bin:$PATH"
           install:
