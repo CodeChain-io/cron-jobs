@@ -78,7 +78,10 @@ export default async function extractStakeActions(
                     break;
                 }
                 case "nomination": {
-                    nominations.set(sender, action.metadata);
+                    nominations.set(
+                        sender,
+                        Buffer.from(action.metadata, "hex").toString()
+                    );
                     break;
                 }
                 default: {

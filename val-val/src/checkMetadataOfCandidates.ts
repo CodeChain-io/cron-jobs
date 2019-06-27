@@ -13,9 +13,12 @@ export default async function checkMetadataOfCandidates(
         if (candidate == null) {
             throw Error(`${address} is not nominated. #${blockNumber}`);
         }
-        if (candidate[2] !== metadata) {
+        if (Buffer.from(candidate[2], "hex").toString() !== metadata) {
             throw Error(
-                `${address}'s metadata should be ${metadata} but ${candidate[2]}. #${blockNumber}`
+                `${address}'s metadata should be "${metadata}" but "${Buffer.from(
+                    candidate[2],
+                    "hex"
+                ).toString()}". #${blockNumber}`
             );
         }
     }
