@@ -11,18 +11,16 @@ import {
     writeLastCheckedBlock
 } from "./file";
 import checkJailed from "./jailed";
-import createEmail from "./noti/email";
-import createSlack from "./noti/slack";
+import Noti from "./noti";
 import returnDelegationsOfReleased from "./returnDelegationsOfReleased";
 import getTermMetadata from "./state/getTermMetadata";
 
 async function main() {
-    const email = createEmail({
+    const noti = new Noti({
         sendgridApiKey: process.env.SENDGRID_API_KEY,
         to: process.env.SENDGRID_TO,
-        tag: "val-val"
+        slackWebhookUrl: process.env.SLACK_WEBHOOK_URL
     });
-    const slack = createSlack("val-val", process.env.SLACK_WEBHOOK_URL);
 
     if (await createLastCheckedBlockIfNotExist()) {
         console.log("New lastBlockNumber file is created");
@@ -38,11 +36,9 @@ async function main() {
         if (reports == null) {
             return;
         }
-        const slackMessage = reports.join("\n");
-        const emailMessage = reports.join("<br />");
+        const messages = reports;
         reports = [];
-        slack.sendInfo("Daily report.", slackMessage);
-        email.sendInfo("Daily report.", emailMessage);
+        noti.sendInfo("Daily report.", messages);
         previousDate = currentDate;
     }, 10 * 60 * 1_000); // 10 minutes
 
@@ -220,8 +216,7 @@ async function main() {
                         await writeLastCheckedBlock(previousCheckedBlock);
                     }
                 } catch (err) {
-                    slack.sendError(err.message);
-                    email.sendError(err.message);
+                    noti.sendError(err.message);
                 }
                 if (previousTermId !== termId) {
                     previousTermId = termId;
@@ -238,8 +233,7 @@ async function main() {
                 wait(1_000)
             ]); // wait 1 second
         } catch (err) {
-            slack.sendError(`Fail to run: ${err}`);
-            email.sendError(`Fail to run: ${err}`);
+            noti.sendError(`Fail to run: ${err}`);
         }
     }
 }
