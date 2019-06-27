@@ -87,136 +87,121 @@ async function main() {
                     rpc,
                     blockNumber
                 );
-                try {
-                    const block = (await rpc.chain.getBlockByNumber({
-                        blockNumber
-                    }))!;
-                    blockAuthors.add((block as any).author);
+                const block = (await rpc.chain.getBlockByNumber({
+                    blockNumber
+                }))!;
+                blockAuthors.add((block as any).author);
 
-                    // FIXME: Validate the deposit changes.
-                    const [
-                        stakeChanges,
-                        nominations,
-                        delegationChanges
-                    ] = await extractStakeActions(rpc, block);
+                const [
+                    stakeChanges,
+                    nominations,
+                    delegationChanges
+                ] = await extractStakeActions(rpc, block);
 
-                    await checkMetadataOfCandidates(
+                await checkMetadataOfCandidates(
+                    networkId,
+                    rpc,
+                    nominations,
+                    blockNumber
+                );
+
+                if (termId !== previousTermId) {
+                    if (termId !== previousTermId + 1) {
+                        throw Error(
+                            `The term id must be increased by one. previous: ${previousTermId} current: ${termId} #${blockNumber}`
+                        );
+                    }
+                    if (lastBlockOfTheTerm !== blockNumber) {
+                        throw Error(
+                            `The last block number in the metadata is ${lastBlockOfTheTerm} but it should be ${blockNumber}. #${blockNumber}`
+                        );
+                    }
+
+                    const validatorsPromise = checkElection(
                         networkId,
                         rpc,
-                        nominations,
                         blockNumber
                     );
+                    const [released, jailed] = await checkJailed(
+                        networkId,
+                        rpc,
+                        blockNumber,
+                        termId,
+                        blockAuthors
+                    );
 
-                    if (termId !== previousTermId) {
-                        if (termId !== previousTermId + 1) {
-                            throw Error(
-                                `The term id must be increased by one. previous: ${previousTermId} current: ${termId} #${blockNumber}`
-                            );
-                        }
-                        if (lastBlockOfTheTerm !== blockNumber) {
-                            throw Error(
-                                `The last block number in the metadata is ${lastBlockOfTheTerm} but it should be ${blockNumber}. #${blockNumber}`
-                            );
-                        }
+                    await returnDelegationsOfReleased(
+                        networkId,
+                        rpc,
+                        blockNumber,
+                        new Set(released.keys()),
+                        stakeChanges
+                    );
 
-                        const validatorsPromise = checkElection(
-                            networkId,
-                            rpc,
-                            blockNumber
-                        );
-                        const [released, jailed] = await checkJailed(
-                            networkId,
-                            rpc,
-                            blockNumber,
-                            termId,
-                            blockAuthors
-                        );
-
-                        await returnDelegationsOfReleased(
-                            networkId,
-                            rpc,
-                            blockNumber,
-                            new Set(released.keys()),
-                            stakeChanges
-                        );
-
-                        const validators = await validatorsPromise;
+                    const validators = await validatorsPromise;
+                    report.push(
+                        `New validators are elected for term ${termId} at bock ${blockNumber}`
+                    );
+                    report.push(
+                        `${JSON.stringify(Array.from(validators.values()))}`
+                    );
+                    if (released.size !== 0) {
                         report.push(
-                            `New validators are elected for term ${termId} at bock ${blockNumber}`
+                            `${Array.from(released.keys())} are released.`
                         );
+                    }
+                    if (jailed.size !== 0) {
                         report.push(
-                            `${JSON.stringify(Array.from(validators.values()))}`
+                            `${Array.from(jailed.values())} are jailed.`
                         );
-                        if (released.size !== 0) {
-                            report.push(
-                                `${Array.from(released.keys())} are released.`
-                            );
-                        }
-                        if (jailed.size !== 0) {
-                            report.push(
-                                `${Array.from(jailed.values())} are jailed.`
-                            );
-                        }
-                    } else {
-                        if (termId === 1) {
-                            await checkWeightChanges(
-                                networkId,
-                                rpc,
-                                blockNumber
-                            );
-                        }
                     }
+                } else {
+                    if (termId === 1) {
+                        await checkWeightChanges(networkId, rpc, blockNumber);
+                    }
+                }
 
-                    await Promise.all([
-                        checkStakeChanges(rpc, blockNumber, stakeChanges),
-                        checkDelegationChanges(
-                            networkId,
-                            rpc,
-                            blockNumber,
-                            delegationChanges
-                        )
-                    ]);
+                await Promise.all([
+                    checkStakeChanges(rpc, blockNumber, stakeChanges),
+                    checkDelegationChanges(
+                        networkId,
+                        rpc,
+                        blockNumber,
+                        delegationChanges
+                    )
+                ]);
 
-                    const logs = [];
-                    if (nominations.size !== 0) {
-                        logs.push(
-                            `${Array.from(
-                                nominations.entries()
-                            )} are nominated.`
-                        );
-                    }
-                    if (stakeChanges.size !== 0) {
-                        logs.push(
-                            `Stake changes: ${Array.from(
-                                stakeChanges.entries()
-                            )}`
-                        );
-                    }
-                    if (delegationChanges.size !== 0) {
-                        logs.push(
-                            `Delegations: ${Array.from(
-                                delegationChanges.entries()
-                            )}`
-                        );
-                    }
+                const logs = [];
+                if (nominations.size !== 0) {
+                    logs.push(
+                        `${Array.from(nominations.entries())} are nominated.`
+                    );
+                }
+                if (stakeChanges.size !== 0) {
+                    logs.push(
+                        `Stake changes: ${Array.from(stakeChanges.entries())}`
+                    );
+                }
+                if (delegationChanges.size !== 0) {
+                    logs.push(
+                        `Delegations: ${Array.from(
+                            delegationChanges.entries()
+                        )}`
+                    );
+                }
 
-                    if (logs.length !== 0) {
-                        report.push(`At block ${blockNumber}`);
-                        report.push(...logs);
-                    }
-                    if (reports != null) {
-                        reports.push(...report);
-                    }
+                if (logs.length !== 0) {
+                    report.push(`At block ${blockNumber}`);
+                    report.push(...logs);
+                }
+                if (reports != null) {
+                    reports.push(...report);
+                }
 
-                    if (blockNumber % 1000 === 0) {
-                        previousCheckedBlock = blockNumber;
-                        console.log(
-                            `Block #${previousCheckedBlock} is validated`
-                        );
-                        await writeLastCheckedBlock(previousCheckedBlock);
-                    }
-                } catch (err) {
-                    noti.sendError(err.message);
+                if (blockNumber % 1000 === 0) {
+                    previousCheckedBlock = blockNumber;
+                    console.log(`Block #${previousCheckedBlock} is validated`);
+                    await writeLastCheckedBlock(previousCheckedBlock);
                 }
                 if (previousTermId !== termId) {
                     previousTermId = termId;
@@ -233,7 +218,8 @@ async function main() {
                 wait(1_000)
             ]); // wait 1 second
         } catch (err) {
-            noti.sendError(`Fail to run: ${err}`);
+            noti.sendError(err.message ? err.message : err);
+            throw err;
         }
     }
 }
