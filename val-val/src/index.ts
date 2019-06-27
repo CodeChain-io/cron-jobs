@@ -1,6 +1,7 @@
 import Rpc from "codechain-rpc";
 import checkDelegationChanges from "./checkDelegationChanges";
 import checkStakeChanges from "./checkStakeChanges";
+import checkWeightChanges from "./checkWeightChanges";
 import checkElection from "./election";
 import extractStakeActions from "./extractStakeActions";
 import {
@@ -142,6 +143,14 @@ async function main() {
                             );
                         }
                         console.groupEnd();
+                    } else {
+                        if (termId === 1) {
+                            await checkWeightChanges(
+                                networkId,
+                                rpc,
+                                blockNumber
+                            );
+                        }
                     }
 
                     await Promise.all([
