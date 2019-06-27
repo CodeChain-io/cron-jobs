@@ -28,6 +28,24 @@ async function main() {
         console.log("New lastBlockNumber file is created");
     }
 
+    let reports: string[] | null = null;
+    let previousDate = new Date().getUTCDate();
+    setInterval(() => {
+        const currentDate = new Date().getUTCDate();
+        if (currentDate === previousDate) {
+            return;
+        }
+        if (reports == null) {
+            return;
+        }
+        const slackMessage = reports.join("\n");
+        const emailMessage = reports.join("<br />");
+        reports = [];
+        slack.sendInfo("Daily report.", slackMessage);
+        email.sendInfo("Daily report.", emailMessage);
+        previousDate = currentDate;
+    }, 10 * 60 * 1_000); // 10 minutes
+
     const rpc = new Rpc(process.env.RPC_SERVER!);
 
     let previousCheckedBlock = await readLastCheckedBlock();
@@ -63,6 +81,7 @@ async function main() {
                 continue;
             }
 
+            const report = [];
             for (
                 let blockNumber = previousCheckedBlock + 1;
                 blockNumber <= currentBestBlock;
@@ -126,23 +145,22 @@ async function main() {
                         );
 
                         const validators = await validatorsPromise;
-                        console.group(
-                            `New validators are elected for term #${termId}. #${blockNumber}`
+                        report.push(
+                            `New validators are elected for term ${termId} at bock ${blockNumber}`
                         );
-                        console.log(
+                        report.push(
                             `${JSON.stringify(Array.from(validators.values()))}`
                         );
                         if (released.size !== 0) {
-                            console.log(
+                            report.push(
                                 `${Array.from(released.keys())} are released.`
                             );
                         }
                         if (jailed.size !== 0) {
-                            console.log(
+                            report.push(
                                 `${Array.from(jailed.values())} are jailed.`
                             );
                         }
-                        console.groupEnd();
                     } else {
                         if (termId === 1) {
                             await checkWeightChanges(
@@ -187,11 +205,11 @@ async function main() {
                     }
 
                     if (logs.length !== 0) {
-                        console.group(`At block #${blockNumber}`);
-                        for (const log of logs) {
-                            console.log(log);
-                        }
-                        console.groupEnd();
+                        report.push(`At block ${blockNumber}`);
+                        report.push(...logs);
+                    }
+                    if (reports != null) {
+                        reports.push(...report);
                     }
 
                     if (blockNumber % 1000 === 0) {
@@ -210,6 +228,8 @@ async function main() {
                     blockAuthors.clear();
                 }
             }
+
+            reports = [];
 
             previousCheckedBlock = currentBestBlock;
             console.log(`Block #${previousCheckedBlock} is validated`);
