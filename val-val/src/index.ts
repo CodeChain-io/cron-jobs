@@ -1,5 +1,6 @@
 import Rpc from "codechain-rpc";
 import checkDelegationChanges from "./checkDelegationChanges";
+import checkMetadataOfCandidates from "./checkMetadataOfCandidates";
 import checkStakeChanges from "./checkStakeChanges";
 import checkWeightChanges from "./checkWeightChanges";
 import checkElection from "./election";
@@ -13,7 +14,6 @@ import checkJailed from "./jailed";
 import createEmail from "./noti/email";
 import createSlack from "./noti/slack";
 import returnDelegationsOfReleased from "./returnDelegationsOfReleased";
-import getCandidates from "./state/getCandidates";
 import getTermMetadata from "./state/getTermMetadata";
 
 async function main() {
@@ -230,24 +230,4 @@ function wait(ms: number) {
     return new Promise(resolve => {
         setTimeout(resolve, ms);
     });
-}
-
-async function checkMetadataOfCandidates(
-    networkId: string,
-    rpc: Rpc,
-    nominations: Map<string, string>,
-    blockNumber: number
-) {
-    const candidates = await getCandidates(networkId, rpc, blockNumber);
-    for (const [address, metadata] of nominations.entries()) {
-        const candidate = candidates.get(address);
-        if (candidate == null) {
-            throw Error(`${address} is not nominated. #${blockNumber}`);
-        }
-        if (candidate[2] !== metadata) {
-            throw Error(
-                `${address}'s metadata should be ${metadata} but ${candidate[2]}. #${blockNumber}`
-            );
-        }
-    }
 }
