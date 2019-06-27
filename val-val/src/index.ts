@@ -194,6 +194,9 @@ async function main() {
                     report.push(`At block ${blockNumber}`);
                     report.push(...logs);
                 }
+                for (const log of report) {
+                    console.log(log);
+                }
                 if (reports != null) {
                     reports.push(...report);
                 }
