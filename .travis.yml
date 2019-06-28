@@ -74,6 +74,11 @@ jobs:
           script:
               - yarn lint
               - yarn build
+        - name: val-val
+          os: linux
+          script:
+              - yarn lint
+              - yarn test
 services:
   - docker
   - postgresql
