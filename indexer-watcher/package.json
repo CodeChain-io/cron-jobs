@@ -23,11 +23,11 @@
     "@types/lodash": "^4.14.123",
     "@types/request": "^2.48.1",
     "@types/request-promise-native": "^1.0.15",
-    "@typescript-eslint/eslint-plugin": "^1.5.0",
-    "@typescript-eslint/parser": "^1.5.0",
-    "eslint": "^5.16.0",
+    "@typescript-eslint/eslint-plugin": "^1.11.0",
+    "@typescript-eslint/parser": "^1.11.0",
+    "eslint": "^6.0.1",
     "prettier": "^1.18.2",
     "ts-node": "^8.3.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   }
 }
