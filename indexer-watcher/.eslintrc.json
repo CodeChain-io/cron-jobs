@@ -25,6 +25,7 @@
             "varsIgnorePattern": "^_",
             "caughtErrorsPattern": "^_"
         }],
+        "require-atomic-updates": "off",
 
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-explicit-any": "off",
