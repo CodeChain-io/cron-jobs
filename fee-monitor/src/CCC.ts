@@ -15,6 +15,8 @@ export async function getCCCBalances(
     return result;
 }
 
+export type SettleMoment = { tag: "block"; value: number } | { tag: "term"; value: number };
+
 export class CCCTracer {
     public totalFee = new U64(0);
     public totalMinFee = new U64(0);
