@@ -26,7 +26,8 @@ export async function run(
         const invalidTransaction = await codeChain.createTransaction({
             input: utxoSet.getTimelockAsset(timelockType),
             timelock: createTimelock(startBlock, timelockType),
-            useTimelockOnInput: false
+            useTimelockOnInput: false,
+            signer: "first"
         });
 
         const invalidTxHash = await codeChain.sendTransaction(
@@ -37,7 +38,8 @@ export async function run(
         const validTransaction = await codeChain.createTransaction({
             input: utxoSet.getTimelockAsset(timelockType),
             timelock: createTimelock(startBlock, timelockType),
-            useTimelockOnInput: true
+            useTimelockOnInput: true,
+            signer: "second"
         });
 
         const validTxHash = await codeChain.sendTransaction(validTransaction);

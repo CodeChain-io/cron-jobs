@@ -31,6 +31,7 @@ type NetworkId = "tc" | "wc";
 const networkId: "tc" | "wc" = getConfig<NetworkId>("networkId");
 const codeChainRPCURL: string = getConfig<string>("codeChainRPCURL");
 const faucetAddress: string = getConfig<string>("faucetAddress");
+const faucetAddress2: string = getConfig<string>("faucetAddress2");
 
 export default class CodeChain {
     private sdk: SDK;
@@ -74,6 +75,7 @@ export default class CodeChain {
         input: Asset;
         timelock: Timelock | null;
         useTimelockOnInput: boolean;
+        signer: "first" | "second";
     }): Promise<SignedTransaction> => {
         const useCustomLockScript = _.some(
             timelockScript.getAllLockScriptHashes(),
@@ -109,13 +111,15 @@ export default class CodeChain {
                 keyStore: this.transientKeyStore
             });
         }
+        const signerAddress =
+            params.signer === "first" ? faucetAddress : faucetAddress2;
 
         const signedTransaction = await this.sdk.key.signTransaction(
             transaction,
             {
-                account: faucetAddress,
+                account: signerAddress,
                 fee: 100,
-                seq: await getCurrentSeq(this.sdk, faucetAddress)
+                seq: await getCurrentSeq(this.sdk, signerAddress)
             }
         );
         return signedTransaction;

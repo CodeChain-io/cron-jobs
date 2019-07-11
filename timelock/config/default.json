@@ -2,5 +2,6 @@
   "networkId": "tc",
   "codeChainRPCURL": "http://localhost:8080",
   "faucetAddress": "tccq9h7vnl68frvqapzv3tujrxtxtwqdnxw6yamrrgd",
+  "faucetAddress2": "tccq9c257uyw5k2erl2fhlvmuem9t0tcr59rgtfufgs",
   "slackWebhookURL": ""
 }
