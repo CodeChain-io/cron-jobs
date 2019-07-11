@@ -9,9 +9,10 @@ import {
     Pay,
 } from "codechain-sdk/lib/core/classes";
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
-import { getWeights, Weight, getStakeholders, getValidators } from "./Stake";
+import { getWeights, Weight, getStakeholders, STAKE_CONSTANT, decodeU64 } from "./Stake";
 import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 import { MinimumFees } from "./CommonParams";
+import { getAccountsInState, AccountState } from "./AccountState";
 import * as RLP from "rlp";
 
 export interface DynamicParams {
@@ -110,7 +111,10 @@ export class DynamicChecker {
 
         const author = block.author;
         const weights = await getWeights(blockNumber);
-        const validators = (await getValidators(blockNumber - 2)).reverse();
+        const validators = (await getAccountsInState(
+            AccountState.Validator,
+            blockNumber - 2,
+        )).reverse();
         await this.recordContribution(block, validators);
         distributeDynamic(
             this.tracerForImmedateSettle,
@@ -134,6 +138,7 @@ export class DynamicChecker {
                 blockNumber,
             );
             this.applyAdditionalRewards(this.parentTermValidators, totalReducedReward);
+            await this.settleNominationDeposit(blockNumber, validators);
             await this.checkForValidators(blockNumber, blockRewardSettleMoment);
             await this.checkForStakeHolders(blockNumber, immediateSettleMoment, true);
             this.finalizeTerm(blockNumber, validators);
@@ -141,6 +146,30 @@ export class DynamicChecker {
             await this.checkForStakeHolders(blockNumber, immediateSettleMoment, false);
         }
         this.tracerForImmedateSettle = new CCCTracer();
+    }
+
+    private async settleNominationDeposit(blockNumber: number, validators: string[]) {
+        const pastValidators = Array.from(this.nominationDeposits.keys());
+        const bannedAccounts = await getAccountsInState(AccountState.Banned, blockNumber);
+        const candidates = await getAccountsInState(AccountState.Candidate, blockNumber);
+        const jailedAccounts = await getAccountsInState(AccountState.Jailed, blockNumber);
+
+        const nowEligible = pastValidators.filter(
+            (address: string) =>
+                !bannedAccounts.includes(address) &&
+                !candidates.includes(address) &&
+                !jailedAccounts.includes(address) &&
+                !validators.includes(address),
+        );
+
+        for (const eligibleAccount of nowEligible) {
+            const deposit = this.nominationDeposits.get(eligibleAccount)!;
+            this.prevTermData.intermediateReward.deposit(
+                PlatformAddress.fromString(eligibleAccount),
+                deposit,
+            );
+            this.nominationDeposits.delete(eligibleAccount);
+        }
     }
 
     private async checkForValidators(currentBlockNumber: number, settleMoment: SettleMoment) {
@@ -268,6 +297,29 @@ export class DynamicChecker {
                     bytes: Buffer;
                 }
                 const { handlerId, bytes }: CustomBody = tx as any;
+                if (handlerId.eq(2)) {
+                    const decoded = RLP.decode(bytes as RLP.Input);
+                    if (decoded instanceof Array) {
+                        const [tag, ...rest] = decoded;
+                        const tagNum = tag.readUInt8(0);
+                        switch (tagNum) {
+                            case STAKE_CONSTANT.ACTION_TAG_SELF_NOMINATE: {
+                                const [depositEncoded] = rest;
+                                const additionalDeposit = decodeU64(depositEncoded);
+                                const prevDeposit =
+                                    this.nominationDeposits.get(signer.value) || new U64(0);
+                                this.nominationDeposits.set(
+                                    signer.value,
+                                    prevDeposit.plus(additionalDeposit),
+                                );
+                                this.tracerForImmedateSettle.withdraw(signer, additionalDeposit);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+                }
             }
         }
     }
@@ -340,6 +392,18 @@ export class DynamicChecker {
      */
     private async applyPenalty(validators: string[], blockNumber: number): Promise<U64> {
         let totalReducedReward = new U64(0);
+        const bannedAccounts = await getAccountsInState(AccountState.Banned, blockNumber);
+        for (const bannedAccount of bannedAccounts) {
+            const bannedAccountReward = this.prevTermData.intermediateReward.adjust(
+                PlatformAddress.fromString(bannedAccount),
+                new U64(0),
+            );
+            this.prevTermData.intermediateReward.withdraw(
+                PlatformAddress.fromString(bannedAccount),
+                bannedAccountReward,
+            );
+            totalReducedReward = totalReducedReward.plus(bannedAccountReward);
+        }
 
         for (const validator of validators) {
             const committedCnt = this.prevTermData.commitedVotesPerValidator.get(validator) || 0;

@@ -3,13 +3,30 @@ import { sdk } from "./config";
 
 const RLP = require("rlp");
 
-function decodeU64(buffer: Buffer): U64 {
+export const STAKE_CONSTANT = {
+    STAKE_ACTION_HANDLER_ID: 2,
+    ACTION_TAG_TRANSFER_CCS: 1,
+    ACTION_TAG_DELEGATE_CCS: 2,
+    ACTION_TAG_REVOKE: 3,
+    ACTION_TAG_SELF_NOMINATE: 4,
+    ACTION_TAG_REPORT_DOUBLE_VOTE: 5,
+    ACTION_TAG_CHANGE_PARAMS: 0xff,
+};
+
+export function decodeU64(buffer: Buffer): U64 {
     return U64.ensure("0x" + buffer.toString("hex"));
 }
 
-function decodePlatformAddress(buffer: Buffer): PlatformAddress {
+export function decodePlatformAddress(buffer: Buffer): PlatformAddress {
     const accountId = buffer.toString("hex");
     return PlatformAddress.fromAccountId(accountId, {
+        networkId: sdk.networkId,
+    });
+}
+
+export function decodePlatformAddressfromPubkey(buffer: Buffer): PlatformAddress {
+    const pubkey = buffer.toString("hex");
+    return PlatformAddress.fromPublic(pubkey, {
         networkId: sdk.networkId,
     });
 }
@@ -73,11 +90,6 @@ async function getWeight(account: PlatformAddress, blockNumber: number): Promise
         .map(d => d.quantity)
         .reduce((prev, current) => prev.plus(current), new U64(0));
     return balance.plus(totalDelegations);
-}
-
-export async function getValidators(blockNumber: number): Promise<string[]> {
-    const data = (await sdk.rpc.engine.getCustomActionData(2, ["Validators"], blockNumber))!;
-    return RLP.decode(Buffer.from(data, "hex")).map(decodePlatformAddress);
 }
 
 export async function getWeights(blockNumber: number): Promise<Weight[]> {

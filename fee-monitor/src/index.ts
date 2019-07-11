@@ -12,7 +12,7 @@ async function checkBlock(blockNumber: number, dynamicChecker: DynamicChecker) {
     const termSeconds = commonParams.termSeconds;
     const minimumFees = getMinimumFees(commonParams);
     if (termSeconds == null) {
-        await checkBlockStatic(blockNumber, minimumFees);
+        await checkBlockStatic(blockNumber, minimumFees, dynamicChecker.nominationDeposits);
     } else {
         await dynamicChecker.checkBlockDynamic(blockNumber, {
             termSeconds,
