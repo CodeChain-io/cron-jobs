@@ -25,7 +25,8 @@ export async function run(
         const transaction = await codeChain.createTransaction({
             input: utxoSet.popPBKHAsset(),
             timelock: createTimelock(startBlock, timelockType),
-            useTimelockOnInput: true
+            useTimelockOnInput: true,
+            signer: "first"
         });
         await codeChain.sendTransaction(transaction);
         const leastBlock = await codeChain.waitFutureBlock({
