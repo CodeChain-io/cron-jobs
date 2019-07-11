@@ -75,6 +75,11 @@ async function getWeight(account: PlatformAddress, blockNumber: number): Promise
     return balance.plus(totalDelegations);
 }
 
+export async function getValidators(blockNumber: number): Promise<string[]> {
+    const data = (await sdk.rpc.engine.getCustomActionData(2, ["Validators"], blockNumber))!;
+    return RLP.decode(Buffer.from(data, "hex")).map(decodePlatformAddress);
+}
+
 export async function getWeights(blockNumber: number): Promise<Weight[]> {
     const stakeholders = await getStakeholders(blockNumber);
     const weights = await Promise.all(stakeholders.map(account => getWeight(account, blockNumber)));

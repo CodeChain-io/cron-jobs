@@ -1,12 +1,21 @@
-import { CCCTracer } from "./CCC";
-import { PlatformAddress, U64, Block } from "codechain-sdk/lib/core/classes";
-import { Weight } from "./Stake";
+import { CCCTracer, getCCCBalances, SettleMoment } from "./CCC";
+import { slack, email, sdk, SERVER } from "./config";
+import {
+    PlatformAddress,
+    U64,
+    Block,
+    WrapCCC,
+    UnwrapCCC,
+    Pay,
+} from "codechain-sdk/lib/core/classes";
+import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
+import { getWeights, Weight, getStakeholders, getValidators } from "./Stake";
+import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 import { MinimumFees } from "./CommonParams";
 import * as RLP from "rlp";
 
 export interface DynamicParams {
     termSeconds: number;
-    nominationExpiration: number;
     minimumFees: MinimumFees;
 }
 
@@ -14,6 +23,12 @@ interface TermData {
     intermediateReward: CCCTracer;
     commitedVotesPerValidator: Map<string, number>;
     assembledVotesPerAuthor: Map<string, [number, number]>;
+}
+
+interface AggregatedErrors {
+    server: string;
+    moment: SettleMoment;
+    errors: any[];
 }
 
 function distributeDynamic(
@@ -58,9 +73,9 @@ function decodeBitsetField(encodedBitSet: number[]): number[] {
 
 export class DynamicChecker {
     private parentTermValidators: string[] = [];
-    private parentTermId = 0;
     private parentTermLastBlockNumber = 0;
     private parentTermFirstBlockNumber = 0;
+    private parentBlockTimestamp = 0;
     private init = true;
     private tracerForImmedateSettle = new CCCTracer();
     private prevTermData: TermData = {
@@ -73,6 +88,206 @@ export class DynamicChecker {
         commitedVotesPerValidator: new Map(),
         assembledVotesPerAuthor: new Map(),
     };
+    public nominationDeposits: Map<string, U64> = new Map();
+
+    public async checkBlockDynamic(blockNumber: number, dynamicParams: DynamicParams) {
+        const block = (await sdk.rpc.chain.getBlock(blockNumber))!;
+        const currentTimestamp = block.timestamp;
+
+        if (this.init) {
+            this.parentBlockTimestamp = currentTimestamp;
+            this.parentTermLastBlockNumber = blockNumber - 1;
+            this.init = false;
+        }
+
+        const currentBlockTermIndicator = Math.floor(currentTimestamp / dynamicParams.termSeconds);
+        const parentBlockTermIndicator = Math.floor(
+            this.parentBlockTimestamp / dynamicParams.termSeconds,
+        );
+        this.parentBlockTimestamp = currentTimestamp;
+
+        this.handleTransactions(block.transactions, dynamicParams);
+
+        const author = block.author;
+        const weights = await getWeights(blockNumber);
+        const validators = (await getValidators(blockNumber - 2)).reverse();
+        await this.recordContribution(block, validators);
+        distributeDynamic(
+            this.tracerForImmedateSettle,
+            this.currentTermData.intermediateReward,
+            author,
+            weights,
+        );
+
+        const immediateSettleMoment: SettleMoment = {
+            tag: "block",
+            value: blockNumber,
+        };
+
+        if (currentBlockTermIndicator !== parentBlockTermIndicator) {
+            const blockRewardSettleMoment: SettleMoment = {
+                tag: "term",
+                value: blockNumber,
+            };
+            const totalReducedReward = await this.applyPenalty(
+                this.parentTermValidators,
+                blockNumber,
+            );
+            this.applyAdditionalRewards(this.parentTermValidators, totalReducedReward);
+            await this.checkForValidators(blockNumber, blockRewardSettleMoment);
+            await this.checkForStakeHolders(blockNumber, immediateSettleMoment, true);
+            this.finalizeTerm(blockNumber, validators);
+        } else {
+            await this.checkForStakeHolders(blockNumber, immediateSettleMoment, false);
+        }
+        this.tracerForImmedateSettle = new CCCTracer();
+    }
+
+    private async checkForValidators(currentBlockNumber: number, settleMoment: SettleMoment) {
+        const errorsOfValidators: AggregatedErrors = {
+            server: SERVER,
+            moment: settleMoment,
+            errors: [] as any[],
+        };
+
+        for (const validator of this.parentTermValidators) {
+            const validatorBefore = await sdk.rpc.chain.getBalance(
+                validator,
+                currentBlockNumber - 1,
+            );
+            const validatorAfter = await sdk.rpc.chain.getBalance(validator, currentBlockNumber);
+            const settleStakeHolderReward = this.tracerForImmedateSettle.adjust(
+                PlatformAddress.fromString(validator),
+                validatorBefore,
+            );
+            const expected = this.prevTermData.intermediateReward.adjust(
+                PlatformAddress.fromString(validator),
+                settleStakeHolderReward,
+            );
+            if (!expected.eq(validatorAfter)) {
+                const error = {
+                    type: "validator",
+                    account: validator,
+                    expected: expected.toString(10),
+                    actual: validatorAfter.toString(10),
+                };
+                console.error(error);
+                errorsOfValidators.errors.push(error);
+            }
+        }
+        this.reportError(errorsOfValidators);
+    }
+
+    private async checkForStakeHolders(
+        blockNumber: number,
+        settleMoment: SettleMoment,
+        isTermChanged: boolean,
+    ) {
+        const stakeholders = await getStakeholders(blockNumber);
+        const stakeholderBefores = await getCCCBalances(stakeholders, blockNumber - 1);
+        const stakeholderAfters = await getCCCBalances(stakeholders, blockNumber);
+
+        const errorsOfstakeHolders: AggregatedErrors = {
+            server: SERVER,
+            moment: settleMoment,
+            errors: [] as any[],
+        };
+
+        for (const stakeholder of stakeholders) {
+            const stakeholderBefore = this.tracerForImmedateSettle.adjust(
+                stakeholder,
+                stakeholderBefores.get(stakeholder.value)!,
+            );
+            const expected = isTermChanged
+                ? this.prevTermData.intermediateReward.adjust(stakeholder, stakeholderBefore)
+                : stakeholderBefore;
+            const actual = stakeholderAfters.get(stakeholder.value)!;
+            if (!expected.eq(actual)) {
+                const error = {
+                    type: "stakeholder",
+                    account: stakeholder.value,
+                    expected: expected.toString(10),
+                    actual: actual.toString(10),
+                };
+                console.error(error);
+                errorsOfstakeHolders.errors.push(error);
+            }
+        }
+        this.reportError(errorsOfstakeHolders);
+    }
+
+    private handleTransactions(transactions: SignedTransaction[], dynamicParams: DynamicParams) {
+        const txTypes = transactions.map(tx => tx.unsigned.type()).join(", ");
+        console.log(`TxTypes: ${txTypes}`);
+        for (const signedTransaction of transactions) {
+            const tx = signedTransaction.unsigned;
+            const signer = signedTransaction.getSignerAddress({
+                networkId: sdk.networkId,
+            });
+            const fee = tx.fee()!;
+            const minFee = new U64(dynamicParams.minimumFees[tx.type()]);
+            this.tracerForImmedateSettle.withdraw(signer, fee);
+            this.tracerForImmedateSettle.collect(fee, minFee);
+
+            if (tx instanceof Pay) {
+                interface PayBody {
+                    receiver: PlatformAddress;
+                    quantity: U64;
+                }
+                let { receiver, quantity }: PayBody = tx as any;
+                this.tracerForImmedateSettle.withdraw(signer, quantity);
+                this.tracerForImmedateSettle.deposit(receiver, quantity);
+            } else if (tx instanceof WrapCCC) {
+                interface WrapCCCBody {
+                    payer: PlatformAddress;
+                    quantity: U64;
+                }
+                let { payer, quantity }: WrapCCCBody = tx as any;
+                this.tracerForImmedateSettle.withdraw(payer, quantity);
+            } else if (tx instanceof UnwrapCCC) {
+                interface UnwrapCCCBody {
+                    _transaction: {
+                        receiver: PlatformAddress;
+                        burn: {
+                            prevOut: { quantity: U64 };
+                        };
+                    };
+                }
+                let {
+                    _transaction: {
+                        receiver,
+                        burn: {
+                            prevOut: { quantity },
+                        },
+                    },
+                }: UnwrapCCCBody = tx as any;
+                this.tracerForImmedateSettle.deposit(receiver, quantity);
+            } else if (tx instanceof Custom) {
+                interface CustomBody {
+                    handlerId: U64;
+                    bytes: Buffer;
+                }
+                const { handlerId, bytes }: CustomBody = tx as any;
+            }
+        }
+    }
+
+    private reportError(aggregated: AggregatedErrors) {
+        const positionString = `${aggregated.moment.tag}: ${aggregated.moment.value}`;
+
+        if (aggregated.errors.length > 0) {
+            slack.sendWarning(JSON.stringify(aggregated, null, "    "));
+            const errors = aggregated.errors
+                .map(error => `<li>${JSON.stringify(error)}</li>`)
+                .join("<br />\r\n");
+            email.sendWarning(`
+            <p>${positionString}</p>
+            <ul>${errors}</ul>
+            `);
+        } else {
+            console.log(`${positionString} is Okay`);
+        }
+    }
 
     private finalizeTerm(blockNumber: number, currentTermValidators: string[]) {
         this.prevTermData = this.currentTermData;

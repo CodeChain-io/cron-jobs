@@ -3,15 +3,21 @@ import { email, sdk, slack, SERVER } from "./config";
 import { getStakeholders } from "./Stake";
 import { getCCCBalances } from "./CCC";
 import { Watchdog } from "watchdog";
+import { DynamicChecker } from "./DynamicChecker";
 import { checkBlockStatic } from "./StaticChecker";
 import { getCommonParams, getMinimumFees } from "./CommonParams";
 
-async function checkBlock(blockNumber: number) {
+async function checkBlock(blockNumber: number, dynamicChecker: DynamicChecker) {
     const commonParams = await getCommonParams(blockNumber - 1);
     const termSeconds = commonParams.termSeconds;
     const minimumFees = getMinimumFees(commonParams);
     if (termSeconds == null) {
         await checkBlockStatic(blockNumber, minimumFees);
+    } else {
+        await dynamicChecker.checkBlockDynamic(blockNumber, {
+            termSeconds,
+            minimumFees,
+        });
     }
 }
 
@@ -95,6 +101,7 @@ async function main() {
 
     let lastReportedBlockNumber = blockNumber;
     let lastReportedDate = new Date().getUTCDate();
+    const dynamicChecker = new DynamicChecker();
     setInterval(() => {
         (async () => {
             const now = new Date();
@@ -131,7 +138,7 @@ async function main() {
                 dog.feed({
                     data: { blockNumber, retry },
                 });
-                await checkBlock(blockNumber);
+                await checkBlock(blockNumber, dynamicChecker);
                 break;
             } catch (e) {
                 if (retry === 10) {
