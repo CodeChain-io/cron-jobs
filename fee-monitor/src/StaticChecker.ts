@@ -3,7 +3,8 @@ import { PlatformAddress, U64, Pay, UnwrapCCC, WrapCCC } from "codechain-sdk/lib
 import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
 import { slack, email, sdk, SERVER } from "./config";
 import { MinimumFees } from "./CommonParams";
-import { getWeights, Weight, getStakeholders } from "./Stake";
+import { getWeights, Weight, getStakeholders, decodeU64, STAKE_CONSTANT } from "./Stake";
+import * as RLP from "rlp";
 
 function distribute(tracer: CCCTracer, author: PlatformAddress, weights: Weight[]) {
     const totalWeights = weights
@@ -20,7 +21,11 @@ function distribute(tracer: CCCTracer, author: PlatformAddress, weights: Weight[
     tracer.deposit(author, tracer.totalFee.minus(distributed));
 }
 
-export async function checkBlockStatic(blockNumber: number, minimumFees: MinimumFees) {
+export async function checkBlockStatic(
+    blockNumber: number,
+    minimumFees: MinimumFees,
+    nominationDeposits: Map<string, U64>,
+) {
     const block = (await sdk.rpc.chain.getBlock(blockNumber))!;
     let tracer = new CCCTracer();
     let txTypes = block.transactions.map(tx => tx.unsigned.type()).join(", ");
@@ -70,7 +75,33 @@ export async function checkBlockStatic(blockNumber: number, minimumFees: Minimum
             }: UnwrapCCCBody = tx as any;
             tracer.deposit(receiver, quantity);
         } else if (tx instanceof Custom) {
-            console.error("Custom not supported yet");
+            interface CustomBody {
+                handlerId: U64;
+                bytes: Buffer;
+            }
+            const { handlerId, bytes }: CustomBody = tx as any;
+            if (handlerId.eq(2)) {
+                const decoded = RLP.decode(bytes as RLP.Input);
+                if (decoded instanceof Array) {
+                    const [tag, ...rest] = decoded;
+                    const tagNum = tag.readUInt8(0);
+                    switch (tagNum) {
+                        case STAKE_CONSTANT.ACTION_TAG_SELF_NOMINATE: {
+                            const [depositEncoded] = rest;
+                            const additionalDeposit = decodeU64(depositEncoded);
+                            const prevDeposit = nominationDeposits.get(signer.value) || new U64(0);
+                            nominationDeposits.set(
+                                signer.value,
+                                prevDeposit.plus(additionalDeposit),
+                            );
+                            tracer.withdraw(signer, additionalDeposit);
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
         }
     }
 
