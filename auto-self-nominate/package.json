@@ -13,7 +13,7 @@
     "@slack/client": "^5.0.1",
     "@types/lodash": "^4.14.134",
     "codechain-sdk": "^1.2.1",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.14"
   },
   "devDependencies": {
     "prettier": "^1.18.2",
