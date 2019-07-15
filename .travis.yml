@@ -34,7 +34,7 @@ jobs:
               - yarn start &
               - popd
               - NODE_ENV=test yarn test
-        - name: indexer-watcher
+        - name: indexer-monitor
           os: linux
           script:
               - yarn lint

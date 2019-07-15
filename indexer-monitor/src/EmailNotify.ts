@@ -16,7 +16,7 @@ export class EmailClient {
             sendgridApiKey = getConfig("SENDGRID_API_KEY");
         }
         sgMail.setApiKey(sendgridApiKey);
-        this.from = "no-reply+indexer-watcher@devop.codechain.io";
+        this.from = "no-reply+indexer-monitor@devop.codechain.io";
     }
 
     public async sendAnnouncement(email: string, title: string, content: string): Promise<void> {

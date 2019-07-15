@@ -1,5 +1,5 @@
 {
-  "name": "indexer-watcher",
+  "name": "indexer-monitor",
   "version": "1.0.0",
   "main": "build/index.js",
   "license": "ISC",
