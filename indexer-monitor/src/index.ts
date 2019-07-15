@@ -352,7 +352,7 @@ async function main() {
     try {
         await indexerAPI.ping();
     } catch (err) {
-        console.error("Indexer should be accessible when starting the watcher");
+        console.error("Indexer should be accessible when starting the monitor");
         throw err;
     }
 
