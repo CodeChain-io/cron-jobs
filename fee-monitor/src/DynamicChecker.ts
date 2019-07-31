@@ -107,7 +107,7 @@ export class DynamicChecker {
         );
         this.parentBlockTimestamp = currentTimestamp;
 
-        this.handleTransactions(block.transactions, dynamicParams);
+        await this.handleTransactions(block.transactions, dynamicParams);
 
         const author = block.author;
         const weights = await getWeights(blockNumber);
@@ -245,7 +245,10 @@ export class DynamicChecker {
         this.reportError(errorsOfstakeHolders);
     }
 
-    private handleTransactions(transactions: SignedTransaction[], dynamicParams: DynamicParams) {
+    private async handleTransactions(
+        transactions: SignedTransaction[],
+        dynamicParams: DynamicParams,
+    ) {
         const txTypes = transactions.map(tx => tx.unsigned.type()).join(", ");
         console.log(`TxTypes: ${txTypes}`);
         for (const signedTransaction of transactions) {
@@ -313,6 +316,25 @@ export class DynamicChecker {
                                     prevDeposit.plus(additionalDeposit),
                                 );
                                 this.tracerForImmedateSettle.withdraw(signer, additionalDeposit);
+                                break;
+                            }
+                            case STAKE_CONSTANT.ACTION_TAG_REPORT_DOUBLE_VOTE: {
+                                const [voteOn, , malValidatorIdxEncodable] = rest as any;
+                                const [[heightEncodable]] = voteOn as any;
+                                const malValidatorIdx = parseInt(
+                                    decodeU64(malValidatorIdxEncodable).toString(),
+                                    10,
+                                );
+                                const height = parseInt(decodeU64(heightEncodable).toString(), 10);
+                                const malValidatorAddress = (await getAccountsInState(
+                                    AccountState.Validator,
+                                    height - 1,
+                                ))[malValidatorIdx];
+
+                                const malValidatorDesposit =
+                                    this.nominationDeposits.get(malValidatorAddress) || new U64(0);
+                                this.nominationDeposits.set(malValidatorAddress, new U64(0));
+                                this.tracerForImmedateSettle.deposit(signer, malValidatorDesposit);
                                 break;
                             }
                             default:
