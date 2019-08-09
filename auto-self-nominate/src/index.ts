@@ -1,20 +1,9 @@
-import { U64 } from "codechain-primitives/lib";
 import { SDK } from "codechain-sdk";
-import { Custom } from "codechain-sdk/lib/core/transaction/Custom";
-import {
-    BannedAccountsInfo,
-    CandidatesInfo,
-    getStatesInfos,
-    JailedAccountInfo,
-    JailedAccountsInfo,
-} from "./AccountState";
+import { PlatformAddress, U64 } from "codechain-sdk/lib/core/classes";
+import * as stake from "codechain-stakeholder-sdk";
+
 import { createEmail } from "./Email";
 import { createSlack } from "./Slack";
-
-const RLP = require("rlp");
-
-const ACTION_TAG_SELF_NOMINATE = 4;
-const STAKE_ACTION_HANDLER_ID = 2;
 
 function getConfig(field: string, defaultVal?: string): string {
     const c = process.env[field];
@@ -56,95 +45,79 @@ const sdk = (() => {
     });
 })();
 
-async function getCurrentTermId(bestBlockNumber: number): Promise<number | null> {
-    return new Promise((resolve, reject) => {
-        sdk.rpc
-            .sendRpcRequest("chain_getTermMetadata", [bestBlockNumber])
-            .then(result => {
-                if (result === null) {
-                    resolve(null);
-                }
-                const [prevTermLastBlockNumber, currentTermId] = result;
-                if (
-                    typeof prevTermLastBlockNumber === "number" &&
-                    typeof currentTermId === "number"
-                ) {
-                    resolve(currentTermId);
-                }
-                reject(
-                    Error(
-                        `Expected getTermMetadata to return [number, number] | null but it returned ${result}`,
-                    ),
-                );
-            })
-            .catch(reject);
-    });
-}
-
 async function sendSelfNominateTransaction(
     accountInfo: { account: string; passphrase: string },
     params: { deposit: U64; metadata: string },
 ) {
-    const tx = createSelfNomination(params);
+    const tx = stake.createSelfNominateTransaction(sdk, params.deposit, params.metadata);
     const { account, passphrase } = accountInfo;
-    await sdk.rpc.account.sendTransaction({
+    const result = await sdk.rpc.account.sendTransaction({
         tx,
         account,
         passphrase,
     });
+
+    for (let i = 0; i < 30; i++) {
+        if ((await sdk.rpc.chain.containsTransaction(result.hash)) === true) {
+            return result.hash;
+        }
+        const errorHint = await sdk.rpc.chain.getErrorHint(result.hash);
+        if (errorHint !== null) {
+            throw new Error(errorHint);
+        }
+        await new Promise(resolve => setTimeout(resolve, 2 * 1000));
+    }
+    throw new Error("Timeout (60s) while send self nominate transaction");
 }
 
-function createSelfNomination(params: { deposit: U64; metadata: string }): Custom {
-    const { deposit, metadata } = params;
-    const handlerId = new U64(STAKE_ACTION_HANDLER_ID);
-    const actionTag = ACTION_TAG_SELF_NOMINATE;
-    const bytes = RLP.encode([actionTag, deposit.toEncodeObject(), metadata]);
-    return new Custom(
-        {
-            handlerId,
-            bytes,
-        },
-        networkId,
-    );
+async function getCandidate(accountAddress: string, bestBlockNumber: number) {
+    const candidates = (await stake.getCandidates(sdk, bestBlockNumber)).map(x => ({
+        ...x,
+        address: PlatformAddress.fromPublic(x.pubkey, {
+            networkId: sdk.networkId,
+        }),
+    }));
+    return candidates.find(x => x.address.toString() === accountAddress);
 }
 
 async function needsNomination(
-    info: CandidatesInfo,
-    bestBlockNumber: number,
-    address: string,
+    candidate: stake.Candidate & { address: PlatformAddress } | undefined,
+    currentTermId: number,
 ): Promise<boolean> {
-    if (!info.hasOwnProperty(address)) {
+    if (candidate === undefined) {
         return true;
     }
-    const { nominateEndAt } = info[address];
-    const currentTermId = (await getCurrentTermId(bestBlockNumber))!;
-    return nominateEndAt - currentTermId < needNominationUnderTermLeft;
+    if (candidate.nominationEndsAt.lt(currentTermId)) {
+        return true;
+    }
+    const remaining = candidate.nominationEndsAt.minus(currentTermId);
+    return remaining.lte(needNominationUnderTermLeft);
 }
 
 function supplementaryDeposit(
-    info: CandidatesInfo,
-    address: string,
+    candidate: stake.Candidate & { address: PlatformAddress } | undefined,
     targetDeposit: number,
-): number {
-    if (!info.hasOwnProperty(address)) {
-        return targetDeposit;
+): U64 {
+    if (candidate === undefined) {
+        return new U64(targetDeposit);
     }
-    const { deposits } = info[address];
-    if (deposits < targetDeposit) {
-        return targetDeposit - deposits;
+    if (candidate.deposit.lt(targetDeposit)) {
+        return new U64(targetDeposit).minus(candidate.deposit);
     } else {
-        return 0;
+        return new U64(0);
     }
 }
 
 function sendAlarmForBanned(address: string) {
     const content = `Your account ${address} is permanently banned`;
+    console.error(content);
     email.sendError(content);
     slack.sendError(content);
 }
 
-function sendAlarmForJailed(address: string, info: JailedAccountInfo) {
-    const content = `Your account ${address} was jailed. The account will be in custody until the term ${info.custodyUntil} and will be released at the term ${info.releasedAt}`;
+function sendAlarmForJailed(address: string, info: stake.Prisoner) {
+    const content = `Your account ${address} was jailed. The account will be in custody until the term ${info.custodyUntil.toString()} and will be released at the term ${info.releasedAt.toString()}`;
+    console.error(content);
     email.sendWarning(content);
     slack.sendWarning(content);
 }
@@ -158,45 +131,56 @@ async function main() {
 
     async function send() {
         const bestBlockNumber = await sdk.rpc.chain.getBestBlockNumber()!;
-        const bannedAccounts = (await getStatesInfos(
-            sdk,
-            "Banned",
-            bestBlockNumber,
-        )) as BannedAccountsInfo;
-        const isBanned = bannedAccounts.accounts.includes(accountAddress);
+        const currentTermId = (await stake.getTermMetadata(sdk, bestBlockNumber))!.currentTermId;
+        console.log("Best block number:", bestBlockNumber);
+        console.log("Current Term Id:", currentTermId);
+
+        const bannedAccounts = await stake.getBanned(sdk, bestBlockNumber);
+        const isBanned = bannedAccounts.some(x => x.toString() === accountAddress);
         if (isBanned) {
             sendAlarmForBanned(accountAddress);
             return;
         }
-        const jailedAccounts = (await getStatesInfos(
-            sdk,
-            "Jailed",
-            bestBlockNumber,
-        )) as JailedAccountsInfo;
-        const isJailed = jailedAccounts.hasOwnProperty(accountAddress);
-        if (isJailed) {
-            sendAlarmForJailed(accountAddress, jailedAccounts[accountAddress]);
+        const jailedAccounts = await stake.getJailed(sdk, bestBlockNumber);
+        const jailed = jailedAccounts.find(x => x.address.toString() === accountAddress);
+        if (jailed !== undefined) {
+            sendAlarmForJailed(accountAddress, jailed);
             return;
         }
-        const info = await getStatesInfos(sdk, "Candidates", bestBlockNumber);
-        if (await needsNomination(info as CandidatesInfo, bestBlockNumber, accountAddress)) {
-            const supplement = await supplementaryDeposit(
-                info as CandidatesInfo,
-                accountAddress,
-                targetDeposit,
-            );
-            await sendSelfNominateTransaction(
-                {
-                    account: accountAddress,
-                    passphrase,
-                },
-                {
-                    deposit: new U64(supplement),
-                    metadata,
-                },
-            );
+
+        const candidate = await getCandidate(accountAddress, bestBlockNumber);
+        if (!(await needsNomination(candidate, currentTermId))) {
+            console.log("No need to self-nominate");
+            console.group("Candidate info");
+            console.log("Deposit", candidate!.deposit.toLocaleString());
+            console.log("Ends at", candidate!.nominationEndsAt.toString());
+            console.groupEnd();
+            return;
+        }
+        const supplement = supplementaryDeposit(candidate, targetDeposit);
+        console.log("Deposit Supplement:", supplement.toLocaleString());
+        const hash = await sendSelfNominateTransaction(
+            {
+                account: accountAddress,
+                passphrase,
+            },
+            {
+                deposit: supplement,
+                metadata,
+            },
+        );
+        console.log("Self Nomination tx sent:", hash.toString());
+
+        const newBestBlockNumber = await sdk.rpc.chain.getBestBlockNumber()!;
+        const newCandidate = await getCandidate(accountAddress, newBestBlockNumber);
+        if (newCandidate !== undefined) {
+            console.group("Candidate info");
+            console.log("Deposit", candidate!.deposit.toLocaleString());
+            console.log("Ends at", candidate!.nominationEndsAt.toString());
+            console.groupEnd();
         }
     }
+
     send().catch(console.error);
     setInterval(() => {
         send().catch(console.error);

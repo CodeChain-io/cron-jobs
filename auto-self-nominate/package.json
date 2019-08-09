@@ -12,7 +12,8 @@
     "@sendgrid/mail": "^6.4.0",
     "@slack/client": "^5.0.1",
     "@types/lodash": "^4.14.134",
-    "codechain-sdk": "^1.2.1",
+    "codechain-sdk": "^2.0.0-alpha.2",
+    "codechain-stakeholder-sdk": "^2.0.0-alpha.1",
     "lodash": "^4.17.14"
   },
   "devDependencies": {
