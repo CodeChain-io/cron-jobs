@@ -726,22 +726,6 @@ codechain-primitives@^1.0.0:
     ripemd160 "^2.0.2"
     rlp "^2.1.0"
 
-codechain-primitives@^1.0.1:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/codechain-primitives/-/codechain-primitives-1.0.2.tgz#2e44c7ba776dbe9d3473bf68c817572e0185a8a3"
-  integrity sha512-PSnXHIoR6EOhoMk4hjPttWGovcJXPYIgUj5De78Q3f5+yah6OPbJR4v82L+MCYOmD5+LvDF50mUzyOAAq+JNcg==
-  dependencies:
-    bignumber.js "^7.2.1"
-    blakejs "^1.1.0"
-    bn.js "^4.11.8"
-    buffer "^5.2.1"
-    crypto-js "^3.1.9-1"
-    elliptic "^6.4.1"
-    hmac-drbg "^1.0.1"
-    lodash "^4.17.11"
-    node-forge "^0.7.6"
-    rlp "^2.1.0"
-
 codechain-sdk@^2.0.0-alpha.2:
   version "2.0.0-alpha.2"
   resolved "https://registry.yarnpkg.com/codechain-sdk/-/codechain-sdk-2.0.0-alpha.2.tgz#6aeeff24aacfa3c83535faddf6072270b6f7cdef"
@@ -757,14 +741,12 @@ codechain-sdk@^2.0.0-alpha.2:
     request-promise "^4.2.2"
     rlp "^2.0.0"
 
-codechain-stakeholder-sdk@^2.0.0-alpha.1:
-  version "2.0.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/codechain-stakeholder-sdk/-/codechain-stakeholder-sdk-2.0.0-alpha.1.tgz#d86dec79479569fb1264c9e8366ae183a99d8fb0"
-  integrity sha512-a/pRNLaXp4NddAe5RNPzNfsfcYaou0Gf/wwVQimdXFKU1TIZ7TL2MIdo784gctEM8K4qOKnNT2OcQa7/LUTHOA==
+codechain-stakeholder-sdk@^2.0.0-alpha.2:
+  version "2.0.0-alpha.2"
+  resolved "https://registry.yarnpkg.com/codechain-stakeholder-sdk/-/codechain-stakeholder-sdk-2.0.0-alpha.2.tgz#6b123d6a2f05c7395bd2b074aa40ce76a719d69c"
+  integrity sha512-Wxs7NhhsH6nGF/1j0G+SNMxX2ZOMdjUYsFSCrllDTd+vB2fYxZmo6soUFMcTveVBktc2oZZWC9Ioo4KMealmHg==
   dependencies:
     cli-table3 "^0.5.1"
-    codechain-primitives "^1.0.1"
-    codechain-sdk "^2.0.0-alpha.2"
     prompt-password "^1.2.0"
     rlp "^2.2.2"
     yargs "^13.2.2"
@@ -832,11 +814,6 @@ core-util-is@1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
-
-crypto-js@^3.1.9-1:
-  version "3.1.9-1"
-  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
-  integrity sha1-/aGedh/Ad+Af+/3G6f38WeiAbNg=
 
 dashdash@^1.12.0:
   version "1.14.1"
