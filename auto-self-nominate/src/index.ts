@@ -175,8 +175,8 @@ async function main() {
         const newCandidate = await getCandidate(accountAddress, newBestBlockNumber);
         if (newCandidate !== undefined) {
             console.group("Candidate info");
-            console.log("Deposit", candidate!.deposit.toLocaleString());
-            console.log("Ends at", candidate!.nominationEndsAt.toString());
+            console.log("Deposit", newCandidate.deposit.toLocaleString());
+            console.log("Ends at", newCandidate.nominationEndsAt.toString());
             console.groupEnd();
         }
     }
