@@ -7,11 +7,27 @@ import { DynamicChecker } from "./DynamicChecker";
 import { checkBlockStatic } from "./StaticChecker";
 import { getCommonParams, getMinimumFees } from "./CommonParams";
 
+async function getTermMetadata(blockNumber: number): Promise<[number, number] | null> {
+    const result = await sdk.rpc.sendRpcRequest("chain_getTermMetadata", [blockNumber]);
+
+    if (result === null) {
+        return null;
+    }
+    if (Array.isArray(result) && result.length === 2 && result.every(x => typeof x === "number")) {
+        return result as [number, number];
+    } else {
+        throw Error(
+            `Expected getTermMetadata to return [number, number] | null but it returned ${result}`,
+        );
+    }
+}
+
 async function checkBlock(blockNumber: number, dynamicChecker: DynamicChecker) {
     const commonParams = await getCommonParams(blockNumber - 1);
+    const [lastTermFinished] = (await getTermMetadata(blockNumber - 1))!;
     const termSeconds = commonParams.termSeconds;
     const minimumFees = getMinimumFees(commonParams);
-    if (termSeconds == null) {
+    if (termSeconds == null || lastTermFinished === 0) {
         await checkBlockStatic(blockNumber, minimumFees, dynamicChecker.nominationDeposits);
     } else {
         await dynamicChecker.checkBlockDynamic(blockNumber, {
@@ -34,30 +50,12 @@ async function getNextBlockNumber(current: number) {
 }
 
 async function getCurrentTermStartBlockNumber(blockNumber: number): Promise<number | null> {
-    return new Promise((resolve, reject) => {
-        sdk.rpc
-            .sendRpcRequest("chain_getTermMetadata", [blockNumber])
-            .then(result => {
-                if (result === null) {
-                    resolve(null);
-                }
-                if (
-                    Array.isArray(result) &&
-                    result.length === 2 &&
-                    result.every(x => typeof x === "number")
-                ) {
-                    const [prevTermLastBlockNumber, _] = result;
-                    resolve(prevTermLastBlockNumber + 1);
-                } else {
-                    reject(
-                        Error(
-                            `Expected getTermMetadata to return [number, number] | null but it returned ${result}`,
-                        ),
-                    );
-                }
-            })
-            .catch(reject);
-    });
+    const metaData = await getTermMetadata(blockNumber);
+    if (metaData === null) {
+        return null;
+    }
+    const [lastTermFinished] = metaData;
+    return lastTermFinished + 1;
 }
 
 async function startFrom() {
