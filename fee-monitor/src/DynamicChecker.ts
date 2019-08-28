@@ -129,19 +129,24 @@ export class DynamicChecker {
         };
 
         if (currentBlockTermIndicator !== parentBlockTermIndicator) {
-            const blockRewardSettleMoment: SettleMoment = {
-                tag: "term",
-                value: blockNumber,
-            };
-            const totalReducedReward = await this.applyPenalty(
-                this.parentTermValidators,
-                blockNumber,
-            );
-            this.applyAdditionalRewards(this.parentTermValidators, totalReducedReward);
-            await this.settleNominationDeposit(blockNumber, validators);
-            await this.checkForValidators(blockNumber, blockRewardSettleMoment);
-            await this.checkForStakeHolders(blockNumber, immediateSettleMoment, true);
-            this.finalizeTerm(blockNumber, validators);
+            /// skip the first checking process when starting in the middle
+            /// because the checker doesn't have the previous term's data.
+            const hasNoPrevTermData = this.parentTermValidators.length === 0;
+            if (!hasNoPrevTermData) {
+                const blockRewardSettleMoment: SettleMoment = {
+                    tag: "term",
+                    value: blockNumber,
+                };
+                const totalReducedReward = await this.applyPenalty(
+                    this.parentTermValidators,
+                    blockNumber,
+                );
+                this.applyAdditionalRewards(this.parentTermValidators, totalReducedReward);
+                await this.settleNominationDeposit(blockNumber, validators);
+                await this.checkForValidators(blockNumber, blockRewardSettleMoment);
+                await this.checkForStakeHolders(blockNumber, immediateSettleMoment, true);
+            }
+            this.updateTermData(blockNumber, validators);
         } else {
             await this.checkForStakeHolders(blockNumber, immediateSettleMoment, false);
         }
@@ -319,7 +324,7 @@ export class DynamicChecker {
                                 break;
                             }
                             case STAKE_CONSTANT.ACTION_TAG_REPORT_DOUBLE_VOTE: {
-                                const [[voteOn, , malValidatorIdxEncodable],] = rest as any;
+                                const [[voteOn, , malValidatorIdxEncodable]] = rest as any;
                                 const [[heightEncodable]] = voteOn as any;
                                 const malValidatorIdx = parseInt(
                                     decodeU64(malValidatorIdxEncodable).toString(),
@@ -363,7 +368,7 @@ export class DynamicChecker {
         }
     }
 
-    private finalizeTerm(blockNumber: number, currentTermValidators: string[]) {
+    private updateTermData(blockNumber: number, currentTermValidators: string[]) {
         this.prevTermData = this.currentTermData;
         this.currentTermData = {
             intermediateReward: new CCCTracer(),
