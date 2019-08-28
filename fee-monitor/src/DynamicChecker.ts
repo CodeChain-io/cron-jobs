@@ -319,7 +319,7 @@ export class DynamicChecker {
                                 break;
                             }
                             case STAKE_CONSTANT.ACTION_TAG_REPORT_DOUBLE_VOTE: {
-                                const [voteOn, , malValidatorIdxEncodable] = rest as any;
+                                const [[voteOn, , malValidatorIdxEncodable],] = rest as any;
                                 const [[heightEncodable]] = voteOn as any;
                                 const malValidatorIdx = parseInt(
                                     decodeU64(malValidatorIdxEncodable).toString(),
