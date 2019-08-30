@@ -53,7 +53,9 @@ export class NodeIsSleeping implements Notification {
       this.content = `Consecutive ${streak} blocks from the block(${blockNumber -
         streak}), validators ${validatorAddresses} did not precommit.`;
     } else {
-      this.content = `For the block(${blockNumber}), validators ${validatorAddresses} did not precommit.`;
+      this.content = `For the block(${blockNumber}), validators \n${validatorAddresses.join(
+        "\n"
+      )} \ndid not precommit.`;
     }
   }
 }
