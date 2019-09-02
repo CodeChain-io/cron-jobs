@@ -125,7 +125,7 @@ function sendAlarmForJailed(address: string, info: stake.Prisoner) {
 async function main() {
     const accountAddress = getConfig("ACCOUNT_ADDRESS");
     const passphrase = getConfig("PASSPHRASE");
-    const metadata = getConfig("METADATA");
+    const defaultMetadata = getConfig("METADATA");
     const targetDeposit = parseInt(getConfig("TARGET_DEPOSIT"), 10);
     const interval = parseInt(getConfig("INTERVAL_SECONDS", "600"), 10); // default interval is 10 minutes
 
@@ -159,6 +159,13 @@ async function main() {
         }
         const supplement = supplementaryDeposit(candidate, targetDeposit);
         console.log("Deposit Supplement:", supplement.toLocaleString());
+        let metadata = defaultMetadata;
+        if (currentTermId === 0) {
+            console.log(
+                "Suppress metadata because current term id === 0, max metadata length === 0",
+            );
+            metadata = "";
+        }
         const hash = await sendSelfNominateTransaction(
             {
                 account: accountAddress,
