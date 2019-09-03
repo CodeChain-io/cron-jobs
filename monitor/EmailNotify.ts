@@ -38,7 +38,7 @@ export class EmailClient {
       from,
       to,
       subject,
-      text
+      html: text.replace("\n", "<br />")
     });
   }
 }
