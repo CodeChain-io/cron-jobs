@@ -17,15 +17,11 @@ export default class Noti {
     }
 
     public sendWarning(text: string) {
-        this.email.sendWarning(text);
         this.slack.sendWarning(text);
     }
 
     public sendInfo(title: string, messages: string[]) {
         const slackMessage = messages.join("\n");
-        const emailMessage = messages.join("<br />");
-
-        this.email.sendInfo(title, emailMessage);
         this.slack.sendInfo(title, slackMessage);
     }
 }
