@@ -2,19 +2,11 @@ import * as sendgrid from "@sendgrid/mail";
 
 export interface Email {
     sendError(msg: string): void;
-    sendWarning(text: string): void;
-    sendInfo(title: string, msg: string): void;
 }
 
 class NullEmail implements Email {
     public sendError(msg: string): void {
         console.error("Error:", msg);
-    }
-    public sendWarning(text: string): void {
-        console.warn("Warning:", text);
-    }
-    public sendInfo(title: string, msg: string): void {
-        console.info(title, " : ", msg);
     }
 }
 
