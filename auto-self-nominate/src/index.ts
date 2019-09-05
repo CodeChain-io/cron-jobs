@@ -118,7 +118,6 @@ function sendAlarmForBanned(address: string) {
 function sendAlarmForJailed(address: string, info: stake.Prisoner) {
     const content = `Your account ${address} was jailed. The account will be in custody until the term ${info.custodyUntil.toString()} and will be released at the term ${info.releasedAt.toString()}`;
     console.error(content);
-    email.sendWarning(content);
     slack.sendWarning(content);
 }
 

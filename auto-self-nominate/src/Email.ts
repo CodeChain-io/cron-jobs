@@ -2,14 +2,10 @@ import * as sendgrid from "@sendgrid/mail";
 
 export interface Email {
     sendError(msg: string): void;
-    sendWarning(text: string): void;
-    sendInfo(title: string, msg: string): void;
 }
 
 class NullEmail implements Email {
     public sendError(_msg: string): void {}
-    public sendWarning(_text: string): void {}
-    public sendInfo(_title: string, _msg: string): void {}
 }
 
 const from = "no-reply+auto-self-nominate@devop.codechain.io";
@@ -32,16 +28,6 @@ class Sendgrid implements Email {
 
     public sendError(text: string): void {
         const subject = createTitle({ tag: this.tag, title: "has a problem.", level: "error" });
-        this.send(subject, text);
-    }
-
-    public sendWarning(text: string): void {
-        const subject = createTitle({ tag: this.tag, title: "finds a problem.", level: "warn" });
-        this.send(subject, text);
-    }
-
-    public sendInfo(title: string, text: string): void {
-        const subject = createTitle({ tag: this.tag, title, level: "info" });
         this.send(subject, text);
     }
 
