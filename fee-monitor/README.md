@@ -1,0 +1,3 @@
+### Fee Monitor
+In a dynamic validator environment, minimum fees are collected and shared amongst stakeholders, and the remaining express fee is distributed amongst validators. The Fee Monitor is a tool that checks whether the process just mentioned is in accordance with the specification.
+* (warn level) Each block is checked to see if the CCC difference between the previous and current block matches the spec logic calculated by the fee monitor itself.
