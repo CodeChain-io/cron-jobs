@@ -140,4 +140,4 @@ export const TIMEOUT: number = (() => {
     }
 })();
 
-export const slack = createSlack(process.env.SLACK);
+export const slack = createSlack(process.env.SLACK_WEBHOOK_URL);
