@@ -214,7 +214,7 @@ async function main() {
                 try {
                     await sendSlackWebHook(
                         slackWebHook,
-                        "warn",
+                        "error",
                         networkId,
                         err.message
                     );
@@ -226,7 +226,7 @@ async function main() {
                     await sendMail(
                         sendgridApiKey,
                         sendgridTo,
-                        "warn",
+                        "error",
                         networkId,
                         `has a problem - ${new Date().toISOString()}`,
                         err.message
