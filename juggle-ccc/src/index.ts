@@ -104,10 +104,8 @@ async function main() {
                 leftFee = 0;
                 rightFee = 0;
                 await sendDailyReport(
-                    sendgridApiKey,
-                    sendgridTo!,
+                    slackWebHook,
                     networkId,
-                    now,
                     `${left}\r\n${right}\r\n`
                 );
 
@@ -292,14 +290,11 @@ async function sendMail(
 }
 
 async function sendDailyReport(
-    sendgridApiKey: string,
-    sendgridTo: string,
+    slackWebHook: string | null,
     networkId: string,
-    now: Date,
     text: string
 ) {
-    const title = `is working - ${now.toUTCString()}`;
-    await sendMail(sendgridApiKey, sendgridTo, "info", networkId, title, text);
+    await sendSlackWebHook(slackWebHook, "info", networkId, text);
 }
 
 function makeDailyReport(
@@ -314,9 +309,7 @@ function makeDailyReport(
         `sends ${count} transactions`,
         `uses ${fee} CCC to pay fee`
     ];
-    const reports = lines
-        .map(line => `&nbsp;&nbsp;<li>${line}</li>\r\n`)
-        .join("");
+    const reports = lines.map(line => `${line}\r\n`).join("");
 
-    return `<p>${side}: ${address}<br /><ul>${reports}</ul><\p>`;
+    return `${side}: ${address}\r\n${reports}`;
 }
