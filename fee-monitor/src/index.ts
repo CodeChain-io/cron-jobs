@@ -139,7 +139,6 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
             console.warn(message);
             const title = "has been recovered to normal.";
             slack.sendInfo(title, message);
-            email.sendInfo(title, message);
         }
     });
     return dog;
@@ -167,12 +166,12 @@ async function main() {
             }
             const reports = [];
             reports.push(
-                `<p>Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked</p>`,
+                `Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked`,
             );
-            reports.push(`<h3>Stakeholders</h3>`);
-            reports.push(`<ul>${stakeholders.join("<br />\r\n")}</ul>`);
+            reports.push(`Stakeholders`);
+            reports.push(`${stakeholders.join("\r\n")}`);
 
-            email.sendInfo("is working.", `${reports.join("\r\n")}`);
+            slack.sendInfo("is working.", `${reports.join("\r\n")}`);
             lastReportedDate = now.getUTCDate();
             lastReportedBlockNumber = currentBlockNumber;
         })().catch(console.error);

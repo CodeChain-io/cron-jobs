@@ -34,13 +34,15 @@ function sendNotice(error: Notification, targetEmail: string) {
             color,
         });
     }
-    emailClient
-        .sendAnnouncement(
-            targetEmail,
-            `${error.title} - ${error.date.toISOString()}`,
-            error.content,
-        )
-        .catch(console.error);
+    if (error.level === "error") {
+        emailClient
+            .sendAnnouncement(
+                targetEmail,
+                `${error.title} - ${error.date.toISOString()}`,
+                error.content,
+            )
+            .catch(console.error);
+    }
 }
 
 const checkDayChange = (() => {
