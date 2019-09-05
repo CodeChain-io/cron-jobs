@@ -287,7 +287,7 @@ const checkSealField = (() => {
 async function main() {
   const rpcUrl = getConfig("RPC_URL");
   const rpc = new Rpc(rpcUrl);
-  const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
+  const targetEmail = getConfig("SENDGRID_TO");
 
   const networkId = await rpc.chain.getNetworkId();
 
@@ -304,7 +304,7 @@ async function main() {
 process.on("unhandledRejection", error => {
   const rpcUrl = getConfig("RPC_URL");
   const rpc = new Rpc(rpcUrl);
-  const targetEmail = getConfig("NOTIFICATION_TARGET_EMAIL");
+  const targetEmail = getConfig("SENDGRID_TO");
   rpc.chain
     .getNetworkId()
     .then(networkId => {

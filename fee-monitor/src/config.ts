@@ -42,7 +42,10 @@ export const sdk = (() => {
     });
 })();
 
-export const slack = createSlack(`[${networkId(SERVER)}][fee-monitor]`, process.env.SLACK);
+export const slack = createSlack(
+    `[${networkId(SERVER)}][fee-monitor]`,
+    process.env.SLACK_WEBHOOK_URL,
+);
 export const email = createEmail({
     tag: `[${networkId(SERVER)}][fee-monitor]`,
     sendgridApiKey: process.env.SENDGRID_API_KEY,
