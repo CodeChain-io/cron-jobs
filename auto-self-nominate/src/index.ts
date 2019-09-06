@@ -143,8 +143,12 @@ async function main() {
         const jailedAccounts = await stake.getJailed(sdk, bestBlockNumber);
         const jailed = jailedAccounts.find(x => x.address.toString() === accountAddress);
         if (jailed !== undefined) {
-            sendAlarmForJailed(accountAddress, jailed);
-            return;
+            if (jailed.custodyUntil.gt(currentTermId)) {
+                sendAlarmForJailed(accountAddress, jailed);
+                return;
+            } else {
+                console.log("I'm getting out of the custody");
+            }
         }
 
         const candidate = await getCandidate(accountAddress, bestBlockNumber);
