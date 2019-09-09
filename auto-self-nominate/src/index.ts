@@ -51,17 +51,17 @@ async function sendSelfNominateTransaction(
 ) {
     const tx = stake.createSelfNominateTransaction(sdk, params.deposit, params.metadata);
     const { account, passphrase } = accountInfo;
-    const result = await sdk.rpc.account.sendTransaction({
-        tx,
+    const result = await sdk.rpc.chain.sendTransaction(tx, {
         account,
         passphrase,
+        fee: 100
     });
 
     for (let i = 0; i < 30; i++) {
-        if ((await sdk.rpc.chain.containsTransaction(result.hash)) === true) {
-            return result.hash;
+        if ((await sdk.rpc.chain.containsTransaction(result)) === true) {
+            return result;
         }
-        const errorHint = await sdk.rpc.chain.getErrorHint(result.hash);
+        const errorHint = await sdk.rpc.chain.getErrorHint(result);
         if (errorHint !== null) {
             throw new Error(errorHint);
         }
