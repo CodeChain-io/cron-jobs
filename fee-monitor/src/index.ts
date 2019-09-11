@@ -162,16 +162,16 @@ async function main() {
                 await getStakeholders(blockNumber),
                 blockNumber,
             )) {
-                stakeholders.push(`<li>${address}: ${balance.toString(10)}</li>`);
+                stakeholders.push(`${address}: ${balance.toString(10)}`);
             }
             const reports = [];
             reports.push(
                 `Block between ${lastReportedBlockNumber} ~ ${currentBlockNumber} are checked`,
             );
             reports.push(`Stakeholders`);
-            reports.push(`${stakeholders.join("\r\n")}`);
+            reports.push(`${stakeholders.join("\n")}`);
 
-            slack.sendInfo("is working.", `${reports.join("\r\n")}`);
+            slack.sendInfo("is working.", `${reports.join("\n")}`);
             lastReportedDate = now.getUTCDate();
             lastReportedBlockNumber = currentBlockNumber;
         })().catch(console.error);
