@@ -150,12 +150,10 @@ export async function checkBlockStatic(
     }
     if (aggregated.errors.length > 0) {
         slack.sendWarning(JSON.stringify(aggregated, null, "    "));
-        const errors = aggregated.errors
-            .map(error => `<li>${JSON.stringify(error)}</li>`)
-            .join("<br />\r\n");
+        const errors = aggregated.errors.map(error => `${JSON.stringify(error)}`).join("\n");
         email.sendWarning(`
-        <p>block number: ${aggregated.blockNumber}</p>
-        <ul>${errors}</ul>
+        block number: ${aggregated.blockNumber}
+        ${errors}
         `);
     } else {
         console.log("Block is Okay");
