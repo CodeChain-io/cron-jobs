@@ -154,12 +154,12 @@ export class DynamicChecker {
     }
 
     private async settleNominationDeposit(blockNumber: number, validators: string[]) {
-        const pastValidators = Array.from(this.nominationDeposits.keys());
+        const registeredCandidates = Array.from(this.nominationDeposits.keys());
         const bannedAccounts = await getAccountsInState(AccountState.Banned, blockNumber);
         const candidates = await getAccountsInState(AccountState.Candidate, blockNumber);
         const jailedAccounts = await getAccountsInState(AccountState.Jailed, blockNumber);
 
-        const nowEligible = pastValidators.filter(
+        const nowEligible = registeredCandidates.filter(
             (address: string) =>
                 !bannedAccounts.includes(address) &&
                 !candidates.includes(address) &&
