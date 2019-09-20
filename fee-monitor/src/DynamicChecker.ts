@@ -1,5 +1,5 @@
 import { CCCTracer, getCCCBalances, SettleMoment } from "./CCC";
-import { slack, sdk, SERVER } from "./config";
+import { email, slack, sdk, SERVER } from "./config";
 import {
     PlatformAddress,
     U64,
@@ -355,7 +355,14 @@ export class DynamicChecker {
         const positionString = `${aggregated.moment.tag}: ${aggregated.moment.value}`;
 
         if (aggregated.errors.length > 0) {
-            slack.sendWarning(JSON.stringify(aggregated, null, "    "));
+            slack.sendError(JSON.stringify(aggregated, null, "    "));
+            const errors = aggregated.errors
+                .map(error => `<li>${JSON.stringify(error)}</li>`)
+                .join("<br />\r\n");
+            email.sendError(`
+            <p>${positionString}</p>
+            <ul>${errors}</ul>
+            `);
         } else {
             console.log(`${positionString} is Okay`);
         }
