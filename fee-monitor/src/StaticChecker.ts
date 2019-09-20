@@ -149,9 +149,9 @@ export async function checkBlockStatic(
         }
     }
     if (aggregated.errors.length > 0) {
-        slack.sendWarning(JSON.stringify(aggregated, null, "    "));
+        slack.sendError(JSON.stringify(aggregated, null, "    "));
         const errors = aggregated.errors.map(error => `${JSON.stringify(error)}`).join("\n");
-        email.sendWarning(`
+        email.sendError(`
         block number: ${aggregated.blockNumber}
         ${errors}
         `);
