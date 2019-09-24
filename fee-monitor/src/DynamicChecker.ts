@@ -146,7 +146,7 @@ export class DynamicChecker {
                 await this.checkForValidators(blockNumber, blockRewardSettleMoment);
                 await this.checkForStakeHolders(blockNumber, immediateSettleMoment, true);
             }
-            this.updateTermData(blockNumber, validators);
+            await this.updateTermData(blockNumber);
         } else {
             await this.checkForStakeHolders(blockNumber, immediateSettleMoment, false);
         }
@@ -368,7 +368,7 @@ export class DynamicChecker {
         }
     }
 
-    private updateTermData(blockNumber: number, currentTermValidators: string[]) {
+    private async updateTermData(blockNumber: number) {
         this.prevTermData = this.currentTermData;
         this.currentTermData = {
             intermediateReward: new CCCTracer(),
@@ -378,7 +378,10 @@ export class DynamicChecker {
 
         this.parentTermFirstBlockNumber = this.parentTermLastBlockNumber + 1;
         this.parentTermLastBlockNumber = blockNumber;
-        this.parentTermValidators = currentTermValidators;
+        this.parentTermValidators = (await getAccountsInState(
+            AccountState.Validator,
+            this.parentTermFirstBlockNumber - 1,
+        )).reverse();
     }
 
     /**
