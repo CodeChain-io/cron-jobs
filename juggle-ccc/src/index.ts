@@ -45,7 +45,7 @@ async function main() {
     }
 
     const networkId = getConfig("NETWORK_ID");
-    const server = getConfig("RPC_SERVER");
+    const server = getConfig("RPC_URL");
 
     const sdk = new SDK({ server, networkId });
 
