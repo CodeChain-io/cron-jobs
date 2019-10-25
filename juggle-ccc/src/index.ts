@@ -116,6 +116,25 @@ async function main() {
         }, 60_000);
     }
 
+    const startMessage = "start";
+    try {
+        await sendSlackWebHook(slackWebHook, "info", networkId, startMessage);
+    } catch (err) {
+        console.error(`Cannot send slack message: ${err.message}`);
+    }
+    try {
+        await sendMail(
+            sendgridApiKey,
+            sendgridTo,
+            "info",
+            networkId,
+            startMessage,
+            startMessage
+        );
+    } catch (err) {
+        console.error(`Cannot send mail: ${err.message}`);
+    }
+
     let retry = 0;
     while (true) {
         try {
