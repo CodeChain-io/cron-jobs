@@ -54,6 +54,18 @@ function sendNotice(error: Notification, targetEmail: string) {
   }
 }
 
+function sendStart(targetEmail: string, networkId: string) {
+  const message = `[${networkId}] monitor start`;
+  SlackNotification.instance.send({
+    title: message,
+    text: "",
+    color: "good"
+  });
+  emailClient
+    .sendAnnouncement(targetEmail, message, message)
+    .catch(console.error);
+}
+
 const checkDeath = (() => {
   let prevBestBlockNumber = 0;
   return async (rpc: Rpc, targetEmail: string, networkId: string) => {
@@ -292,6 +304,8 @@ async function main() {
   const networkId = await rpc.chain.getNetworkId();
 
   lastDate = new Date().getUTCDate();
+
+  sendStart(targetEmail, networkId);
 
   // 10 minutes interval
   setInterval(checkDayChange, 10 * 60 * 1000, targetEmail, networkId);
