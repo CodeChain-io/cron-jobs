@@ -7,6 +7,7 @@ import { IndexerAPI, IndexerAPIImpl, TestIndexerAPI } from "./IndexerAPI";
 const emailClient = new EmailClient();
 type Notification = Notifications.Notification;
 let lastNotiForTest: Notification | null = null;
+const networkId = getConfig("NETWORK_ID");
 
 function colorFromLevel(level: "error" | "warn" | "info"): "danger" | "warning" | undefined {
     switch (level) {
@@ -357,6 +358,19 @@ async function main() {
         console.error("Indexer should be accessible when starting the monitor");
         throw err;
     }
+
+    SlackNotification.instance.send({
+        title: `[${networkId}] indexer-monitor start`,
+        text: "",
+        color: "good",
+    });
+    await emailClient
+        .sendAnnouncement(
+            targetEmail,
+            `[${networkId}] indexer-monitor start`,
+            "indexer-monitor start",
+        )
+        .catch(console.error);
 
     // 10 minutes interval
     setInterval(checkDayChange, 10 * 60 * 1000, indexerAPI, targetEmail);
