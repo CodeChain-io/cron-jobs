@@ -178,6 +178,8 @@ async function main() {
     }, 60_000); // 1 minute interval
 
     const dog = createWatchdog(30);
+    slack.sendInfo("start", "");
+    email.sendInfo("start", "start");
     for (;;) {
         console.log();
         console.log(`BlockNumber: ${blockNumber}`);
