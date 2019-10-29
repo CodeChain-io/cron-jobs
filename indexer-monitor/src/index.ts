@@ -363,7 +363,7 @@ async function main() {
 
     setInterval(checkPing, 5 * 1000, indexerAPI, targetEmail);
     setInterval(checkFollowUp, 10 * 1000, indexerAPI, targetEmail);
-    setInterval(checkBlockSync, 5 * 60 * 1000, indexerAPI, targetEmail);
+    setInterval(checkBlockSync, 60 * 60 * 1000, indexerAPI, targetEmail);
 }
 
 main().catch(error => {
