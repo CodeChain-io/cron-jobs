@@ -144,13 +144,15 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
     return dog;
 }
 
+let setIntervalId: any = null;
+
 async function main() {
     let blockNumber = await startFrom();
 
     let lastReportedBlockNumber = blockNumber;
     let lastReportedDate = new Date().getUTCDate();
     const dynamicChecker = new DynamicChecker();
-    setInterval(() => {
+    setIntervalId = setInterval(() => {
         (async () => {
             const now = new Date();
             if (now.getUTCDate() === lastReportedDate) {
@@ -206,5 +208,8 @@ main().catch(error => {
     console.log({ error });
     slack.sendError(error);
     email.sendError(error.message);
+    if (setIntervalId != null) {
+        clearInterval(setIntervalId);
+    }
     throw error;
 });
