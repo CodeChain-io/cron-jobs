@@ -189,6 +189,7 @@ async function main() {
                     data: { blockNumber, retry },
                 });
                 await checkBlock(blockNumber, dynamicChecker);
+                blockNumber = await getNextBlockNumber(blockNumber);
                 break;
             } catch (e) {
                 if (retry === 10) {
@@ -199,7 +200,6 @@ async function main() {
                 await new Promise(resolve => setTimeout(resolve, 1000 * retry));
             }
         }
-        blockNumber = await getNextBlockNumber(blockNumber);
         fs.writeFileSync(`lastBlockNumber.${SERVER}`, blockNumber.toString(10), "utf8");
     }
 }
