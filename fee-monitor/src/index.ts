@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as _ from "lodash";
 import { email, sdk, slack, SERVER } from "./config";
 import { getStakeholders } from "./Stake";
 import { getCCCBalances } from "./CCC";
@@ -123,7 +124,7 @@ interface Progress {
 function createWatchdog(timeout: number): Watchdog<Progress> {
     let stalled = false;
     const dog = new Watchdog<Progress>(timeout * 1000);
-    dog.on("reset", ({ data }, _) => {
+    dog.on("reset", ({ data }, _dummy) => {
         stalled = true;
         const message =
             `fee-monitor has been stalled for ${timeout} seconds:` +
@@ -132,7 +133,7 @@ function createWatchdog(timeout: number): Watchdog<Progress> {
         slack.sendError(message);
         email.sendError(message);
     });
-    dog.on("feed", ({ data }, _) => {
+    dog.on("feed", ({ data }, _dummy) => {
         if (stalled) {
             stalled = false;
             const message = JSON.stringify(data, null, "    ");
@@ -151,7 +152,7 @@ async function main() {
 
     let lastReportedBlockNumber = blockNumber;
     let lastReportedDate = new Date().getUTCDate();
-    const dynamicChecker = new DynamicChecker();
+    let dynamicChecker = new DynamicChecker();
     setIntervalId = setInterval(() => {
         (async () => {
             const now = new Date();
@@ -184,6 +185,11 @@ async function main() {
         console.log();
         console.log(`BlockNumber: ${blockNumber}`);
         for (let retry = 1; ; retry++) {
+            // checkpoint
+            // lodash cloneDeep is not able to preserve the original prototype of the class.
+            // If you are checking prototype with operators like "instanceof" then find
+            // another way. https://stackoverflow.com/a/34295179/2756490
+            const clonedChecker = _.cloneDeep(dynamicChecker);
             try {
                 dog.feed({
                     data: { blockNumber, retry },
@@ -197,6 +203,8 @@ async function main() {
                     throw e;
                 }
                 console.error(`Retry ${e}. wait for ${retry} sec(s)`);
+                // revert
+                dynamicChecker = clonedChecker;
                 await new Promise(resolve => setTimeout(resolve, 1000 * retry));
             }
         }
