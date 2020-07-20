@@ -19,7 +19,7 @@
     "chai": "^4.2.0",
     "codechain-sdk": "^1.1.0",
     "config": "^2.0.1",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.19",
     "request-json": "^0.6.4",
     "request-promise-native": "^1.0.5"
   },
