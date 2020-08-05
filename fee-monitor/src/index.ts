@@ -67,7 +67,9 @@ async function startFrom() {
         }
         const currentTermStart = await getCurrentTermStartBlockNumber(blockNumber);
         if (currentTermStart === null) {
-            throw new Error("BLOCK_NUMBER is bigger than current best block number");
+            throw new Error(
+                `BLOCK_NUMBER(${blockNumber}) is bigger than current best block number`,
+            );
         } else if (currentTermStart === 1) {
             return blockNumber;
         } else {
@@ -83,7 +85,9 @@ async function startFrom() {
         }
         const want = bestBlockNumber - lookBehind;
         const wantingTermStart = (await getCurrentTermStartBlockNumber(want))!;
-        if (wantingTermStart === 1) {
+        if (wantingTermStart === null) {
+            throw new Error(`BLOCK_NUMBER(${want}) is bigger than current best block number`);
+        } else if (wantingTermStart === 1) {
             return want;
         } else {
             return wantingTermStart;
@@ -100,7 +104,12 @@ async function startFrom() {
             throw new Error("lastBlockNumber file contains invalid number");
         }
         const currentTermStart = (await getCurrentTermStartBlockNumber(blockNumber))!;
-        if (currentTermStart === 1) {
+
+        if (currentTermStart === null) {
+            throw new Error(
+                `BLOCK_NUMBER(${blockNumber}) is bigger than current best block number`,
+            );
+        } else if (currentTermStart === 1) {
             return blockNumber;
         } else {
             return currentTermStart;
