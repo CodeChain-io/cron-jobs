@@ -223,10 +223,26 @@ async function main() {
 
 main().catch(error => {
     console.log({ error });
-    slack.sendError(error);
-    email.sendError(error.message);
+    try {
+        slack.sendError(error);
+    } catch (slackSendError) {
+        console.error(`Fail to send a slack message for the erorr ${error}`);
+        console.error(slackSendError);
+    }
+    try {
+        email.sendError(error.message);
+    } catch (sendEmailError) {
+        console.error("Fail to send an email for the error ${err}");
+        console.error(sendEmailError);
+    }
+
     if (setIntervalId != null) {
         clearInterval(setIntervalId);
     }
-    throw error;
+
+    setTimeout(() => {
+        // Wait for 10 seconds to make sure email and slack message is sent.
+        // If we didn't wait, fee-monitor will be killed before send error messages.
+        process.exit(1);
+    }, 10_000);
 });
