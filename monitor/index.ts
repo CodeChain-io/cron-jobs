@@ -36,13 +36,11 @@ function colorFromLevel(
 
 function sendNotice(error: Notification, targetEmail: string) {
   const color = colorFromLevel(error.level);
-  if (color != null) {
-    SlackNotification.instance.send({
-      title: error.title,
-      text: error.content,
-      color
-    });
-  }
+  SlackNotification.instance.send({
+    title: error.title,
+    text: error.content,
+    color
+  });
   if (error.level === "error") {
     emailClient
       .sendAnnouncement(
