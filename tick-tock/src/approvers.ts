@@ -33,15 +33,21 @@ export async function createApprovers(
     sdk: SDK,
     passphrase?: string
 ): Promise<[string, string, string]> {
-    const hourApprover = (await sdk.key.createPlatformAddress({
-        passphrase
-    })).value;
-    const minuteApprover = (await sdk.key.createPlatformAddress({
-        passphrase
-    })).value;
-    const secondApprover = (await sdk.key.createPlatformAddress({
-        passphrase
-    })).value;
+    const hourApprover = (
+        await sdk.key.createPlatformAddress({
+            passphrase
+        })
+    ).value;
+    const minuteApprover = (
+        await sdk.key.createPlatformAddress({
+            passphrase
+        })
+    ).value;
+    const secondApprover = (
+        await sdk.key.createPlatformAddress({
+            passphrase
+        })
+    ).value;
     return [hourApprover, minuteApprover, secondApprover];
 }
 

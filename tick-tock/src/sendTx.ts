@@ -50,14 +50,16 @@ export async function sendMints(
     const hashes = [];
     for (let i = 0; i < mints.length; i += 1) {
         hashes.push(
-            (await sendTransaction(
-                sdk,
-                payer,
-                passphrase,
-                seq + i,
-                100_000,
-                mints[i]
-            )).value
+            (
+                await sendTransaction(
+                    sdk,
+                    payer,
+                    passphrase,
+                    seq + i,
+                    100_000,
+                    mints[i]
+                )
+            ).value
         );
     }
 
