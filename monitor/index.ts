@@ -298,20 +298,21 @@ async function main() {
   setInterval(checkSealField, 3 * 1000, rpc, targetEmail, networkId);
 }
 
-process.on("unhandledRejection", error => {
+process.on("unhandledRejection", (error: any) => {
   const rpcUrl = getConfig("RPC_URL");
   const rpc = new Rpc(rpcUrl);
   const targetEmail = getConfig("SENDGRID_TO");
+  const message = error?.message ?? "No error message";
   rpc.chain
     .getNetworkId()
     .then(networkId => {
       sendNotice(
-        new Notifications.UnhandledRejection(networkId, error.message),
+        new Notifications.UnhandledRejection(networkId, message),
         targetEmail
       );
     })
     .catch(err => console.error(err.message));
-  console.error("unhandledRejection", error.message);
+  console.error("unhandledRejection", message);
 });
 
 main().catch(err => console.log(err));
