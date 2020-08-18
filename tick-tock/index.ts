@@ -146,7 +146,7 @@ if (require.main === module) {
                 const minuteChanged =
                     hourChanged ||
                     current.getUTCMinutes() !== previousDate.getUTCMinutes();
-                const unshuffledInputs = [];
+                const unshuffledInputs: AssetTransferInput[] = [];
                 const outputs = [];
                 if (hourChanged) {
                     outputs.push(
@@ -182,7 +182,7 @@ if (require.main === module) {
                 );
                 unshuffledInputs.push(secondAsset.createTransferInput());
 
-                const inputs = shuffle<AssetTransferInput>(unshuffledInputs);
+                const inputs = shuffle<AssetTransferInput[]>(unshuffledInputs);
 
                 const transfer = sdk.core.createTransferAssetTransaction({
                     inputs,
@@ -190,7 +190,7 @@ if (require.main === module) {
                     metadata: `Current time is ${current}`
                 });
                 await sdk.key.signTransactionInput(transfer, 0, { passphrase });
-                const approvers = [];
+                const approvers: string[] = [];
                 let failedTransaction = false;
                 if (p99()) {
                     approvers.push(secondApprover);
@@ -221,7 +221,7 @@ if (require.main === module) {
                         }
                     }
                 }
-                for (const approver of shuffle<string>(approvers)) {
+                for (const approver of shuffle<string[]>(approvers)) {
                     await approve(sdk, transfer, approver, passphrase);
                 }
 
