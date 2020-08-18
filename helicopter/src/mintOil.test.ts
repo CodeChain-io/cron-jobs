@@ -42,10 +42,12 @@ describe("mint oil", async function() {
     });
 
     it("Mint", async function() {
-        const oilOwner = (await sdk.key.createAssetAddress({
-            keyStore,
-            passphrase: "pass"
-        })).toString();
+        const oilOwner = (
+            await sdk.key.createAssetAddress({
+                keyStore,
+                passphrase: "pass"
+            })
+        ).toString();
         const mintOilTx = createMintOilTx(sdk, oilOwner);
 
         expect(
