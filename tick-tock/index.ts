@@ -22,6 +22,8 @@ const USERS_FILE_NAME = ".users";
 const SHARD_ID_FILE_NAME = ".shard";
 const APPROVERS_FILE_NAME = ".approvers";
 
+const DEFAULT_TRANSFER_FEE = 100;
+
 if (require.main === module) {
     const rpcUrl = config.get<string>("rpc_url")!;
     const networkId = config.get<string>("network_id")!;
@@ -110,9 +112,11 @@ if (require.main === module) {
             passphrase
         });
         let seq = nextSeq; // TODO: quirks because of tslint
+        let fee = DEFAULT_TRANSFER_FEE;
 
         for (const hash of mintHashes) {
-            while (true) {
+            let i = 0;
+            for (; i < 100; i += 1) {
                 if (await sdk.rpc.chain.containsTransaction(hash)) {
                     break;
                 }
@@ -121,6 +125,9 @@ if (require.main === module) {
                     throw Error(`Cannot mint the clock hand: ${error}`);
                 }
                 await wait(1_000);
+            }
+            if (i === 100) {
+                throw Error("Cannot mint hands");
             }
         }
 
@@ -184,40 +191,44 @@ if (require.main === module) {
 
                 const inputs = shuffle<AssetTransferInput>(unshuffledInputs);
 
+                let metadata = `Current time is ${current}`;
+                const noSecondApprover = !p99();
+                if (noSecondApprover) {
+                    metadata = `${metadata} : No second approver`;
+                }
+                const noMinuteApprover = minuteChanged && !p99();
+                if (noMinuteApprover) {
+                    metadata = `${metadata} : No minute approver`;
+                }
+                const noHourApprover = hourChanged && !p99();
+                if (noHourApprover) {
+                    metadata = `${metadata} : No hour approver`;
+                }
+
                 const transfer = sdk.core.createTransferAssetTransaction({
                     inputs,
                     outputs,
-                    metadata: `Current time is ${current}`
+                    metadata
                 });
                 await sdk.key.signTransactionInput(transfer, 0, { passphrase });
                 const approvers = [];
-                let failedTransaction = false;
-                if (p99()) {
+                if (!noSecondApprover) {
                     approvers.push(secondApprover);
-                } else {
-                    console.log("Create a failed transaction");
-                    failedTransaction = true;
                 }
 
                 if (minuteChanged) {
                     await sdk.key.signTransactionInput(transfer, 1, {
                         passphrase
                     });
-                    if (p99()) {
+                    if (!noMinuteApprover) {
                         approvers.push(minuteApprover);
-                    } else {
-                        console.log("Create a failed transaction");
-                        failedTransaction = true;
                     }
                     if (hourChanged) {
                         await sdk.key.signTransactionInput(transfer, 2, {
                             passphrase
                         });
-                        if (p99()) {
+                        if (!noHourApprover) {
                             approvers.push(hourApprover);
-                        } else {
-                            console.log("Create a failed transaction");
-                            failedTransaction = true;
                         }
                     }
                 }
@@ -231,19 +242,25 @@ if (require.main === module) {
                     payer,
                     passphrase,
                     seq,
-                    100,
+                    fee,
                     transfer
                 );
-                if (failedTransaction) {
+                if (noSecondApprover || noMinuteApprover || noHourApprover) {
                     numberOfFailedTransaction += 1;
                     console.log(
-                        `Send failed transaction at ${current}:${hash}`
+                        `Send failed transaction at ${current}.hash: ${hash}. metadata: ${metadata}. seq: ${seq}`
                     );
 
-                    setTimeout(transferFunction, 0); // Send the next transaction immediately.
+                    // Increase the fee of the next transaction to guarantee the transaction propagation.
+                    fee = Math.min(Math.floor(fee * 1.5), 1_000);
+
+                    // Pause sending transactions for a while.
+                    setTimeout(transferFunction, 30_000);
                     return;
                 }
-                console.log(`Clock hands are moved at ${current}:${hash}`);
+                console.log(
+                    `Clock hands are moved at ${current}. hash: ${hash}. seq: ${seq}`
+                );
                 pendings.push([
                     hash.value,
                     hourAsset,
@@ -266,15 +283,12 @@ if (require.main === module) {
 
                 seq += 1;
 
-                const timeout = Math.max(
-                    current.getTime() + 1_000 - Date.now(),
-                    0
-                );
                 previousDate = current;
-                setTimeout(transferFunction, timeout);
             } catch (ex) {
                 console.error(ex);
             }
+            const timeout = Math.max(Math.floor(Math.random() * 3_000), 500);
+            setTimeout(transferFunction, timeout);
         };
 
         let numberOfAcceptedTransactions = 0;
@@ -286,13 +300,17 @@ if (require.main === module) {
                     const hash = pendings[0][0];
                     if (await sdk.rpc.chain.containsTransaction(hash)) {
                         numberOfAcceptedTransactions += 1;
+                        // Decrease the fee because the previous transaction succeed.
+                        fee = Math.floor(
+                            Math.max(DEFAULT_TRANSFER_FEE, fee / 2)
+                        );
                         pendings.pop();
                         break;
                     }
                     const current = pendings[0][4];
-                    if (current.getTime() + 60 * 1_000 < Date.now()) {
+                    if (current.getTime() + 30 * 1_000 < Date.now()) {
                         console.log(
-                            "The transaction is not accepted over 1 minute ago. Try a different transaction."
+                            "The transaction is not accepted over 30 seconds. Try a different transaction."
                         );
                         numberOfExpiredTransactions += 1;
                     } else {
@@ -310,6 +328,8 @@ if (require.main === module) {
                         numberOfRejectedTransactions += 1;
                     }
 
+                    // Increase the fee of the next transaction to guarantee the transaction propagation.
+                    fee = Math.floor(fee * 1.5);
                     hourAsset = pendings[0][1];
                     minuteAsset = pendings[0][2];
                     secondAsset = pendings[0][3];
@@ -344,7 +364,7 @@ if (require.main === module) {
                     `Tick-tock is using ${payer}.`,
                     `It sent ${total} transactions and ${failed} of them are intentionally failed transactions.`,
                     `${numberOfAcceptedTransactions} are accepted. ${numberOfRejectedTransactions} are rejected.`,
-                    `${numberOfExpiredTransactions} are retried because it's not accepted over 1 minute.`
+                    `${numberOfExpiredTransactions} are retried because it's not accepted over 30 seconds.`
                 ];
 
                 const text = lines.map(line => `${line}<br />`).join("\r\n");
@@ -365,6 +385,6 @@ if (require.main === module) {
     })().catch(console.error);
 }
 
-function p99() {
+function p99(): boolean {
     return Math.random() * 100 < 99;
 }
