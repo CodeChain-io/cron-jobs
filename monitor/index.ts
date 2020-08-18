@@ -191,10 +191,9 @@ async function queryValidators(
   rpc: Rpc,
   blockNumber: number
 ): Promise<PlatformAddress[]> {
-  const addresses: ReadonlyArray<string> = (await rpc.call(
-    { method: "chain_getPossibleAuthors" },
-    blockNumber
-  )).result;
+  const addresses: ReadonlyArray<string> = (
+    await rpc.call({ method: "chain_getPossibleAuthors" }, blockNumber)
+  ).result;
   return addresses.map((address: string) => PlatformAddress.ensure(address));
 }
 
