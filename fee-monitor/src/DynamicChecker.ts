@@ -111,10 +111,9 @@ export class DynamicChecker {
 
         const author = block.author;
         const weights = await getWeights(blockNumber);
-        const validators = (await getAccountsInState(
-            AccountState.Validator,
-            blockNumber - 2,
-        )).reverse();
+        const validators = (
+            await getAccountsInState(AccountState.Validator, blockNumber - 2)
+        ).reverse();
         await this.recordContribution(block, validators);
         distributeDynamic(
             this.tracerForImmedateSettle,
@@ -331,10 +330,9 @@ export class DynamicChecker {
                                     10,
                                 );
                                 const height = parseInt(decodeU64(heightEncodable).toString(), 10);
-                                const malValidatorAddress = (await getAccountsInState(
-                                    AccountState.Validator,
-                                    height - 1,
-                                ))[malValidatorIdx];
+                                const malValidatorAddress = (
+                                    await getAccountsInState(AccountState.Validator, height - 1)
+                                )[malValidatorIdx];
 
                                 const malValidatorDesposit =
                                     this.nominationDeposits.get(malValidatorAddress) || new U64(0);
@@ -378,10 +376,9 @@ export class DynamicChecker {
 
         this.parentTermFirstBlockNumber = this.parentTermLastBlockNumber + 1;
         this.parentTermLastBlockNumber = blockNumber;
-        this.parentTermValidators = (await getAccountsInState(
-            AccountState.Validator,
-            this.parentTermFirstBlockNumber - 1,
-        )).reverse();
+        this.parentTermValidators = (
+            await getAccountsInState(AccountState.Validator, this.parentTermFirstBlockNumber - 1)
+        ).reverse();
     }
 
     /**
