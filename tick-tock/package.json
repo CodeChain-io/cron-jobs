@@ -36,6 +36,6 @@
     "@types/underscore": "^1.8.13",
     "codechain-sdk": "^1.2.0",
     "config": "^3.0.1",
-    "underscore": "^1.9.1"
+    "underscore": "^1.12.1"
   }
 }
